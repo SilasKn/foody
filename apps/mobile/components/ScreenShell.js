@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../theme';
 
 function TabPill({ label, active, onPress }) {
@@ -20,8 +20,10 @@ function TabPill({ label, active, onPress }) {
 }
 
 export default function ScreenShell({ navigation, title, activeTab }) {
+  const insets = useSafeAreaInsets();
+
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+    <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
         <Pressable
           onPress={() => navigation.navigate('Start')}
@@ -40,7 +42,12 @@ export default function ScreenShell({ navigation, title, activeTab }) {
         <Text style={styles.title}>{title}</Text>
       </View>
 
-      <View style={styles.tabBar}>
+      <View
+        style={[
+          styles.tabBar,
+          { paddingBottom: Math.max(insets.bottom, 8) },
+        ]}
+      >
         <TabPill
           label="Home"
           active={activeTab === 'home'}
@@ -100,8 +107,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingTop: 12,
-    paddingBottom: 8,
-    backgroundColor: colors.headerBg,
+    backgroundColor: colors.cream,
     gap: 6,
   },
   pill: {
