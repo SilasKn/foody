@@ -5,4 +5,5 @@ export const colors = {
   pillActive: '#F0EDE6',
   pillInactive: '#FFFFFF',
   text: '#000000',
+  accent: '#7A9E7E',
 };

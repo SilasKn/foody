@@ -31,7 +31,9 @@ export default function ScreenShell({ navigation, title, activeTab }) {
           accessibilityRole="button"
           accessibilityLabel="Go to home"
         >
-          <Text style={styles.logo}>foody.</Text>
+          <Text style={styles.logo}>
+            foody<Text style={styles.logoDot}>.</Text>
+          </Text>
         </Pressable>
         <Pressable hitSlop={12} accessibilityRole="button">
           <Ionicons name="person-outline" size={26} color={colors.text} />
@@ -87,6 +89,9 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '700',
     color: colors.text,
+  },
+  logoDot: {
+    color: colors.accent,
   },
   body: {
     flex: 1,
