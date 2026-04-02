@@ -1,0 +1,10 @@
+{
+  "name": "essensplan",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "mobile": "npm run start -w mobile"
+  }
+}
