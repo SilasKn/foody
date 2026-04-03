@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../providers/AuthProvider';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../theme';
@@ -19,8 +20,15 @@ function TabPill({ label, active, onPress }) {
   );
 }
 
-export default function ScreenShell({ navigation, title, activeTab }) {
+export default function ScreenShell({ navigation, title, activeTab, children }) {
   const insets = useSafeAreaInsets();
+  const { session, signOut } = useAuth();
+
+  const onUserPress = () => {
+    // Since unauthenticated users should only see `LoginScreen`, we primarily use this as "log out".
+    if (session) return signOut();
+    navigation.navigate('Login');
+  };
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -35,13 +43,14 @@ export default function ScreenShell({ navigation, title, activeTab }) {
             foody<Text style={styles.logoDot}>.</Text>
           </Text>
         </Pressable>
-        <Pressable hitSlop={12} accessibilityRole="button">
+        <Pressable hitSlop={12} accessibilityRole="button" accessibilityLabel="User menu" onPress={onUserPress}>
           <Ionicons name="person-outline" size={26} color={colors.text} />
         </Pressable>
       </View>
 
       <View style={styles.body}>
         <Text style={styles.title}>{title}</Text>
+        {children}
       </View>
 
       <View
