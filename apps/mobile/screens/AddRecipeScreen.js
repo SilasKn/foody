@@ -1,7 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Picker } from '@react-native-picker/picker';
 import { useMemo, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -10,14 +12,19 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import ScreenShell from '../components/ScreenShell';
 import { colors } from '../theme';
 
 export default function AddRecipeScreen({ navigation }) {
+  const unitOptions = ['g', 'ml', 'unit'];
+
   const [recipeName, setRecipeName] = useState('');
   const [recipeDescription, setRecipeDescription] = useState('');
   const [ingredientInput, setIngredientInput] = useState('');
+  const [ingredientQuantityInput, setIngredientQuantityInput] = useState('');
+  const [ingredientUnit, setIngredientUnit] = useState('g');
+  const [showUnitPickerIOS, setShowUnitPickerIOS] = useState(false);
   const [ingredients, setIngredients] = useState([]);
   const [isPublic, setIsPublic] = useState(false);
 
@@ -35,13 +42,35 @@ export default function AddRecipeScreen({ navigation }) {
   };
 
   const addIngredient = () => {
-    const next = ingredientInput.trim();
-    if (!next) return;
+    const name = ingredientInput.trim();
+    const quantityRaw = ingredientQuantityInput.trim().replace(',', '.');
+    const quantity = Number(quantityRaw);
+
+    if (!name) {
+      setErrorMessage('Please enter an ingredient name.');
+      return;
+    }
+    if (!quantityRaw || Number.isNaN(quantity) || quantity <= 0) {
+      setErrorMessage('Please enter a valid positive quantity.');
+      return;
+    }
+
+    setErrorMessage('');
     setIngredients((prev) => {
-      if (prev.some((i) => i.toLowerCase() === next.toLowerCase())) return prev;
-      return [...prev, next];
+      const hasDuplicate = prev.some(
+        (i) =>
+          i.name.toLowerCase() === name.toLowerCase() &&
+          i.quantity === quantity &&
+          i.unit === ingredientUnit
+      );
+      if (hasDuplicate) return prev;
+
+      return [...prev, { name, quantity, unit: ingredientUnit }];
     });
     setIngredientInput('');
+    setIngredientQuantityInput('');
+    setIngredientUnit('g');
+    setShowUnitPickerIOS(false);
   };
 
   const removeIngredient = (idx) => {
@@ -52,6 +81,9 @@ export default function AddRecipeScreen({ navigation }) {
     setRecipeName('');
     setRecipeDescription('');
     setIngredientInput('');
+    setIngredientQuantityInput('');
+    setIngredientUnit('g');
+    setShowUnitPickerIOS(false);
     setIngredients([]);
     setIsPublic(false);
     setErrorMessage('');
@@ -70,123 +102,212 @@ export default function AddRecipeScreen({ navigation }) {
   };
 
   return (
-    <ScreenShell navigation={navigation} title="Add Recipe" activeTab="recipes">
-      <KeyboardAvoidingView style={styles.flex} behavior="padding">
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.card}>
-            <Text style={styles.label}>Recipe name</Text>
-            <TextInput
-              value={recipeName}
-              onChangeText={setRecipeName}
-              placeholder="e.g. Spaghetti Aglio e Olio"
-              placeholderTextColor="#666"
-              style={styles.input}
-              returnKeyType="next"
-            />
+    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <View style={styles.modalBody}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.card}>
+              <View style={styles.backRow}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Back"
+                  onPress={() => navigation.goBack()}
+                  hitSlop={10}
+                  style={({ pressed }) => [styles.backButton, pressed && styles.fabPressed]}
+                >
+                  <Ionicons name="arrow-back" size={24} color={colors.text} />
+                </Pressable>
+              </View>
 
-            <Text style={styles.label}>Recipe description</Text>
-            <TextInput
-              value={recipeDescription}
-              onChangeText={setRecipeDescription}
-              placeholder="Short description / steps…"
-              placeholderTextColor="#666"
-              style={[styles.input, styles.textArea]}
-              multiline
-              textAlignVertical="top"
-            />
-
-            <Text style={styles.label}>Ingredients</Text>
-            <View style={styles.ingredientRow}>
+              <Text style={styles.label}>Recipe name</Text>
               <TextInput
-                value={ingredientInput}
-                onChangeText={setIngredientInput}
-                placeholder="Add ingredient…"
+                value={recipeName}
+                onChangeText={setRecipeName}
+                placeholder="e.g. Spaghetti Aglio e Olio"
                 placeholderTextColor="#666"
-                style={[styles.input, styles.ingredientInput]}
-                returnKeyType="done"
-                onSubmitEditing={addIngredient}
+                style={styles.input}
+                returnKeyType="next"
               />
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Add ingredient"
-                onPress={addIngredient}
-                style={({ pressed }) => [styles.addIconButton, pressed && styles.pressed]}
-              >
-                <Ionicons name="add" size={22} color={colors.text} />
-              </Pressable>
-            </View>
 
-            {ingredients.length > 0 && (
-              <View style={styles.ingredientsList}>
-                {ingredients.map((ing, idx) => (
-                  <View key={`${ing}-${idx}`} style={styles.ingredientItem}>
-                    <Text style={styles.ingredientText}>{ing}</Text>
+              <Text style={styles.label}>Recipe description</Text>
+              <TextInput
+                value={recipeDescription}
+                onChangeText={setRecipeDescription}
+                placeholder="Short description / steps…"
+                placeholderTextColor="#666"
+                style={[styles.input, styles.textArea]}
+                multiline
+                textAlignVertical="top"
+              />
+
+              <Text style={styles.label}>Ingredients</Text>
+              <View style={styles.ingredientRow}>
+                <TextInput
+                  value={ingredientInput}
+                  onChangeText={setIngredientInput}
+                  placeholder="Add ingredient…"
+                  placeholderTextColor="#666"
+                  style={[styles.input, styles.ingredientInput]}
+                  returnKeyType="done"
+                  onSubmitEditing={addIngredient}
+                />
+              </View>
+              <View style={styles.ingredientMetaRow}>
+                <TextInput
+                  value={ingredientQuantityInput}
+                  onChangeText={setIngredientQuantityInput}
+                  placeholder="Quantity"
+                  placeholderTextColor="#666"
+                  keyboardType="numeric"
+                  style={[styles.input, styles.quantityInput]}
+                />
+                {Platform.OS === 'ios' ? (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Select unit"
+                    onPress={() => setShowUnitPickerIOS((prev) => !prev)}
+                    style={({ pressed }) => [
+                      styles.unitFieldButton,
+                      pressed && styles.pressed,
+                    ]}
+                  >
+                    <Text style={styles.unitFieldText}>{ingredientUnit}</Text>
+                    <Ionicons name="chevron-down" size={18} color={colors.text} />
+                  </Pressable>
+                ) : (
+                  <View style={styles.pickerWrap}>
+                    <Picker
+                      selectedValue={ingredientUnit}
+                      onValueChange={(value) => setIngredientUnit(value)}
+                      style={styles.picker}
+                      dropdownIconColor={colors.text}
+                    >
+                      {unitOptions.map((unit) => (
+                        <Picker.Item key={unit} label={unit} value={unit} />
+                      ))}
+                    </Picker>
+                  </View>
+                )}
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Add ingredient"
+                  onPress={addIngredient}
+                  style={({ pressed }) => [styles.addIconButton, pressed && styles.pressed]}
+                >
+                  <Ionicons name="add" size={22} color={colors.text} />
+                </Pressable>
+              </View>
+              {Platform.OS === 'ios' && showUnitPickerIOS && (
+                <View style={styles.iosPickerPanel}>
+                  <View style={styles.iosPickerHeader}>
+                    <Text style={styles.iosPickerTitle}>Unit</Text>
                     <Pressable
                       accessibilityRole="button"
-                      accessibilityLabel={`Remove ${ing}`}
-                      onPress={() => removeIngredient(idx)}
-                      hitSlop={10}
-                      style={({ pressed }) => [styles.removeButton, pressed && styles.pressed]}
+                      accessibilityLabel="Done selecting unit"
+                      onPress={() => setShowUnitPickerIOS(false)}
+                      style={({ pressed }) => [styles.iosPickerDone, pressed && styles.pressed]}
                     >
-                      <Ionicons name="close" size={18} color={colors.text} />
+                      <Text style={styles.iosPickerDoneText}>Done</Text>
                     </Pressable>
                   </View>
-                ))}
+                  <Picker
+                    selectedValue={ingredientUnit}
+                    onValueChange={(value) => setIngredientUnit(value)}
+                    style={styles.iosPicker}
+                    itemStyle={styles.iosPickerItem}
+                  >
+                    {unitOptions.map((unit) => (
+                      <Picker.Item key={unit} label={unit} value={unit} />
+                    ))}
+                  </Picker>
+                </View>
+              )}
+
+              {ingredients.length > 0 && (
+                <View style={styles.ingredientsList}>
+                  {ingredients.map((ing, idx) => (
+                    <View key={`${ing.name}-${ing.quantity}-${ing.unit}-${idx}`} style={styles.ingredientItem}>
+                      <Text style={styles.ingredientText}>
+                        {ing.name} - {ing.quantity} {ing.unit}
+                      </Text>
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={`Remove ${ing.name}`}
+                        onPress={() => removeIngredient(idx)}
+                        hitSlop={10}
+                        style={({ pressed }) => [styles.removeButton, pressed && styles.pressed]}
+                      >
+                        <Ionicons name="close" size={18} color={colors.text} />
+                      </Pressable>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              <View style={styles.toggleRow}>
+                <Text style={styles.label}>Public</Text>
+                <Switch
+                  value={isPublic}
+                  onValueChange={setIsPublic}
+                  trackColor={{ false: '#DDD', true: colors.accent }}
+                  thumbColor="#fff"
+                />
               </View>
-            )}
 
-            <View style={styles.toggleRow}>
-              <Text style={styles.label}>Public</Text>
-              <Switch
-                value={isPublic}
-                onValueChange={setIsPublic}
-                trackColor={{ false: '#DDD', true: colors.accent }}
-                thumbColor="#fff"
-              />
+              {!!errorMessage && <Text style={styles.error}>{errorMessage}</Text>}
+              {!!toastMessage && <Text style={styles.toast}>{toastMessage}</Text>}
+
+              <View style={styles.buttonRow}>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={onClear}
+                  style={({ pressed }) => [styles.clearButton, pressed && styles.pressed]}
+                >
+                  <Text style={styles.clearButtonText}>Clear</Text>
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={onSave}
+                  disabled={!canSave}
+                  style={({ pressed }) => [
+                    styles.saveButton,
+                    !canSave && styles.saveButtonDisabled,
+                    pressed && canSave && styles.saveButtonPressed,
+                  ]}
+                >
+                  <Text style={styles.saveButtonText}>Save</Text>
+                </Pressable>
+              </View>
             </View>
-
-            {!!errorMessage && <Text style={styles.error}>{errorMessage}</Text>}
-            {!!toastMessage && <Text style={styles.toast}>{toastMessage}</Text>}
-
-            <View style={styles.buttonRow}>
-              <Pressable
-                accessibilityRole="button"
-                onPress={onClear}
-                style={({ pressed }) => [styles.clearButton, pressed && styles.pressed]}
-              >
-                <Text style={styles.clearButtonText}>Clear</Text>
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                onPress={onSave}
-                disabled={!canSave}
-                style={({ pressed }) => [
-                  styles.saveButton,
-                  !canSave && styles.saveButtonDisabled,
-                  pressed && canSave && styles.saveButtonPressed,
-                ]}
-              >
-                <Text style={styles.saveButtonText}>Save</Text>
-              </Pressable>
-            </View>
-          </View>
-        </ScrollView>
+          </ScrollView>
+        </View>
       </KeyboardAvoidingView>
-    </ScreenShell>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, alignSelf: 'stretch' },
+  safe: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+  flex: { flex: 1 },
+  modalBody: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    backgroundColor: 'transparent',
+  },
   scrollContent: {
     flexGrow: 1,
-    width: '100%',
     justifyContent: 'center',
-    paddingVertical: 18,
   },
   card: {
     width: '100%',
@@ -201,6 +322,29 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     elevation: 3,
     minHeight: 420,
+  },
+  backRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    marginBottom: 14,
+  },
+  backButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 28,
+    backgroundColor: colors.accent,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 5,
+  },
+  fabPressed: {
+    opacity: 0.85,
   },
   label: {
     fontSize: 13,
@@ -221,13 +365,91 @@ const styles = StyleSheet.create({
     height: 110,
   },
   ingredientRow: {
+    marginBottom: 10,
+  },
+  ingredientInput: {
+    marginBottom: 0,
+  },
+  ingredientMetaRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    marginBottom: 2,
   },
-  ingredientInput: {
-    flex: 1,
+  quantityInput: {
+    width: 96,
     marginBottom: 0,
+  },
+  unitFieldButton: {
+    minWidth: 92,
+    height: 44,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 14,
+    backgroundColor: '#fff',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+  },
+  unitFieldText: {
+    color: colors.text,
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  pickerWrap: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 14,
+    backgroundColor: '#fff',
+    overflow: 'hidden',
+  },
+  picker: {
+    height: 44,
+  },
+  iosPickerPanel: {
+    marginTop: 10,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 14,
+    backgroundColor: '#fff',
+    overflow: 'hidden',
+  },
+  iosPickerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#DDD',
+  },
+  iosPickerTitle: {
+    color: colors.text,
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  iosPickerDone: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 9999,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    backgroundColor: colors.pillInactive,
+  },
+  iosPickerDoneText: {
+    color: colors.text,
+    fontWeight: '700',
+    fontSize: 12,
+  },
+  iosPicker: {
+    height: 170,
+  },
+  iosPickerItem: {
+    color: colors.text,
+    fontSize: 18,
   },
   addIconButton: {
     width: 44,
@@ -274,7 +496,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 4,
+    marginTop: 12,
     marginBottom: 10,
   },
   error: {

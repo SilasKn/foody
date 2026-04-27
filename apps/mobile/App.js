@@ -44,7 +44,11 @@ function AppRoutes() {
           <Stack.Screen
             name="AddRecipe"
             component={AddRecipeScreen}
-            options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+            options={{
+              presentation: 'transparentModal',
+              animation: 'slide_from_bottom',
+              contentStyle: { backgroundColor: 'transparent' },
+            }}
           />
         </Stack.Navigator>
       ) : (
