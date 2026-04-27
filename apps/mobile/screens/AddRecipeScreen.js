@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -14,10 +14,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useAuth } from '../providers/AuthProvider';
 import { colors } from '../theme';
+import { supabase } from '../utils/supabase';
 
 export default function AddRecipeScreen({ navigation }) {
   const unitOptions = ['g', 'ml', 'unit'];
+  const { user } = useAuth();
 
   const [recipeName, setRecipeName] = useState('');
   const [recipeDescription, setRecipeDescription] = useState('');
@@ -27,13 +30,22 @@ export default function AddRecipeScreen({ navigation }) {
   const [showUnitPickerIOS, setShowUnitPickerIOS] = useState(false);
   const [ingredients, setIngredients] = useState([]);
   const [isPublic, setIsPublic] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [errorMessage, setErrorMessage] = useState('');
   const [toastMessage, setToastMessage] = useState('');
 
   const toastTimeoutRef = useRef(null);
+  const closeTimeoutRef = useRef(null);
 
-  const canSave = useMemo(() => recipeName.trim().length > 0, [recipeName]);
+  const canSave = useMemo(() => recipeName.trim().length > 0 && !isSaving, [recipeName, isSaving]);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+      if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+    };
+  }, []);
 
   const showToast = (msg) => {
     setToastMessage(msg);
@@ -77,7 +89,74 @@ export default function AddRecipeScreen({ navigation }) {
     setIngredients((prev) => prev.filter((_, i) => i !== idx));
   };
 
+  const normalizeIngredientName = (name) => name.trim().toLowerCase();
+
+  const getIngredientIdsByName = async (ingredientNames) => {
+    const uniqueOriginalNames = [];
+    const uniqueNormalizedNames = [];
+    const originalByNormalizedName = {};
+    const seen = new Set();
+
+    ingredientNames.forEach((name) => {
+      const normalized = normalizeIngredientName(name);
+      if (!normalized || seen.has(normalized)) return;
+      seen.add(normalized);
+      uniqueNormalizedNames.push(normalized);
+      uniqueOriginalNames.push(name.trim());
+      originalByNormalizedName[normalized] = name.trim();
+    });
+
+    const { data: existingIngredients, error: existingIngredientsError } = await supabase
+      .from('ingredients')
+      .select('id, name');
+
+    if (existingIngredientsError) {
+      throw existingIngredientsError;
+    }
+
+    const ingredientIdByNormalizedName = {};
+    (existingIngredients ?? []).forEach((item) => {
+      const normalized = normalizeIngredientName(item.name ?? '');
+      if (!normalized) return;
+      if (!ingredientIdByNormalizedName[normalized]) {
+        ingredientIdByNormalizedName[normalized] = item.id;
+      }
+    });
+
+    const missingNormalizedNames = uniqueNormalizedNames.filter(
+      (normalizedName) => !ingredientIdByNormalizedName[normalizedName]
+    );
+
+    if (missingNormalizedNames.length > 0) {
+      const ingredientsToInsert = missingNormalizedNames.map((normalizedName) => ({
+        name: originalByNormalizedName[normalizedName],
+      }));
+
+      const { data: insertedIngredients, error: insertIngredientsError } = await supabase
+        .from('ingredients')
+        .insert(ingredientsToInsert)
+        .select('id, name');
+
+      if (insertIngredientsError) {
+        throw insertIngredientsError;
+      }
+
+      (insertedIngredients ?? []).forEach((item) => {
+        const normalized = normalizeIngredientName(item.name ?? '');
+        if (!normalized) return;
+        ingredientIdByNormalizedName[normalized] = item.id;
+      });
+    }
+
+    return ingredientNames.reduce((acc, name) => {
+      const normalized = normalizeIngredientName(name);
+      acc[normalized] = ingredientIdByNormalizedName[normalized];
+      return acc;
+    }, {});
+  };
+
   const onClear = () => {
+    if (isSaving) return;
     setRecipeName('');
     setRecipeDescription('');
     setIngredientInput('');
@@ -90,15 +169,71 @@ export default function AddRecipeScreen({ navigation }) {
     setToastMessage('');
   };
 
-  const onSave = () => {
+  const onSave = async () => {
+    if (isSaving) return;
     setErrorMessage('');
+    setToastMessage('');
     const name = recipeName.trim();
     if (!name) {
       setErrorMessage('Please enter a recipe name.');
       return;
     }
+    if (!user?.id) {
+      setErrorMessage('Please log in again.');
+      return;
+    }
 
-    showToast('Saved locally (no database yet).');
+    setIsSaving(true);
+
+    try {
+      const { data: createdRecipe, error: recipeInsertError } = await supabase
+        .from('recipes')
+        .insert({
+          name,
+          description: recipeDescription.trim(),
+          author: user.id,
+          public: isPublic,
+        })
+        .select('id')
+        .single();
+
+      if (recipeInsertError) throw recipeInsertError;
+      if (!createdRecipe?.id) throw new Error('Failed to create recipe.');
+
+      if (ingredients.length > 0) {
+        const ingredientNames = ingredients.map((item) => item.name);
+        const ingredientIdByNormalizedName = await getIngredientIdsByName(ingredientNames);
+
+        const recipeIngredientsToInsert = ingredients.map((item) => {
+          const ingredientId = ingredientIdByNormalizedName[normalizeIngredientName(item.name)];
+          if (!ingredientId) {
+            throw new Error(`Missing ingredient id for "${item.name}".`);
+          }
+
+          return {
+            recipe_id: createdRecipe.id,
+            ingredient_id: ingredientId,
+            quantity: item.quantity,
+            unit: item.unit,
+          };
+        });
+
+        const { error: recipeIngredientsInsertError } = await supabase
+          .from('recipe_ingredients')
+          .insert(recipeIngredientsToInsert);
+
+        if (recipeIngredientsInsertError) throw recipeIngredientsInsertError;
+      }
+
+      showToast('Recipe saved successfully.');
+      closeTimeoutRef.current = setTimeout(() => {
+        navigation.goBack();
+      }, 900);
+    } catch (err) {
+      setErrorMessage(err?.message ?? 'Failed to save recipe.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -272,6 +407,7 @@ export default function AddRecipeScreen({ navigation }) {
               <Pressable
                 accessibilityRole="button"
                 onPress={onClear}
+                disabled={isSaving}
                 style={({ pressed }) => [styles.clearButton, pressed && styles.pressed]}
               >
                 <Text style={styles.clearButtonText}>Clear</Text>
@@ -286,7 +422,7 @@ export default function AddRecipeScreen({ navigation }) {
                   pressed && canSave && styles.saveButtonPressed,
                 ]}
               >
-                <Text style={styles.saveButtonText}>Save</Text>
+                <Text style={styles.saveButtonText}>{isSaving ? 'Saving...' : 'Save'}</Text>
               </Pressable>
             </View>
           </View>
