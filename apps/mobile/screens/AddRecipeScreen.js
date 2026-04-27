@@ -108,24 +108,25 @@ export default function AddRecipeScreen({ navigation }) {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <View style={styles.modalBody}>
-          <ScrollView
-            contentContainerStyle={styles.scrollContent}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
-            <View style={styles.card}>
-              <View style={styles.backRow}>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Back"
-                  onPress={() => navigation.goBack()}
-                  hitSlop={10}
-                  style={({ pressed }) => [styles.backButton, pressed && styles.fabPressed]}
-                >
-                  <Ionicons name="arrow-back" size={24} color={colors.text} />
-                </Pressable>
-              </View>
+          <View style={styles.card}>
+            <View style={styles.backRow}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Back"
+                onPress={() => navigation.goBack()}
+                hitSlop={10}
+                style={({ pressed }) => [styles.backButton, pressed && styles.fabPressed]}
+              >
+                <Ionicons name="arrow-back" size={24} color={colors.text} />
+              </Pressable>
+            </View>
 
+            <ScrollView
+              style={styles.cardScroll}
+              contentContainerStyle={styles.cardScrollContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
               <Text style={styles.label}>Recipe name</Text>
               <TextInput
                 value={recipeName}
@@ -160,14 +161,16 @@ export default function AddRecipeScreen({ navigation }) {
                 />
               </View>
               <View style={styles.ingredientMetaRow}>
-                <TextInput
-                  value={ingredientQuantityInput}
-                  onChangeText={setIngredientQuantityInput}
-                  placeholder="Quantity"
-                  placeholderTextColor="#666"
-                  keyboardType="numeric"
-                  style={[styles.input, styles.quantityInput]}
-                />
+                <View style={styles.quantityInputWrap}>
+                  <TextInput
+                    value={ingredientQuantityInput}
+                    onChangeText={setIngredientQuantityInput}
+                    placeholder="Quantity"
+                    placeholderTextColor="#666"
+                    keyboardType="numeric"
+                    style={[styles.input, styles.quantityInput]}
+                  />
+                </View>
                 {Platform.OS === 'ios' ? (
                   <Pressable
                     accessibilityRole="button"
@@ -263,30 +266,30 @@ export default function AddRecipeScreen({ navigation }) {
 
               {!!errorMessage && <Text style={styles.error}>{errorMessage}</Text>}
               {!!toastMessage && <Text style={styles.toast}>{toastMessage}</Text>}
+            </ScrollView>
 
-              <View style={styles.buttonRow}>
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={onClear}
-                  style={({ pressed }) => [styles.clearButton, pressed && styles.pressed]}
-                >
-                  <Text style={styles.clearButtonText}>Clear</Text>
-                </Pressable>
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={onSave}
-                  disabled={!canSave}
-                  style={({ pressed }) => [
-                    styles.saveButton,
-                    !canSave && styles.saveButtonDisabled,
-                    pressed && canSave && styles.saveButtonPressed,
-                  ]}
-                >
-                  <Text style={styles.saveButtonText}>Save</Text>
-                </Pressable>
-              </View>
+            <View style={styles.buttonRow}>
+              <Pressable
+                accessibilityRole="button"
+                onPress={onClear}
+                style={({ pressed }) => [styles.clearButton, pressed && styles.pressed]}
+              >
+                <Text style={styles.clearButtonText}>Clear</Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                onPress={onSave}
+                disabled={!canSave}
+                style={({ pressed }) => [
+                  styles.saveButton,
+                  !canSave && styles.saveButtonDisabled,
+                  pressed && canSave && styles.saveButtonPressed,
+                ]}
+              >
+                <Text style={styles.saveButtonText}>Save</Text>
+              </Pressable>
             </View>
-          </ScrollView>
+          </View>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -304,13 +307,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 16,
     backgroundColor: 'transparent',
-  },
-  scrollContent: {
-    flexGrow: 1,
     justifyContent: 'center',
   },
   card: {
     width: '100%',
+    height: '82%',
+    maxHeight: '82%',
     backgroundColor: '#fff',
     borderWidth: 1,
     borderColor: colors.border,
@@ -321,7 +323,7 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 6 },
     elevation: 3,
-    minHeight: 420,
+    overflow: 'hidden',
   },
   backRow: {
     flexDirection: 'row',
@@ -345,6 +347,15 @@ const styles = StyleSheet.create({
   },
   fabPressed: {
     opacity: 0.85,
+  },
+  cardScroll: {
+    flexGrow: 1,
+    flexShrink: 1,
+    minHeight: 1,
+  },
+  cardScrollContent: {
+    flexGrow: 1,
+    paddingBottom: 12,
   },
   label: {
     fontSize: 13,
@@ -375,13 +386,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     marginBottom: 2,
+    width: '100%',
+  },
+  quantityInputWrap: {
+    flex: 1,
+    minWidth: 0,
   },
   quantityInput: {
-    width: 96,
+    width: '100%',
     marginBottom: 0,
   },
   unitFieldButton: {
-    minWidth: 92,
+    width: 92,
     height: 44,
     borderWidth: 1,
     borderColor: colors.border,
@@ -398,7 +414,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   pickerWrap: {
-    flex: 1,
+    width: 92,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 14,
@@ -452,6 +468,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   addIconButton: {
+    flexShrink: 0,
     width: 44,
     height: 44,
     borderRadius: 14,
@@ -510,11 +527,13 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   buttonRow: {
-    marginTop: 'auto',
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 14,
     paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#DDD',
+    backgroundColor: '#fff',
   },
   clearButton: {
     minWidth: 110,
