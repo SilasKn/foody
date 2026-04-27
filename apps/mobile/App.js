@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import { View, Text } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import AddRecipeScreen from './screens/AddRecipeScreen';
 import CalendarScreen from './screens/CalendarScreen';
 import LoginScreen from './screens/LoginScreen';
 import RecipesScreen from './screens/RecipesScreen';
@@ -40,6 +41,11 @@ function AppRoutes() {
           <Stack.Screen name="Start" component={StartScreen} />
           <Stack.Screen name="Recipes" component={RecipesScreen} />
           <Stack.Screen name="Calendar" component={CalendarScreen} />
+          <Stack.Screen
+            name="AddRecipe"
+            component={AddRecipeScreen}
+            options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+          />
         </Stack.Navigator>
       ) : (
         <Stack.Navigator
