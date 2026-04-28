@@ -46,8 +46,12 @@ export function AuthProvider({ children }) {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         return { data, error };
       },
-      signUp: async ({ email, password }) => {
-        const { data, error } = await supabase.auth.signUp({ email, password });
+      signUp: async ({ email, password, displayName }) => {
+        const normalizedDisplayName = displayName?.trim();
+        const payload = normalizedDisplayName
+          ? { email, password, options: { data: { display_name: normalizedDisplayName } } }
+          : { email, password };
+        const { data, error } = await supabase.auth.signUp(payload);
         return { data, error };
       },
       signOut: async () => {

@@ -18,6 +18,7 @@ export default function LoginScreen() {
   const { signIn, signUp } = useAuth();
 
   const [mode, setMode] = useState('signin'); // 'signin' | 'signup'
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -32,7 +33,11 @@ export default function LoginScreen() {
       const result =
         mode === 'signin'
           ? await signIn({ email: email.trim(), password })
-          : await signUp({ email: email.trim(), password });
+          : await signUp({
+              email: email.trim(),
+              password,
+              displayName: username.trim(),
+            });
 
       if (result?.error) {
         setErrorMessage(result.error.message);
@@ -74,6 +79,21 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.form}>
+            {mode === 'signup' && (
+              <>
+                <Text style={styles.label}>Username</Text>
+                <TextInput
+                  value={username}
+                  onChangeText={setUsername}
+                  placeholder="Your display name"
+                  placeholderTextColor="#666"
+                  autoCapitalize="words"
+                  autoCorrect={false}
+                  style={styles.input}
+                />
+              </>
+            )}
+
             <Text style={styles.label}>Email</Text>
             <TextInput
               value={email}
@@ -101,7 +121,12 @@ export default function LoginScreen() {
             <Pressable
               accessibilityRole="button"
               onPress={onSubmit}
-              disabled={isSubmitting || !email || !password}
+              disabled={
+                isSubmitting ||
+                !email ||
+                !password ||
+                (mode === 'signup' && username.trim().length === 0)
+              }
               style={({ pressed }) => [
                 styles.primaryButton,
                 isSubmitting && styles.primaryButtonDisabled,
