@@ -20,7 +20,7 @@ function TabPill({ label, active, onPress }) {
   );
 }
 
-export default function ScreenShell({ navigation, title, activeTab, children }) {
+export default function ScreenShell({ navigation, activeTab, children }) {
   const insets = useSafeAreaInsets();
   const { session, signOut } = useAuth();
 
@@ -48,10 +48,7 @@ export default function ScreenShell({ navigation, title, activeTab, children }) 
         </Pressable>
       </View>
 
-      <View style={styles.body}>
-        <Text style={styles.title}>{title}</Text>
-        {children}
-      </View>
+      <View style={styles.body}>{children}</View>
 
       <View
         style={[
@@ -108,12 +105,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 24,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.text,
-    textAlign: 'center',
   },
   tabBar: {
     flexDirection: 'row',

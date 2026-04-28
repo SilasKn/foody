@@ -4,6 +4,10 @@ import { useAuth } from './AuthProvider';
 import { supabase } from '../utils/supabase';
 
 const RecipesContext = createContext(null);
+const FILTER_MODES = {
+  MINE: 'mine',
+  PUBLIC: 'public',
+};
 
 const formatRecipeDate = (value) => {
   if (!value) return 'Date unknown';
@@ -15,104 +19,187 @@ const formatRecipeDate = (value) => {
   return `${weekday} ${dayMonth}.`;
 };
 
-const mapRecipeRecord = (record) => ({
+const mapRecipeRecord = (record, authorLabel) => ({
   id: record.id,
   name: record.name ?? '',
   author: record.author ?? null,
   created_at: record.created_at ?? null,
+  public: Boolean(record.public),
   dateLabel: formatRecipeDate(record.created_at),
-  authorLabel: 'Author: You',
+  authorLabel,
 });
 
 export function RecipesProvider({ children }) {
   const { user } = useAuth();
   const lastUserIdRef = useRef(null);
-  const [recipes, setRecipes] = useState([]);
+  const [filterMode, setFilterMode] = useState(FILTER_MODES.MINE);
+  const [recipesByMode, setRecipesByMode] = useState({
+    [FILTER_MODES.MINE]: [],
+    [FILTER_MODES.PUBLIC]: [],
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [hasFetched, setHasFetched] = useState(false);
+  const [hasFetchedByMode, setHasFetchedByMode] = useState({
+    [FILTER_MODES.MINE]: false,
+    [FILTER_MODES.PUBLIC]: false,
+  });
 
   useEffect(() => {
     const currentUserId = user?.id ?? null;
     if (lastUserIdRef.current === currentUserId) return;
     lastUserIdRef.current = currentUserId;
-    setRecipes([]);
+    setRecipesByMode({
+      [FILTER_MODES.MINE]: [],
+      [FILTER_MODES.PUBLIC]: [],
+    });
     setErrorMessage('');
-    setHasFetched(false);
+    setHasFetchedByMode({
+      [FILTER_MODES.MINE]: false,
+      [FILTER_MODES.PUBLIC]: false,
+    });
+    setFilterMode(FILTER_MODES.MINE);
     setIsLoading(false);
   }, [user?.id]);
 
-  const loadFromBackend = useCallback(async () => {
+  const loadProfilesByAuthorId = useCallback(async (authorIds) => {
+    if (!Array.isArray(authorIds) || authorIds.length === 0) return {};
+
+    const { data, error } = await supabase.from('profiles').select('id, username').in('id', authorIds);
+
+    if (error) throw error;
+
+    return (data ?? []).reduce((acc, row) => {
+      if (!row?.id) return acc;
+      acc[row.id] = row.username ?? null;
+      return acc;
+    }, {});
+  }, []);
+
+  const loadFromBackend = useCallback(async (mode) => {
     if (!user?.id) {
-      setRecipes([]);
+      setRecipesByMode({
+        [FILTER_MODES.MINE]: [],
+        [FILTER_MODES.PUBLIC]: [],
+      });
       setErrorMessage('');
-      setHasFetched(false);
+      setHasFetchedByMode({
+        [FILTER_MODES.MINE]: false,
+        [FILTER_MODES.PUBLIC]: false,
+      });
       return;
     }
 
     setIsLoading(true);
     setErrorMessage('');
 
-    const { data, error } = await supabase
-      .from('recipes')
-      .select('id, name, author, created_at')
-      .eq('author', user.id)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      setErrorMessage(error.message ?? 'Failed to load recipes.');
-      setIsLoading(false);
-      return;
+    let query = supabase.from('recipes').select('id, name, author, created_at, public');
+    if (mode === FILTER_MODES.PUBLIC) {
+      query = query.eq('public', true);
+    } else {
+      query = query.eq('author', user.id);
     }
 
-    setRecipes(Array.isArray(data) ? data.map(mapRecipeRecord) : []);
-    setHasFetched(true);
-    setIsLoading(false);
-  }, [user?.id]);
+    try {
+      const { data, error } = await query.order('created_at', { ascending: false });
 
-  const loadMyRecipes = useCallback(async () => {
-    if (hasFetched || isLoading) return;
-    await loadFromBackend();
-  }, [hasFetched, isLoading, loadFromBackend]);
+      if (error) {
+        setErrorMessage(error.message ?? 'Failed to load recipes.');
+        setIsLoading(false);
+        return;
+      }
 
-  const refreshMyRecipes = useCallback(async () => {
-    await loadFromBackend();
+      const records = Array.isArray(data) ? data : [];
+      const authorIds = [...new Set(records.map((row) => row.author).filter(Boolean))];
+      const profilesByAuthorId = await loadProfilesByAuthorId(authorIds);
+
+      const mapped = records.map((record) => {
+        const profileName = profilesByAuthorId[record.author];
+        const authorLabel =
+          mode === FILTER_MODES.MINE
+            ? 'Author: You'
+            : `Author: ${profileName?.trim() || 'Unknown author'}`;
+        return mapRecipeRecord(record, authorLabel);
+      });
+
+      setRecipesByMode((prev) => ({ ...prev, [mode]: mapped }));
+      setHasFetchedByMode((prev) => ({ ...prev, [mode]: true }));
+      setIsLoading(false);
+    } catch (err) {
+      setErrorMessage(err?.message ?? 'Failed to load recipes.');
+      setIsLoading(false);
+    }
+  }, [loadProfilesByAuthorId, user?.id]);
+
+  const loadRecipesForMode = useCallback(async (mode) => {
+    if (!mode || isLoading || hasFetchedByMode[mode]) return;
+    await loadFromBackend(mode);
+  }, [hasFetchedByMode, isLoading, loadFromBackend]);
+
+  const refreshRecipesForMode = useCallback(async (mode) => {
+    if (!mode) return;
+    await loadFromBackend(mode);
   }, [loadFromBackend]);
 
   const prependRecipe = useCallback((record) => {
     if (!record?.id) return;
-    setRecipes((prev) => {
-      const withoutDuplicate = prev.filter((item) => item.id !== record.id);
-      return [mapRecipeRecord(record), ...withoutDuplicate];
+    setRecipesByMode((prev) => {
+      const next = { ...prev };
+
+      const mineWithoutDuplicate = next[FILTER_MODES.MINE].filter((item) => item.id !== record.id);
+      next[FILTER_MODES.MINE] = [mapRecipeRecord(record, 'Author: You'), ...mineWithoutDuplicate];
+
+      if (record.public) {
+        const publicWithoutDuplicate = next[FILTER_MODES.PUBLIC].filter((item) => item.id !== record.id);
+        next[FILTER_MODES.PUBLIC] = [
+          mapRecipeRecord(record, 'Author: You'),
+          ...publicWithoutDuplicate,
+        ];
+      }
+
+      return next;
     });
-    setHasFetched(true);
+    setHasFetchedByMode((prev) => ({ ...prev, [FILTER_MODES.MINE]: true }));
   }, []);
 
   const clearRecipes = useCallback(() => {
-    setRecipes([]);
+    setRecipesByMode({
+      [FILTER_MODES.MINE]: [],
+      [FILTER_MODES.PUBLIC]: [],
+    });
     setErrorMessage('');
-    setHasFetched(false);
+    setHasFetchedByMode({
+      [FILTER_MODES.MINE]: false,
+      [FILTER_MODES.PUBLIC]: false,
+    });
+    setFilterMode(FILTER_MODES.MINE);
     setIsLoading(false);
   }, []);
 
+  const recipes = recipesByMode[filterMode] ?? [];
+  const hasFetched = hasFetchedByMode[filterMode] ?? false;
+
   const value = useMemo(
     () => ({
+      filterMode,
+      setFilterMode,
+      filterModes: FILTER_MODES,
       recipes,
       isLoading,
       errorMessage,
       hasFetched,
-      loadMyRecipes,
-      refreshMyRecipes,
+      loadRecipesForMode,
+      refreshRecipesForMode,
       prependRecipe,
       clearRecipes,
     }),
     [
+      filterMode,
       recipes,
       isLoading,
       errorMessage,
       hasFetched,
-      loadMyRecipes,
-      refreshMyRecipes,
+      loadRecipesForMode,
+      refreshRecipesForMode,
       prependRecipe,
       clearRecipes,
     ]

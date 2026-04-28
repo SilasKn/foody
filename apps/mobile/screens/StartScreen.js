@@ -48,27 +48,42 @@ export default function StartScreen({ navigation }) {
   return (
     <ScreenShell
       navigation={navigation}
-      title="Welcome to the starting page"
       activeTab="home"
     >
-      <View style={{ width: '100%', marginTop: 16 }}>
-        {isLoading ? (
-          <Text>Loading todos…</Text>
-        ) : errorMessage ? (
-          <Text style={{ color: '#B00020', fontWeight: '600' }}>{errorMessage}</Text>
-        ) : todos.length === 0 ? (
-          <Text>No todos found.</Text>
-        ) : (
-          <FlatList
-            data={todos}
-            keyExtractor={(item) => String(item.id)}
-            renderItem={({ item }) => (
-              <Text style={{ paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#DDD' }}>
-                {item.name ?? item.title ?? String(item.id)}
-              </Text>
-            )}
-          />
-        )}
+      <View style={{ width: '100%', flex: 1 }}>
+        <FlatList
+          data={isLoading || errorMessage ? [] : todos}
+          keyExtractor={(item) => String(item.id)}
+          contentContainerStyle={{ paddingTop: 8, paddingBottom: 20 }}
+          ListHeaderComponent={
+            <Text
+              style={{
+                alignSelf: 'stretch',
+                textAlign: 'left',
+                fontSize: 32,
+                fontWeight: '700',
+                marginTop: 6,
+                marginBottom: 16,
+              }}
+            >
+              Welcome to the starting page
+            </Text>
+          }
+          ListEmptyComponent={
+            isLoading ? (
+              <Text>Loading todos…</Text>
+            ) : errorMessage ? (
+              <Text style={{ color: '#B00020', fontWeight: '600' }}>{errorMessage}</Text>
+            ) : (
+              <Text>No todos found.</Text>
+            )
+          }
+          renderItem={({ item }) => (
+            <Text style={{ paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#DDD' }}>
+              {item.name ?? item.title ?? String(item.id)}
+            </Text>
+          )}
+        />
       </View>
     </ScreenShell>
   );
