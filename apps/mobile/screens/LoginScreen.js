@@ -24,10 +24,18 @@ export default function LoginScreen() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [infoMessage, setInfoMessage] = useState('');
+
+  const onModeChange = (nextMode) => {
+    setMode(nextMode);
+    setErrorMessage('');
+    setInfoMessage('');
+  };
 
   const onSubmit = async () => {
     setIsSubmitting(true);
     setErrorMessage('');
+    setInfoMessage('');
 
     try {
       const result =
@@ -41,6 +49,12 @@ export default function LoginScreen() {
 
       if (result?.error) {
         setErrorMessage(result.error.message);
+      } else if (mode === 'signup') {
+        if (result?.data?.session) {
+          setInfoMessage('Account created. You are now signed in.');
+        } else {
+          setInfoMessage('Account created. Please confirm your email, then sign in.');
+        }
       }
     } finally {
       setIsSubmitting(false);
@@ -64,14 +78,14 @@ export default function LoginScreen() {
           <View style={styles.modeRow}>
             <Pressable
               accessibilityRole="button"
-              onPress={() => setMode('signin')}
+              onPress={() => onModeChange('signin')}
               style={({ pressed }) => [styles.modePill, mode === 'signin' && styles.modePillActive, pressed && styles.pressed]}
             >
               <Text style={styles.modePillText}>Sign in</Text>
             </Pressable>
             <Pressable
               accessibilityRole="button"
-              onPress={() => setMode('signup')}
+              onPress={() => onModeChange('signup')}
               style={({ pressed }) => [styles.modePill, mode === 'signup' && styles.modePillActive, pressed && styles.pressed]}
             >
               <Text style={styles.modePillText}>Sign up</Text>
@@ -117,6 +131,7 @@ export default function LoginScreen() {
             />
 
             {!!errorMessage && <Text style={styles.error}>{errorMessage}</Text>}
+            {!!infoMessage && <Text style={styles.info}>{infoMessage}</Text>}
 
             <Pressable
               accessibilityRole="button"
@@ -230,6 +245,11 @@ const styles = StyleSheet.create({
   },
   error: {
     color: '#B00020',
+    fontWeight: '600',
+    marginBottom: 14,
+  },
+  info: {
+    color: '#1B5E20',
     fontWeight: '600',
     marginBottom: 14,
   },

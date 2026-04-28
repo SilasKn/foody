@@ -26,14 +26,16 @@ export function AuthProvider({ children }) {
         setIsLoading(false);
       });
 
-    const { data: subscription } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession);
       setUser(nextSession?.user ?? null);
     });
 
     return () => {
       isMounted = false;
-      subscription?.unsubscribe();
+      subscription?.unsubscribe?.();
     };
   }, []);
 
