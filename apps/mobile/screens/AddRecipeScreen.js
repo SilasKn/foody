@@ -15,12 +15,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAuth } from '../providers/AuthProvider';
+import { useRecipes } from '../providers/RecipesProvider';
 import { colors } from '../theme';
 import { supabase } from '../utils/supabase';
 
 export default function AddRecipeScreen({ navigation }) {
   const unitOptions = ['g', 'ml', 'unit'];
   const { user } = useAuth();
+  const { prependRecipe } = useRecipes();
 
   const [recipeName, setRecipeName] = useState('');
   const [recipeDescription, setRecipeDescription] = useState('');
@@ -194,7 +196,7 @@ export default function AddRecipeScreen({ navigation }) {
           author: user.id,
           public: isPublic,
         })
-        .select('id')
+        .select('id, name, author, created_at')
         .single();
 
       if (recipeInsertError) throw recipeInsertError;
@@ -225,6 +227,7 @@ export default function AddRecipeScreen({ navigation }) {
         if (recipeIngredientsInsertError) throw recipeIngredientsInsertError;
       }
 
+      prependRecipe(createdRecipe);
       showToast('Recipe saved successfully.');
       closeTimeoutRef.current = setTimeout(() => {
         navigation.goBack();

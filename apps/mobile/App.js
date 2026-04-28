@@ -10,6 +10,7 @@ import RecipesScreen from './screens/RecipesScreen';
 import StartScreen from './screens/StartScreen';
 import { colors } from './theme';
 import { AuthProvider, useAuth } from './providers/AuthProvider';
+import { RecipesProvider } from './providers/RecipesProvider';
 
 const Stack = createNativeStackNavigator();
 
@@ -67,8 +68,10 @@ export default function App() {
   return (
     <AuthProvider>
       <SafeAreaProvider>
-        <AppRoutes />
-        <StatusBar style="dark" />
+        <RecipesProvider>
+          <AppRoutes />
+          <StatusBar style="dark" />
+        </RecipesProvider>
       </SafeAreaProvider>
     </AuthProvider>
   );
