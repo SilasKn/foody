@@ -64,13 +64,16 @@ export function RecipesProvider({ children }) {
   const loadProfilesByAuthorId = useCallback(async (authorIds) => {
     if (!Array.isArray(authorIds) || authorIds.length === 0) return {};
 
-    const { data, error } = await supabase.from('profiles').select('id, username').in('id', authorIds);
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('user_id, username')
+      .in('user_id', authorIds);
 
     if (error) throw error;
 
     return (data ?? []).reduce((acc, row) => {
-      if (!row?.id) return acc;
-      acc[row.id] = row.username ?? null;
+      if (!row?.user_id) return acc;
+      acc[row.user_id] = row.username ?? null;
       return acc;
     }, {});
   }, []);

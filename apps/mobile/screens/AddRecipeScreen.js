@@ -7,7 +7,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   View,
@@ -31,7 +30,6 @@ export default function AddRecipeScreen({ navigation }) {
   const [ingredientUnit, setIngredientUnit] = useState('g');
   const [showUnitPickerIOS, setShowUnitPickerIOS] = useState(false);
   const [ingredients, setIngredients] = useState([]);
-  const [isPublic, setIsPublic] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   const [errorMessage, setErrorMessage] = useState('');
@@ -166,7 +164,6 @@ export default function AddRecipeScreen({ navigation }) {
     setIngredientUnit('g');
     setShowUnitPickerIOS(false);
     setIngredients([]);
-    setIsPublic(false);
     setErrorMessage('');
     setToastMessage('');
   };
@@ -194,7 +191,7 @@ export default function AddRecipeScreen({ navigation }) {
           name,
           description: recipeDescription.trim(),
           author: user.id,
-          public: isPublic,
+          public: false,
         })
         .select('id, name, author, created_at')
         .single();
@@ -392,16 +389,6 @@ export default function AddRecipeScreen({ navigation }) {
                 </View>
               )}
 
-              <View style={styles.toggleRow}>
-                <Text style={styles.label}>Public</Text>
-                <Switch
-                  value={isPublic}
-                  onValueChange={setIsPublic}
-                  trackColor={{ false: '#DDD', true: colors.accent }}
-                  thumbColor="#fff"
-                />
-              </View>
-
               {!!errorMessage && <Text style={styles.error}>{errorMessage}</Text>}
               {!!toastMessage && <Text style={styles.toast}>{toastMessage}</Text>}
             </ScrollView>
@@ -450,8 +437,8 @@ const styles = StyleSheet.create({
   },
   card: {
     width: '100%',
-    height: '82%',
-    maxHeight: '82%',
+    height: '74%',
+    maxHeight: '74%',
     backgroundColor: '#fff',
     borderWidth: 1,
     borderColor: colors.border,
@@ -647,13 +634,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.pillActive,
     borderWidth: 1,
     borderColor: colors.border,
-  },
-  toggleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 12,
-    marginBottom: 10,
   },
   error: {
     color: '#B00020',
