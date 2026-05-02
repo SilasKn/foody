@@ -8,4 +8,5 @@ export const colors = {
   pillInactive: '#FFFFFF',
   text: '#000000',
   accent,
+  imagePlaceholderBg: '#E8EFED',
 };
