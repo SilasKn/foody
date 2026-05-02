@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useState } from 'react';
 import { useAuth } from '../providers/AuthProvider';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../theme';
 
@@ -23,10 +24,10 @@ function TabPill({ label, active, onPress }) {
 export default function ScreenShell({ navigation, activeTab, children }) {
   const insets = useSafeAreaInsets();
   const { session, signOut } = useAuth();
+  const [logoutVisible, setLogoutVisible] = useState(false);
 
   const onUserPress = () => {
-    // Since unauthenticated users should only see `LoginScreen`, we primarily use this as "log out".
-    if (session) return signOut();
+    if (session) return setLogoutVisible(true);
     navigation.navigate('Login');
   };
 
@@ -72,6 +73,34 @@ export default function ScreenShell({ navigation, activeTab, children }) {
           onPress={() => navigation.navigate('Calendar')}
         />
       </View>
+
+      <Modal
+        transparent
+        visible={logoutVisible}
+        animationType="fade"
+        onRequestClose={() => setLogoutVisible(false)}
+      >
+        <Pressable style={styles.backdrop} onPress={() => setLogoutVisible(false)}>
+          <Pressable style={styles.dialogCard} onPress={() => {}}>
+            <Text style={styles.dialogTitle}>Log out?</Text>
+            <Text style={styles.dialogMessage}>Do you really want to log out?</Text>
+            <View style={styles.dialogButtons}>
+              <Pressable
+                style={({ pressed }) => [styles.dialogBtn, styles.dialogBtnCancel, pressed && styles.dialogBtnPressed]}
+                onPress={() => setLogoutVisible(false)}
+              >
+                <Text style={styles.dialogBtnLabel}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                style={({ pressed }) => [styles.dialogBtn, styles.dialogBtnConfirm, pressed && styles.dialogBtnPressed]}
+                onPress={() => { setLogoutVisible(false); signOut(); }}
+              >
+                <Text style={[styles.dialogBtnLabel, styles.dialogBtnLabelConfirm]}>Log out</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -141,6 +170,69 @@ const styles = StyleSheet.create({
   pillLabel: {
     fontSize: 13,
     fontWeight: '700',
+    color: colors.text,
+  },
+  backdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dialogCard: {
+    width: '85%',
+    backgroundColor: '#fff',
+    borderRadius: 28,
+    padding: 28,
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: '#000',
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 5,
+  },
+  dialogTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 8,
+  },
+  dialogMessage: {
+    fontSize: 15,
+    color: colors.text,
+    opacity: 0.7,
+  },
+  dialogButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 24,
+  },
+  dialogBtn: {
+    flex: 1,
+    borderRadius: 9999,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dialogBtnCancel: {
+    backgroundColor: colors.pillInactive,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  dialogBtnConfirm: {
+    backgroundColor: colors.accent,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  dialogBtnPressed: {
+    opacity: 0.85,
+  },
+  dialogBtnLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  dialogBtnLabelConfirm: {
     color: colors.text,
   },
 });
