@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useState } from 'react';
-import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect } from 'react';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import ScreenShell from '../components/ScreenShell';
 import { useRecipes } from '../providers/RecipesProvider';
 import { colors } from '../theme';
@@ -10,36 +10,20 @@ export default function RecipesScreen({ navigation }) {
     recipes,
     isLoading,
     errorMessage,
-    filterMode,
-    setFilterMode,
     filterModes,
     loadRecipesForMode,
   } = useRecipes();
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   useEffect(() => {
-    loadRecipesForMode(filterMode);
-  }, [filterMode, loadRecipesForMode]);
+    loadRecipesForMode(filterModes.MINE);
+  }, [filterModes.MINE, loadRecipesForMode]);
 
-  const pageTitle = filterMode === filterModes.PUBLIC ? 'Public Recipes' : 'Your Recipes';
-  const emptyText = filterMode === filterModes.PUBLIC ? 'No public recipes found.' : 'No own recipes yet.';
-
-  const applyMode = (mode) => {
-    setFilterMode(mode);
-    setIsFilterOpen(false);
-  };
+  const pageTitle = 'Your Recipes';
+  const emptyText = 'No own recipes yet.';
 
   const renderListHeader = () => (
     <View style={styles.pageHeaderRow}>
       <Text style={styles.pageTitle}>{pageTitle}</Text>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Open recipe filter"
-        onPress={() => setIsFilterOpen(true)}
-        style={({ pressed }) => [styles.filterButton, pressed && styles.pressed]}
-      >
-        <Ionicons name="options-outline" size={22} color={colors.text} />
-      </Pressable>
     </View>
   );
 
@@ -81,38 +65,6 @@ export default function RecipesScreen({ navigation }) {
         />
       </View>
 
-      <Modal
-        transparent
-        animationType="fade"
-        visible={isFilterOpen}
-        onRequestClose={() => setIsFilterOpen(false)}
-      >
-        <Pressable style={styles.dropdownOverlay} onPress={() => setIsFilterOpen(false)}>
-          <Pressable style={styles.dropdownMenu} onPress={() => {}}>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => applyMode(filterModes.MINE)}
-              style={({ pressed }) => [styles.dropdownItem, pressed && styles.pressed]}
-            >
-              <Text style={styles.dropdownItemText}>My recipes</Text>
-              {filterMode === filterModes.MINE && (
-                <Ionicons name="checkmark" size={18} color={colors.text} />
-              )}
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => applyMode(filterModes.PUBLIC)}
-              style={({ pressed }) => [styles.dropdownItem, pressed && styles.pressed]}
-            >
-              <Text style={styles.dropdownItemText}>Public recipes</Text>
-              {filterMode === filterModes.PUBLIC && (
-                <Ionicons name="checkmark" size={18} color={colors.text} />
-              )}
-            </Pressable>
-          </Pressable>
-        </Pressable>
-      </Modal>
-
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Add recipe"
@@ -148,51 +100,6 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: '700',
     color: colors.text,
-  },
-  filterButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fff',
-    marginLeft: 10,
-  },
-  dropdownOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.05)',
-  },
-  dropdownMenu: {
-    position: 'absolute',
-    top: 120,
-    right: 24,
-    width: 180,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 14,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOpacity: 0.14,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 6,
-  },
-  dropdownItem: {
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
-  dropdownItemText: {
-    color: colors.text,
-    fontWeight: '600',
-    fontSize: 14,
   },
   recipeCard: {
     height: 126,
