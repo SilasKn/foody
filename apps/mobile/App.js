@@ -6,6 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AddRecipeScreen from './screens/AddRecipeScreen';
 import CalendarScreen from './screens/CalendarScreen';
 import LoginScreen from './screens/LoginScreen';
+import RecipeDetailScreen from './screens/RecipeDetailScreen';
 import RecipesScreen from './screens/RecipesScreen';
 import StartScreen from './screens/StartScreen';
 import { colors } from './theme';
@@ -42,6 +43,7 @@ function AppRoutes() {
           <Stack.Screen name="Start" component={StartScreen} />
           <Stack.Screen name="Recipes" component={RecipesScreen} />
           <Stack.Screen name="Calendar" component={CalendarScreen} />
+          <Stack.Screen name="RecipeDetail" component={RecipeDetailScreen} />
           <Stack.Screen
             name="AddRecipe"
             component={AddRecipeScreen}

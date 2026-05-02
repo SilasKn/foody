@@ -28,16 +28,21 @@ export default function RecipesScreen({ navigation }) {
   );
 
   const renderRecipeCard = ({ item }) => (
-    <View style={styles.recipeCard}>
-      <View style={styles.recipeCardRail} />
-      <View style={styles.recipeCardContent}>
-        <Text style={styles.recipeTitle} numberOfLines={1}>
+    <Pressable
+      onPress={() => navigation.navigate('RecipeDetail', { recipe: { id: item.id, name: item.name } })}
+      style={({ pressed }) => pressed && styles.pressed}
+    >
+      <View style={styles.recipeCard}>
+        <View style={styles.recipeCardRail} />
+        <View style={styles.recipeCardContent}>
+          <Text style={styles.recipeTitle} numberOfLines={1}>
             {item.name}
-        </Text>
-        <Text style={styles.recipeDate}>Added: {item.dateLabel}</Text>
-        <Text style={styles.recipeAuthor}>{item.authorLabel}</Text>
+          </Text>
+          <Text style={styles.recipeDate}>Added: {item.dateLabel}</Text>
+          <Text style={styles.recipeAuthor}>{item.authorLabel}</Text>
+        </View>
       </View>
-    </View>
+    </Pressable>
   );
 
   return (
