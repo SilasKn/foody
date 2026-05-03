@@ -9,4 +9,5 @@ export const colors = {
   text: '#000000',
   accent,
   imagePlaceholderBg: '#E8EFED',
+  textMuted: '#666666',
 };
