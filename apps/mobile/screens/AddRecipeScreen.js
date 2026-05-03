@@ -18,18 +18,20 @@ import { useRecipes } from '../providers/RecipesProvider';
 import { colors } from '../theme';
 import { supabase } from '../utils/supabase';
 
-export default function AddRecipeScreen({ navigation }) {
+export default function AddRecipeScreen({ navigation, route }) {
   const unitOptions = ['g', 'ml', 'unit'];
   const { user } = useAuth();
-  const { prependRecipe } = useRecipes();
+  const { prependRecipe, refreshRecipesForMode, filterModes } = useRecipes();
 
-  const [recipeName, setRecipeName] = useState('');
-  const [recipeDescription, setRecipeDescription] = useState('');
+  const editRecipe = route?.params?.recipe ?? null;
+
+  const [recipeName, setRecipeName] = useState(editRecipe?.name ?? '');
+  const [recipeDescription, setRecipeDescription] = useState(editRecipe?.description ?? '');
   const [ingredientInput, setIngredientInput] = useState('');
   const [ingredientQuantityInput, setIngredientQuantityInput] = useState('');
   const [ingredientUnit, setIngredientUnit] = useState('g');
   const [showUnitPickerIOS, setShowUnitPickerIOS] = useState(false);
-  const [ingredients, setIngredients] = useState([]);
+  const [ingredients, setIngredients] = useState(editRecipe?.ingredients ?? []);
   const [isSaving, setIsSaving] = useState(false);
 
   const [errorMessage, setErrorMessage] = useState('');
@@ -185,47 +187,92 @@ export default function AddRecipeScreen({ navigation }) {
     setIsSaving(true);
 
     try {
-      const { data: createdRecipe, error: recipeInsertError } = await supabase
-        .from('recipes')
-        .insert({
-          name,
-          description: recipeDescription.trim(),
-          author: user.id,
-          public: false,
-        })
-        .select('id, name, author, created_at')
-        .single();
+      if (editRecipe) {
+        const { error: updateError } = await supabase
+          .from('recipes')
+          .update({ name, description: recipeDescription.trim() })
+          .eq('id', editRecipe.id);
+        if (updateError) throw updateError;
 
-      if (recipeInsertError) throw recipeInsertError;
-      if (!createdRecipe?.id) throw new Error('Failed to create recipe.');
-
-      if (ingredients.length > 0) {
-        const ingredientNames = ingredients.map((item) => item.name);
-        const ingredientIdByNormalizedName = await getIngredientIdsByName(ingredientNames);
-
-        const recipeIngredientsToInsert = ingredients.map((item) => {
-          const ingredientId = ingredientIdByNormalizedName[normalizeIngredientName(item.name)];
-          if (!ingredientId) {
-            throw new Error(`Missing ingredient id for "${item.name}".`);
-          }
-
-          return {
-            recipe_id: createdRecipe.id,
-            ingredient_id: ingredientId,
-            quantity: item.quantity,
-            unit: item.unit,
-          };
-        });
-
-        const { error: recipeIngredientsInsertError } = await supabase
+        const { error: deleteError } = await supabase
           .from('recipe_ingredients')
-          .insert(recipeIngredientsToInsert);
+          .delete()
+          .eq('recipe_id', editRecipe.id);
+        if (deleteError) throw deleteError;
 
-        if (recipeIngredientsInsertError) throw recipeIngredientsInsertError;
+        const { count, error: countError } = await supabase
+          .from('recipe_ingredients')
+          .select('*', { count: 'exact', head: true })
+          .eq('recipe_id', editRecipe.id);
+        if (countError) throw countError;
+        if (count > 0) throw new Error('Could not clear existing ingredients. Check database permissions.');
+
+        if (ingredients.length > 0) {
+          const ingredientNames = ingredients.map((item) => item.name);
+          const ingredientIdByNormalizedName = await getIngredientIdsByName(ingredientNames);
+
+          const recipeIngredientsToInsert = ingredients.map((item) => {
+            const ingredientId = ingredientIdByNormalizedName[normalizeIngredientName(item.name)];
+            if (!ingredientId) throw new Error(`Missing ingredient id for "${item.name}".`);
+            return {
+              recipe_id: editRecipe.id,
+              ingredient_id: ingredientId,
+              quantity: item.quantity,
+              unit: item.unit,
+            };
+          });
+
+          const { error: insertError } = await supabase
+            .from('recipe_ingredients')
+            .insert(recipeIngredientsToInsert);
+          if (insertError) throw insertError;
+        }
+
+        await refreshRecipesForMode(filterModes.MINE);
+        showToast('Recipe updated successfully.');
+      } else {
+        const { data: createdRecipe, error: recipeInsertError } = await supabase
+          .from('recipes')
+          .insert({
+            name,
+            description: recipeDescription.trim(),
+            author: user.id,
+            public: false,
+          })
+          .select('id, name, author, created_at')
+          .single();
+
+        if (recipeInsertError) throw recipeInsertError;
+        if (!createdRecipe?.id) throw new Error('Failed to create recipe.');
+
+        if (ingredients.length > 0) {
+          const ingredientNames = ingredients.map((item) => item.name);
+          const ingredientIdByNormalizedName = await getIngredientIdsByName(ingredientNames);
+
+          const recipeIngredientsToInsert = ingredients.map((item) => {
+            const ingredientId = ingredientIdByNormalizedName[normalizeIngredientName(item.name)];
+            if (!ingredientId) {
+              throw new Error(`Missing ingredient id for "${item.name}".`);
+            }
+            return {
+              recipe_id: createdRecipe.id,
+              ingredient_id: ingredientId,
+              quantity: item.quantity,
+              unit: item.unit,
+            };
+          });
+
+          const { error: recipeIngredientsInsertError } = await supabase
+            .from('recipe_ingredients')
+            .insert(recipeIngredientsToInsert);
+
+          if (recipeIngredientsInsertError) throw recipeIngredientsInsertError;
+        }
+
+        prependRecipe(createdRecipe);
+        showToast('Recipe saved successfully.');
       }
 
-      prependRecipe(createdRecipe);
-      showToast('Recipe saved successfully.');
       closeTimeoutRef.current = setTimeout(() => {
         navigation.goBack();
       }, 900);
@@ -394,14 +441,16 @@ export default function AddRecipeScreen({ navigation }) {
             </ScrollView>
 
             <View style={styles.buttonRow}>
-              <Pressable
-                accessibilityRole="button"
-                onPress={onClear}
-                disabled={isSaving}
-                style={({ pressed }) => [styles.clearButton, pressed && styles.pressed]}
-              >
-                <Text style={styles.clearButtonText}>Clear</Text>
-              </Pressable>
+              {!editRecipe && (
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={onClear}
+                  disabled={isSaving}
+                  style={({ pressed }) => [styles.clearButton, pressed && styles.pressed]}
+                >
+                  <Text style={styles.clearButtonText}>Clear</Text>
+                </Pressable>
+              )}
               <Pressable
                 accessibilityRole="button"
                 onPress={onSave}

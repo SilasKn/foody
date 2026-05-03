@@ -1,11 +1,13 @@
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import ScreenShell from '../components/ScreenShell';
 import { colors } from '../theme';
 import { supabase } from '../utils/supabase';
 
 const placeholderImage = require('../assets/no-picture.png');
+const editIcon = require('../assets/edit-icon.png');
 
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
@@ -16,15 +18,34 @@ export default function RecipeDetailScreen({ route, navigation }) {
   const [details, setDetails] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    Promise.all([
-      supabase.from('recipes').select('name, description, created_at').eq('id', recipe.id).single(),
-      supabase.from('recipe_ingredients').select('quantity, unit, ingredients(name)').eq('recipe_id', recipe.id),
-    ]).then(([{ data: rec }, { data: ings }]) => {
-      setDetails({ ...rec, ingredients: ings ?? [] });
-      setLoading(false);
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      Promise.all([
+        supabase.from('recipes').select('name, description, created_at').eq('id', recipe.id).single(),
+        supabase.from('recipe_ingredients').select('quantity, unit, ingredients(name)').eq('recipe_id', recipe.id),
+      ]).then(([{ data: rec }, { data: ings }]) => {
+        setDetails({ ...rec, ingredients: ings ?? [] });
+        setLoading(false);
+      });
+    }, [recipe.id])
+  );
+
+  const onEditPress = () => {
+    if (!details) return;
+    navigation.navigate('AddRecipe', {
+      recipe: {
+        id: recipe.id,
+        name: details.name,
+        description: details.description ?? '',
+        ingredients: details.ingredients.map((i) => ({
+          name: i.ingredients?.name ?? '',
+          quantity: i.quantity,
+          unit: i.unit,
+        })),
+      },
     });
-  }, [recipe.id]);
+  };
 
   return (
     <ScreenShell navigation={navigation} activeTab="recipes">
@@ -85,6 +106,15 @@ export default function RecipeDetailScreen({ route, navigation }) {
                       ))
                     )}
                   </View>
+
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Edit recipe"
+                    onPress={onEditPress}
+                    style={({ pressed }) => [styles.editButton, pressed && styles.editButtonPressed]}
+                  >
+                    <Image source={editIcon} style={styles.editIcon} resizeMode="contain" />
+                  </Pressable>
                 </>
               )}
             </View>
@@ -205,5 +235,24 @@ const styles = StyleSheet.create({
   ingredientText: {
     fontSize: 15,
     color: colors.text,
+  },
+  editButton: {
+    alignSelf: 'flex-end',
+    width: 48,
+    height: 48,
+    borderRadius: 28,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
+  },
+  editButtonPressed: {
+    opacity: 0.85,
+  },
+  editIcon: {
+    width: 24,
+    height: 24,
   },
 });
