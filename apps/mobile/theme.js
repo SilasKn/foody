@@ -11,4 +11,5 @@ export const colors = {
   accent,
   imagePlaceholderBg: '#E8EFED',
   textMuted: '#666666',
+  danger: '#D32F2F',
 };

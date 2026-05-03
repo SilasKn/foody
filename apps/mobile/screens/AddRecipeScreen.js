@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -170,6 +171,26 @@ export default function AddRecipeScreen({ navigation, route }) {
     setToastMessage('');
   };
 
+  const onDeletePress = () => {
+    Alert.alert(
+      'Delete Recipe',
+      'Are you sure you want to delete this recipe? This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            await supabase.from('recipe_ingredients').delete().eq('recipe_id', editRecipe.id);
+            await supabase.from('recipes').delete().eq('id', editRecipe.id);
+            refreshRecipesForMode(filterModes.MINE);
+            navigation.navigate('Recipes');
+          },
+        },
+      ]
+    );
+  };
+
   const onSave = async () => {
     if (isSaving) return;
     setErrorMessage('');
@@ -301,6 +322,17 @@ export default function AddRecipeScreen({ navigation, route }) {
               >
                 <Ionicons name="arrow-back" size={24} color={colors.text} />
               </Pressable>
+              {editRecipe && (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Delete recipe"
+                  onPress={onDeletePress}
+                  hitSlop={10}
+                  style={({ pressed }) => [pressed && styles.pressed]}
+                >
+                  <Text style={styles.deleteText}>Delete</Text>
+                </Pressable>
+              )}
             </View>
 
             <ScrollView
@@ -502,8 +534,15 @@ const styles = StyleSheet.create({
   },
   backRow: {
     flexDirection: 'row',
-    justifyContent: 'flex-start',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 14,
+  },
+  deleteText: {
+    color: colors.danger,
+    fontWeight: '600',
+    fontSize: 15,
+    textDecorationLine: 'underline',
   },
   backButton: {
     width: 48,
