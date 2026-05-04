@@ -1,8 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
+import * as ImagePicker from 'expo-image-picker';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -17,6 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../providers/AuthProvider';
 import { useRecipes } from '../providers/RecipesProvider';
 import { colors } from '../theme';
+import { uploadImage } from '../utils/imageUpload';
 import { supabase } from '../utils/supabase';
 
 export default function AddRecipeScreen({ navigation, route }) {
@@ -33,6 +36,7 @@ export default function AddRecipeScreen({ navigation, route }) {
   const [ingredientUnit, setIngredientUnit] = useState('g');
   const [showUnitPickerIOS, setShowUnitPickerIOS] = useState(false);
   const [ingredients, setIngredients] = useState(editRecipe?.ingredients ?? []);
+  const [selectedImage, setSelectedImage] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
 
   const [errorMessage, setErrorMessage] = useState('');
@@ -90,6 +94,19 @@ export default function AddRecipeScreen({ navigation, route }) {
 
   const removeIngredient = (idx) => {
     setIngredients((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets?.[0]) {
+      const asset = result.assets[0];
+      setSelectedImage({ uri: asset.uri, width: asset.width, height: asset.height });
+    }
   };
 
   const normalizeIngredientName = (name) => name.trim().toLowerCase();
@@ -167,6 +184,7 @@ export default function AddRecipeScreen({ navigation, route }) {
     setIngredientUnit('g');
     setShowUnitPickerIOS(false);
     setIngredients([]);
+    setSelectedImage(null);
     setErrorMessage('');
     setToastMessage('');
   };
@@ -249,49 +267,69 @@ export default function AddRecipeScreen({ navigation, route }) {
           if (insertError) throw insertError;
         }
 
+        if (selectedImage) await uploadImage(supabase, user, editRecipe.id, selectedImage);
         await refreshRecipesForMode(filterModes.MINE);
         showToast('Recipe updated successfully.');
       } else {
-        const { data: createdRecipe, error: recipeInsertError } = await supabase
-          .from('recipes')
-          .insert({
-            name,
-            description: recipeDescription.trim(),
-            author: user.id,
-            public: false,
-          })
-          .select('id, name, author, created_at')
-          .single();
+        let draftRecipeId = null;
+        try {
+          const { data: createdRecipe, error: recipeInsertError } = await supabase
+            .from('recipes')
+            .insert({
+              name,
+              description: recipeDescription.trim(),
+              author: user.id,
+              public: false,
+              draft: true,
+            })
+            .select('id, name, author, created_at')
+            .single();
 
-        if (recipeInsertError) throw recipeInsertError;
-        if (!createdRecipe?.id) throw new Error('Failed to create recipe.');
+          if (recipeInsertError) throw recipeInsertError;
+          if (!createdRecipe?.id) throw new Error('Failed to create recipe.');
+          draftRecipeId = createdRecipe.id;
 
-        if (ingredients.length > 0) {
-          const ingredientNames = ingredients.map((item) => item.name);
-          const ingredientIdByNormalizedName = await getIngredientIdsByName(ingredientNames);
+          if (ingredients.length > 0) {
+            const ingredientNames = ingredients.map((item) => item.name);
+            const ingredientIdByNormalizedName = await getIngredientIdsByName(ingredientNames);
 
-          const recipeIngredientsToInsert = ingredients.map((item) => {
-            const ingredientId = ingredientIdByNormalizedName[normalizeIngredientName(item.name)];
-            if (!ingredientId) {
-              throw new Error(`Missing ingredient id for "${item.name}".`);
-            }
-            return {
-              recipe_id: createdRecipe.id,
-              ingredient_id: ingredientId,
-              quantity: item.quantity,
-              unit: item.unit,
-            };
-          });
+            const recipeIngredientsToInsert = ingredients.map((item) => {
+              const ingredientId = ingredientIdByNormalizedName[normalizeIngredientName(item.name)];
+              if (!ingredientId) {
+                throw new Error(`Missing ingredient id for "${item.name}".`);
+              }
+              return {
+                recipe_id: createdRecipe.id,
+                ingredient_id: ingredientId,
+                quantity: item.quantity,
+                unit: item.unit,
+              };
+            });
 
-          const { error: recipeIngredientsInsertError } = await supabase
-            .from('recipe_ingredients')
-            .insert(recipeIngredientsToInsert);
+            const { error: recipeIngredientsInsertError } = await supabase
+              .from('recipe_ingredients')
+              .insert(recipeIngredientsToInsert);
 
-          if (recipeIngredientsInsertError) throw recipeIngredientsInsertError;
+            if (recipeIngredientsInsertError) throw recipeIngredientsInsertError;
+          }
+
+          if (selectedImage) await uploadImage(supabase, user, createdRecipe.id, selectedImage);
+
+          const { error: finalizeError } = await supabase
+            .from('recipes')
+            .update({ draft: false })
+            .eq('id', createdRecipe.id);
+          if (finalizeError) throw finalizeError;
+
+          prependRecipe(createdRecipe);
+          showToast('Recipe saved successfully.');
+        } catch (createErr) {
+          if (draftRecipeId) {
+            await supabase.from('recipe_ingredients').delete().eq('recipe_id', draftRecipeId);
+            await supabase.from('recipes').delete().eq('id', draftRecipeId);
+          }
+          throw createErr;
         }
-
-        prependRecipe(createdRecipe);
-        showToast('Recipe saved successfully.');
       }
 
       closeTimeoutRef.current = setTimeout(() => {
@@ -361,6 +399,33 @@ export default function AddRecipeScreen({ navigation, route }) {
                 multiline
                 textAlignVertical="top"
               />
+
+              <Text style={styles.label}>Recipe Image</Text>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={selectedImage ? 'Change recipe image' : 'Add recipe image'}
+                onPress={pickImage}
+                style={({ pressed }) => [styles.imagePicker, pressed && styles.pressed]}
+              >
+                {selectedImage ? (
+                  <Image source={{ uri: selectedImage.uri }} style={styles.imagePreview} resizeMode="cover" />
+                ) : (
+                  <View style={styles.imagePlaceholder}>
+                    <Ionicons name="camera-outline" size={28} color={colors.textMuted} />
+                    <Text style={styles.imagePlaceholderText}>Add photo</Text>
+                  </View>
+                )}
+              </Pressable>
+              {selectedImage && (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Remove image"
+                  onPress={() => setSelectedImage(null)}
+                  style={({ pressed }) => [styles.removeImageButton, pressed && styles.pressed]}
+                >
+                  <Text style={styles.removeImageText}>Remove image</Text>
+                </Pressable>
+              )}
 
               <Text style={styles.label}>Ingredients</Text>
               <View style={styles.ingredientRow}>
@@ -776,6 +841,40 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.85,
+  },
+  imagePicker: {
+    height: 120,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 14,
+    marginBottom: 6,
+    overflow: 'hidden',
+  },
+  imagePlaceholder: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.imagePlaceholderBg,
+    gap: 6,
+  },
+  imagePlaceholderText: {
+    color: colors.textMuted,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  imagePreview: {
+    width: '100%',
+    height: '100%',
+  },
+  removeImageButton: {
+    marginBottom: 14,
+    alignSelf: 'flex-start',
+  },
+  removeImageText: {
+    color: colors.danger,
+    fontSize: 12,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
 });
 

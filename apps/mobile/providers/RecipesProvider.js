@@ -101,6 +101,7 @@ export function RecipesProvider({ children }) {
     } else {
       query = query.eq('author', user.id);
     }
+    query = query.eq('draft', false);
 
     try {
       const { data, error } = await query.order('created_at', { ascending: false });

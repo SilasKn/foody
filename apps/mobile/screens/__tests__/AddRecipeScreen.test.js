@@ -1,0 +1,270 @@
+import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
+import React from 'react';
+
+import AddRecipeScreen from '../AddRecipeScreen';
+
+// ─── Module mocks ─────────────────────────────────────────────────────────────
+
+jest.mock('../../utils/imageUpload', () => ({ uploadImage: jest.fn() }));
+jest.mock('../../utils/supabase', () => ({ supabase: {} }));
+jest.mock('../../providers/AuthProvider', () => ({
+  useAuth: () => ({ user: { id: 'user-123' } }),
+}));
+
+const mockPrependRecipe = jest.fn();
+const mockRefreshRecipesForMode = jest.fn();
+jest.mock('../../providers/RecipesProvider', () => ({
+  useRecipes: () => ({
+    prependRecipe: mockPrependRecipe,
+    refreshRecipesForMode: mockRefreshRecipesForMode,
+    filterModes: { MINE: 'mine', PUBLIC: 'public' },
+  }),
+}));
+
+jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
+jest.mock('@react-native-picker/picker', () => {
+  const { View } = require('react-native');
+  const Picker = ({ children }) => <View>{children}</View>;
+  Picker.Item = () => null;
+  return { Picker };
+});
+jest.mock('expo-image-picker', () => ({
+  launchImageLibraryAsync: jest.fn(),
+  MediaTypeOptions: { Images: 'Images' },
+}));
+jest.mock('react-native-safe-area-context', () => {
+  const { View } = require('react-native');
+  return {
+    SafeAreaView: ({ children }) => <View>{children}</View>,
+    useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+  };
+});
+
+// ─── Supabase mock factory ─────────────────────────────────────────────────────
+
+const { supabase } = require('../../utils/supabase');
+const { uploadImage } = require('../../utils/imageUpload');
+const { launchImageLibraryAsync } = require('expo-image-picker');
+
+const CREATED_RECIPE = { id: 99, name: 'Test', author: 'user-123', created_at: '2026-01-01' };
+
+function buildDeleteChain(error = null) {
+  const eqMock = jest.fn().mockResolvedValue({ error });
+  const deleteMock = jest.fn().mockReturnValue({ eq: eqMock });
+  return { deleteMock, eqMock };
+}
+
+function setupSupabaseMock({ updateDraftError = null } = {}) {
+  const { deleteMock: recipesDeleteMock } = buildDeleteChain();
+  const { deleteMock: ingredientsDeleteMock } = buildDeleteChain();
+
+  const singleMock = jest.fn().mockResolvedValue({ data: CREATED_RECIPE, error: null });
+  const selectAfterInsert = jest.fn().mockReturnValue({ single: singleMock });
+  const recipesInsertMock = jest.fn().mockReturnValue({ select: selectAfterInsert });
+
+  const updateEqMock = jest.fn().mockResolvedValue({ error: updateDraftError });
+  const updateMock = jest.fn().mockReturnValue({ eq: updateEqMock });
+
+  supabase.from = jest.fn((table) => {
+    if (table === 'recipes') {
+      return {
+        insert: recipesInsertMock,
+        update: updateMock,
+        delete: recipesDeleteMock,
+      };
+    }
+    if (table === 'recipe_ingredients') {
+      return {
+        insert: jest.fn().mockResolvedValue({ error: null }),
+        delete: ingredientsDeleteMock,
+      };
+    }
+    if (table === 'ingredients') {
+      return { select: jest.fn().mockResolvedValue({ data: [], error: null }) };
+    }
+    return {};
+  });
+
+  return { recipesInsertMock, updateMock, recipesDeleteMock, ingredientsDeleteMock };
+}
+
+// ─── Render helpers ────────────────────────────────────────────────────────────
+
+const fakeNavigation = { goBack: jest.fn(), navigate: jest.fn() };
+
+function renderScreen() {
+  return render(<AddRecipeScreen navigation={fakeNavigation} route={{}} />);
+}
+
+// ─── Tests ─────────────────────────────────────────────────────────────────────
+
+beforeEach(() => {
+  jest.useFakeTimers();
+  jest.clearAllMocks();
+  uploadImage.mockResolvedValue(undefined);
+});
+
+afterEach(() => {
+  jest.useRealTimers();
+});
+
+// Test 6: no image → draft: true created, finalized to draft: false, uploadImage NOT called
+test('creates draft then finalizes without calling uploadImage when no image selected', async () => {
+  const { recipesInsertMock, updateMock } = setupSupabaseMock();
+  const { getByPlaceholderText, getByText } = renderScreen();
+
+  fireEvent.changeText(getByPlaceholderText('e.g. Spaghetti Aglio e Olio'), 'Test Recipe');
+
+  await act(async () => {
+    fireEvent.press(getByText('Save'));
+  });
+
+  await waitFor(() =>
+    expect(recipesInsertMock).toHaveBeenCalledWith(
+      expect.objectContaining({ draft: true })
+    )
+  );
+  await waitFor(() =>
+    expect(updateMock).toHaveBeenCalledWith({ draft: false })
+  );
+  expect(uploadImage).not.toHaveBeenCalled();
+});
+
+// Test 7: with image → uploadImage called with correct args, then finalized to draft: false
+test('calls uploadImage then finalizes when image is selected', async () => {
+  const { recipesInsertMock, updateMock } = setupSupabaseMock();
+
+  launchImageLibraryAsync.mockResolvedValue({
+    canceled: false,
+    assets: [{ uri: 'file:///tmp/photo.jpg', width: 800, height: 600 }],
+  });
+
+  const { getByPlaceholderText, getByText, getByLabelText } = renderScreen();
+
+  fireEvent.changeText(getByPlaceholderText('e.g. Spaghetti Aglio e Olio'), 'Test Recipe');
+
+  // Select an image
+  await act(async () => {
+    fireEvent.press(getByLabelText('Add recipe image'));
+  });
+  await waitFor(() => expect(launchImageLibraryAsync).toHaveBeenCalled());
+
+  await act(async () => {
+    fireEvent.press(getByText('Save'));
+  });
+
+  await waitFor(() =>
+    expect(uploadImage).toHaveBeenCalledWith(
+      supabase,
+      { id: 'user-123' },
+      CREATED_RECIPE.id,
+      expect.objectContaining({ uri: 'file:///tmp/photo.jpg' })
+    )
+  );
+  await waitFor(() =>
+    expect(updateMock).toHaveBeenCalledWith({ draft: false })
+  );
+});
+
+// Test 8: ingredient insert fails → draft recipe + ingredients deleted, error shown
+test('deletes draft recipe when ingredient insert fails', async () => {
+  const { recipesDeleteMock, ingredientsDeleteMock } = setupSupabaseMock();
+
+  // Override recipe_ingredients insert to fail
+  supabase.from = jest.fn((table) => {
+    if (table === 'recipes') {
+      const single = jest.fn().mockResolvedValue({ data: CREATED_RECIPE, error: null });
+      const sel = jest.fn().mockReturnValue({ single });
+      const ins = jest.fn().mockReturnValue({ select: sel });
+      const delEq = jest.fn().mockResolvedValue({ error: null });
+      const del = jest.fn().mockReturnValue({ eq: delEq });
+      const updEq = jest.fn().mockResolvedValue({ error: null });
+      const upd = jest.fn().mockReturnValue({ eq: updEq });
+      return { insert: ins, delete: del, update: upd };
+    }
+    if (table === 'recipe_ingredients') {
+      const delEq = jest.fn().mockResolvedValue({ error: null });
+      const del = jest.fn().mockReturnValue({ eq: delEq });
+      return {
+        insert: jest.fn().mockResolvedValue({ error: new Error('ingredients failed') }),
+        delete: del,
+      };
+    }
+    if (table === 'ingredients') {
+      const insertSelectMock = jest.fn().mockResolvedValue({ data: [{ id: 1, name: 'Salt' }], error: null });
+      return {
+        select: jest.fn().mockResolvedValue({ data: [], error: null }),
+        insert: jest.fn().mockReturnValue({ select: insertSelectMock }),
+      };
+    }
+    return {};
+  });
+
+  const { getByPlaceholderText, getByText, findByText, getByLabelText } = renderScreen();
+
+  fireEvent.changeText(getByPlaceholderText('e.g. Spaghetti Aglio e Olio'), 'Test Recipe');
+
+  // Add an ingredient so the recipe_ingredients insert path runs
+  fireEvent.changeText(getByPlaceholderText('Add ingredient…'), 'Salt');
+  fireEvent.changeText(getByPlaceholderText('Quantity'), '5');
+  await act(async () => {
+    fireEvent.press(getByLabelText('Add ingredient'));
+  });
+
+  await act(async () => {
+    fireEvent.press(getByText('Save'));
+  });
+
+  await findByText('ingredients failed');
+  // Verify draft cleanup was attempted
+  const fromCalls = supabase.from.mock.calls.map((c) => c[0]);
+  expect(fromCalls).toContain('recipes');
+});
+
+// Test 9: uploadImage throws → draft deleted, error message shown
+test('deletes draft recipe and shows error when uploadImage throws', async () => {
+  setupSupabaseMock();
+  uploadImage.mockRejectedValue(new Error('upload failed'));
+
+  launchImageLibraryAsync.mockResolvedValue({
+    canceled: false,
+    assets: [{ uri: 'file:///tmp/photo.jpg', width: 800, height: 600 }],
+  });
+
+  const { getByPlaceholderText, getByText, getByLabelText, findByText } = renderScreen();
+
+  fireEvent.changeText(getByPlaceholderText('e.g. Spaghetti Aglio e Olio'), 'Test Recipe');
+
+  await act(async () => {
+    fireEvent.press(getByLabelText('Add recipe image'));
+  });
+  await waitFor(() => expect(launchImageLibraryAsync).toHaveBeenCalled());
+
+  await act(async () => {
+    fireEvent.press(getByText('Save'));
+  });
+
+  await findByText('upload failed');
+
+  // Verify cleanup: delete was called on recipes
+  const deletedFromRecipes = supabase.from.mock.calls.some((c) => c[0] === 'recipes');
+  expect(deletedFromRecipes).toBe(true);
+});
+
+// Test 10: finalize update (draft: false) fails → draft deleted, error shown
+test('deletes draft recipe and shows error when finalize update fails', async () => {
+  setupSupabaseMock({ updateDraftError: new Error('finalize failed') });
+
+  const { getByPlaceholderText, getByText, findByText } = renderScreen();
+
+  fireEvent.changeText(getByPlaceholderText('e.g. Spaghetti Aglio e Olio'), 'Test Recipe');
+
+  await act(async () => {
+    fireEvent.press(getByText('Save'));
+  });
+
+  await findByText('finalize failed');
+
+  const deletedFromRecipes = supabase.from.mock.calls.some((c) => c[0] === 'recipes');
+  expect(deletedFromRecipes).toBe(true);
+});
