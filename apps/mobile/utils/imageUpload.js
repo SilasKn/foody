@@ -4,11 +4,11 @@ export async function uploadImage(supabase, user, recipeId, selectedImage) {
   const filePath = `${user.id}/${recipeId}/${Date.now()}.${ext}`;
 
   const response = await fetch(selectedImage.uri);
-  const blob = await response.blob();
+  const arrayBuffer = await response.arrayBuffer();
 
   const { error: uploadError } = await supabase.storage
     .from('recipe_images')
-    .upload(filePath, blob, { contentType: `image/${ext}` });
+    .upload(filePath, arrayBuffer, { contentType: `image/${ext}` });
   if (uploadError) throw uploadError;
 
   const { error: metaError } = await supabase.from('recipe_images').insert({

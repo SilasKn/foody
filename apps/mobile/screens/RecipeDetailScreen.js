@@ -20,14 +20,36 @@ export default function RecipeDetailScreen({ route, navigation }) {
 
   useFocusEffect(
     useCallback(() => {
-      setLoading(true);
-      Promise.all([
-        supabase.from('recipes').select('name, description, created_at').eq('id', recipe.id).single(),
-        supabase.from('recipe_ingredients').select('quantity, unit, ingredients(name)').eq('recipe_id', recipe.id),
-      ]).then(([{ data: rec }, { data: ings }]) => {
-        setDetails({ ...rec, ingredients: ings ?? [] });
-        setLoading(false);
-      });
+      let active = true;
+
+      async function load() {
+        setLoading(true);
+        const [
+          { data: rec,     error: recErr },
+          { data: ings,    error: ingsErr },
+          { data: imgData, error: imgErr },
+        ] = await Promise.all([
+          supabase.from('recipes').select('name, description, created_at').eq('id', recipe.id).single(),
+          supabase.from('recipe_ingredients').select('quantity, unit, ingredients(name)').eq('recipe_id', recipe.id),
+          supabase.from('recipe_images').select('file_path').eq('recipe_id', recipe.id).maybeSingle(),
+        ]);
+
+        let imageUrl = null;
+        if (imgData?.file_path) {
+          const { data: signed } = await supabase.storage
+            .from('recipe_images')
+            .createSignedUrl(imgData.file_path, 3600);
+          imageUrl = signed?.signedUrl ?? null;
+        }
+
+        if (active) {
+          setDetails({ ...rec, ingredients: ings ?? [], imageUrl });
+          setLoading(false);
+        }
+      }
+
+      load();
+      return () => { active = false; };
     }, [recipe.id])
   );
 
@@ -58,7 +80,11 @@ export default function RecipeDetailScreen({ route, navigation }) {
           <View style={styles.card}>
             <View style={styles.imageSection}>
               <View style={styles.imageWrapper}>
-                <Image source={placeholderImage} style={styles.image} resizeMode="cover" />
+                <Image
+                  source={details?.imageUrl ? { uri: details.imageUrl } : placeholderImage}
+                  style={styles.image}
+                  resizeMode="cover"
+                />
               </View>
               <Pressable
                 accessibilityRole="button"
