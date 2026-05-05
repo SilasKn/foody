@@ -6,6 +6,7 @@ export const colors = {
   headerBg: '#FFFFFF',
   border: '#000000',
   pillActive: accent + '59', // accent at ~35% opacity
+  accentOverlay: accent + '80', // accent at 50% opacity
   pillInactive: '#FFFFFF',
   text: '#000000',
   accent,

@@ -43,7 +43,7 @@ export default function RecipeDetailScreen({ route, navigation }) {
         }
 
         if (active) {
-          setDetails({ ...rec, ingredients: ings ?? [], imageUrl });
+          setDetails({ ...rec, ingredients: ings ?? [], imageUrl, imagePath: imgData?.file_path ?? null });
           setLoading(false);
         }
       }
@@ -65,6 +65,8 @@ export default function RecipeDetailScreen({ route, navigation }) {
           quantity: i.quantity,
           unit: i.unit,
         })),
+        existingImagePath: details.imagePath,
+        existingImageUrl: details.imageUrl,
       },
     });
   };

@@ -16,6 +16,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+const placeholderImage = require('../assets/no-picture.png');
+
 import { useAuth } from '../providers/AuthProvider';
 import { useRecipes } from '../providers/RecipesProvider';
 import { colors } from '../theme';
@@ -28,6 +30,8 @@ export default function AddRecipeScreen({ navigation, route }) {
   const { prependRecipe, refreshRecipesForMode, filterModes } = useRecipes();
 
   const editRecipe = route?.params?.recipe ?? null;
+  const existingImagePath = editRecipe?.existingImagePath ?? null;
+  const existingImageUrl = editRecipe?.existingImageUrl ?? null;
 
   const [recipeName, setRecipeName] = useState(editRecipe?.name ?? '');
   const [recipeDescription, setRecipeDescription] = useState(editRecipe?.description ?? '');
@@ -37,6 +41,7 @@ export default function AddRecipeScreen({ navigation, route }) {
   const [showUnitPickerIOS, setShowUnitPickerIOS] = useState(false);
   const [ingredients, setIngredients] = useState(editRecipe?.ingredients ?? []);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [imageRemoved, setImageRemoved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   const [errorMessage, setErrorMessage] = useState('');
@@ -46,6 +51,7 @@ export default function AddRecipeScreen({ navigation, route }) {
   const closeTimeoutRef = useRef(null);
 
   const canSave = useMemo(() => recipeName.trim().length > 0 && !isSaving, [recipeName, isSaving]);
+  const displayImageUri = selectedImage?.uri ?? (imageRemoved ? null : existingImageUrl) ?? null;
 
   useEffect(() => {
     return () => {
@@ -106,6 +112,7 @@ export default function AddRecipeScreen({ navigation, route }) {
     if (!result.canceled && result.assets?.[0]) {
       const asset = result.assets[0];
       setSelectedImage({ uri: asset.uri, width: asset.width, height: asset.height });
+      setImageRemoved(false);
     }
   };
 
@@ -185,6 +192,7 @@ export default function AddRecipeScreen({ navigation, route }) {
     setShowUnitPickerIOS(false);
     setIngredients([]);
     setSelectedImage(null);
+    setImageRemoved(false);
     setErrorMessage('');
     setToastMessage('');
   };
@@ -207,6 +215,14 @@ export default function AddRecipeScreen({ navigation, route }) {
         },
       ]
     );
+  };
+
+  const onRemoveImage = () => {
+    if (selectedImage) {
+      setSelectedImage(null);
+    } else {
+      setImageRemoved(true);
+    }
   };
 
   const onSave = async () => {
@@ -267,7 +283,16 @@ export default function AddRecipeScreen({ navigation, route }) {
           if (insertError) throw insertError;
         }
 
-        if (selectedImage) await uploadImage(supabase, user, editRecipe.id, selectedImage);
+        if (selectedImage) {
+          if (existingImagePath) {
+            await supabase.storage.from('recipe_images').remove([existingImagePath]);
+            await supabase.from('recipe_images').delete().eq('recipe_id', editRecipe.id);
+          }
+          await uploadImage(supabase, user, editRecipe.id, selectedImage);
+        } else if (imageRemoved && existingImagePath) {
+          await supabase.storage.from('recipe_images').remove([existingImagePath]);
+          await supabase.from('recipe_images').delete().eq('recipe_id', editRecipe.id);
+        }
         await refreshRecipesForMode(filterModes.MINE);
         showToast('Recipe updated successfully.');
       } else {
@@ -407,8 +432,18 @@ export default function AddRecipeScreen({ navigation, route }) {
                 onPress={pickImage}
                 style={({ pressed }) => [styles.imagePicker, pressed && styles.pressed]}
               >
-                {selectedImage ? (
-                  <Image source={{ uri: selectedImage.uri }} style={styles.imagePreview} resizeMode="cover" />
+                {(displayImageUri !== null || imageRemoved) ? (
+                  <>
+                    <Image
+                      source={displayImageUri ? { uri: displayImageUri } : placeholderImage}
+                      style={styles.imagePreview}
+                      resizeMode="cover"
+                    />
+                    <View style={styles.imageOverlay} pointerEvents="none">
+                      <Ionicons name="camera-outline" size={28} color={colors.white} />
+                      <Text style={styles.imageOverlayText}>Edit</Text>
+                    </View>
+                  </>
                 ) : (
                   <View style={styles.imagePlaceholder}>
                     <Ionicons name="camera-outline" size={28} color={colors.textMuted} />
@@ -416,11 +451,11 @@ export default function AddRecipeScreen({ navigation, route }) {
                   </View>
                 )}
               </Pressable>
-              {selectedImage && (
+              {(selectedImage !== null || (!imageRemoved && !!existingImageUrl)) && (
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel="Remove image"
-                  onPress={() => setSelectedImage(null)}
+                  onPress={onRemoveImage}
                   style={({ pressed }) => [styles.removeImageButton, pressed && styles.pressed]}
                 >
                   <Text style={styles.removeImageText}>Remove image</Text>
@@ -865,6 +900,18 @@ const styles = StyleSheet.create({
   imagePreview: {
     width: '100%',
     height: '100%',
+  },
+  imageOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: colors.accentOverlay,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  imageOverlayText: {
+    color: colors.white,
+    fontSize: 13,
+    fontWeight: '600',
   },
   removeImageButton: {
     marginBottom: 14,
