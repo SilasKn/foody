@@ -19,7 +19,7 @@ const formatRecipeDate = (value) => {
   return `${weekday} ${dayMonth}.`;
 };
 
-const mapRecipeRecord = (record, authorLabel) => ({
+const mapRecipeRecord = (record, authorLabel, imageUrl = null) => ({
   id: record.id,
   name: record.name ?? '',
   author: record.author ?? null,
@@ -27,7 +27,33 @@ const mapRecipeRecord = (record, authorLabel) => ({
   public: Boolean(record.public),
   dateLabel: formatRecipeDate(record.created_at),
   authorLabel,
+  imageUrl,
 });
+
+async function fetchSignedImageUrls(recipeIds) {
+  if (!recipeIds.length) return {};
+
+  const { data: imgRows } = await supabase
+    .from('recipe_images')
+    .select('recipe_id, file_path')
+    .in('recipe_id', recipeIds);
+
+  const pathMap = Object.fromEntries((imgRows ?? []).map((r) => [r.recipe_id, r.file_path]));
+  const filePaths = Object.values(pathMap);
+  if (!filePaths.length) return {};
+
+  const { data: signed } = await supabase.storage
+    .from('recipe_images')
+    .createSignedUrls(filePaths, 3600);
+
+  const signedMap = {};
+  (signed ?? []).forEach((s) => {
+    const recipeId = Object.keys(pathMap).find((id) => pathMap[id] === s.path);
+    if (recipeId && s.signedUrl) signedMap[recipeId] = s.signedUrl;
+  });
+
+  return signedMap;
+}
 
 export function RecipesProvider({ children }) {
   const { user } = useAuth();
@@ -114,7 +140,10 @@ export function RecipesProvider({ children }) {
 
       const records = Array.isArray(data) ? data : [];
       const authorIds = [...new Set(records.map((row) => row.author).filter(Boolean))];
-      const profilesByAuthorId = await loadProfilesByAuthorId(authorIds);
+      const [profilesByAuthorId, signedMap] = await Promise.all([
+        loadProfilesByAuthorId(authorIds),
+        fetchSignedImageUrls(records.map((r) => r.id)),
+      ]);
 
       const mapped = records.map((record) => {
         const profileName = profilesByAuthorId[record.author];
@@ -122,7 +151,7 @@ export function RecipesProvider({ children }) {
           mode === FILTER_MODES.MINE
             ? 'Author: You'
             : `Author: ${profileName?.trim() || 'Unknown author'}`;
-        return mapRecipeRecord(record, authorLabel);
+        return mapRecipeRecord(record, authorLabel, signedMap[record.id] ?? null);
       });
 
       setRecipesByMode((prev) => ({ ...prev, [mode]: mapped }));

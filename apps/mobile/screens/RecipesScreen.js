@@ -1,9 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import ScreenShell from '../components/ScreenShell';
 import { useRecipes } from '../providers/RecipesProvider';
 import { colors } from '../theme';
+
+const placeholderImage = require('../assets/no-picture.png');
 
 export default function RecipesScreen({ navigation }) {
   const {
@@ -33,7 +35,11 @@ export default function RecipesScreen({ navigation }) {
       style={({ pressed }) => pressed && styles.pressed}
     >
       <View style={styles.recipeCard}>
-        <View style={styles.recipeCardRail} />
+        <Image
+          source={item.imageUrl ? { uri: item.imageUrl } : placeholderImage}
+          style={styles.recipeCardImage}
+          resizeMode="cover"
+        />
         <View style={styles.recipeCardContent}>
           <Text style={styles.recipeTitle} numberOfLines={1}>
             {item.name}
@@ -120,11 +126,9 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     elevation: 4,
   },
-  recipeCardRail: {
-    width: 34,
-    borderRightWidth: 1,
-    borderRightColor: colors.border,
-    backgroundColor: '#fff',
+  recipeCardImage: {
+    width: 110,
+    height: '100%',
   },
   recipeCardContent: {
     flex: 1,
