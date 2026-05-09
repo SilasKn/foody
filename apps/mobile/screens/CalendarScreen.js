@@ -2,6 +2,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useRef, useState } from 'react';
 import { Animated, ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import ScreenShell from '../components/ScreenShell';
+import shared from '../sharedStyles';
 import { colors } from '../theme';
 import { supabase } from '../utils/supabase';
 
@@ -115,13 +116,13 @@ export default function CalendarScreen({ navigation }) {
 
   return (
     <ScreenShell navigation={navigation} activeTab="calendar">
-      <View style={styles.outerContainer}>
+      <View style={shared.outerContainer}>
         <ScrollView
-          style={styles.scroll}
+          style={shared.scroll}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.pageTitle}>Upcoming recipes</Text>
+          <Text style={shared.pageTitle}>Upcoming recipes</Text>
 
           {loading ? (
             <ActivityIndicator size="large" color={colors.accent} style={styles.loader} />
@@ -159,50 +160,36 @@ export default function CalendarScreen({ navigation }) {
             ))
           )}
         </ScrollView>
+      </View>
 
-        <View style={styles.fabArea} pointerEvents="box-none">
-          <Animated.View style={[styles.subButton, subButtonStyle(2)]}>
-            <Pressable style={styles.iconCircle} onPress={() => {}}>
-              <Image source={require('../assets/trashcan-icon.png')} style={styles.fabIcon} />
-            </Pressable>
-          </Animated.View>
-          <Animated.View style={[styles.subButton, subButtonStyle(1)]}>
-            <Pressable style={styles.iconCircle} onPress={() => {}}>
-              <Image source={require('../assets/calendar-icon.png')} style={styles.fabIcon} />
-            </Pressable>
-          </Animated.View>
-          <Pressable
-            style={({ pressed }) => [styles.iconCircle, styles.fabMainButton, pressed && { opacity: 0.8 }]}
-            onPress={toggleMenu}
-            accessibilityRole="button"
-            accessibilityLabel="Open menu"
-          >
-            <Image source={require('../assets/icon_drei_punkte.png')} style={styles.fabIcon} />
+      <View style={shared.fabArea} pointerEvents="box-none">
+        <Animated.View style={subButtonStyle(2)}>
+          <Pressable style={shared.fabSubButton} onPress={() => {}}>
+            <Image source={require('../assets/trashcan-icon.png')} style={styles.fabIcon} />
           </Pressable>
-        </View>
+        </Animated.View>
+        <Animated.View style={subButtonStyle(1)}>
+          <Pressable style={shared.fabSubButton} onPress={() => {}}>
+            <Image source={require('../assets/calendar-icon.png')} style={styles.fabIcon} />
+          </Pressable>
+        </Animated.View>
+        <Pressable
+          style={({ pressed }) => [shared.fabMainButton, pressed && shared.pressed]}
+          onPress={toggleMenu}
+          accessibilityRole="button"
+          accessibilityLabel="Open menu"
+        >
+          <Image source={require('../assets/icon_drei_punkte.png')} style={styles.fabIcon} />
+        </Pressable>
       </View>
     </ScreenShell>
   );
 }
 
 const styles = StyleSheet.create({
-  outerContainer: {
-    flex: 1,
-    alignSelf: 'stretch',
-  },
-  scroll: {
-    flex: 1,
-  },
   scrollContent: {
-    paddingHorizontal: 4,
     paddingTop: 8,
     paddingBottom: 100,
-  },
-  pageTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: 8,
   },
   loader: {
     marginTop: 48,
@@ -254,37 +241,9 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     marginLeft: 8,
   },
-  fabArea: {
-    position: 'absolute',
-    right: 5,
-    bottom: 20,
-    alignItems: 'center',
-    zIndex: 20,
-  },
-  subButton: {
-    marginBottom: 10,
-  },
-  iconCircle: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: colors.cream,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 5,
-  },
   fabIcon: {
     width: 26,
     height: 26,
     resizeMode: 'contain',
-  },
-  fabMainButton: {
-    backgroundColor: colors.accent,
   },
 });

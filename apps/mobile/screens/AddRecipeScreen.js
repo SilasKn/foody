@@ -20,6 +20,7 @@ const placeholderImage = require('../assets/no-picture.png');
 
 import { useAuth } from '../providers/AuthProvider';
 import { useRecipes } from '../providers/RecipesProvider';
+import shared from '../sharedStyles';
 import { colors } from '../theme';
 import { uploadImage } from '../utils/imageUpload';
 import { supabase } from '../utils/supabase';
@@ -381,7 +382,7 @@ export default function AddRecipeScreen({ navigation, route }) {
                 accessibilityLabel="Back"
                 onPress={() => navigation.goBack()}
                 hitSlop={10}
-                style={({ pressed }) => [styles.backButton, pressed && styles.fabPressed]}
+                style={({ pressed }) => [shared.circleButton, styles.backButton, pressed && shared.pressed]}
               >
                 <Ionicons name="arrow-back" size={24} color={colors.text} />
               </Pressable>
@@ -391,7 +392,7 @@ export default function AddRecipeScreen({ navigation, route }) {
                   accessibilityLabel="Delete recipe"
                   onPress={onDeletePress}
                   hitSlop={10}
-                  style={({ pressed }) => [pressed && styles.pressed]}
+                  style={({ pressed }) => [pressed && shared.pressed]}
                 >
                   <Text style={styles.deleteText}>Delete</Text>
                 </Pressable>
@@ -430,7 +431,7 @@ export default function AddRecipeScreen({ navigation, route }) {
                 accessibilityRole="button"
                 accessibilityLabel={selectedImage ? 'Change recipe image' : 'Add recipe image'}
                 onPress={pickImage}
-                style={({ pressed }) => [styles.imagePicker, pressed && styles.pressed]}
+                style={({ pressed }) => [styles.imagePicker, pressed && shared.pressed]}
               >
                 {(displayImageUri !== null || imageRemoved) ? (
                   <>
@@ -456,7 +457,7 @@ export default function AddRecipeScreen({ navigation, route }) {
                   accessibilityRole="button"
                   accessibilityLabel="Remove image"
                   onPress={onRemoveImage}
-                  style={({ pressed }) => [styles.removeImageButton, pressed && styles.pressed]}
+                  style={({ pressed }) => [styles.removeImageButton, pressed && shared.pressed]}
                 >
                   <Text style={styles.removeImageText}>Remove image</Text>
                 </Pressable>
@@ -492,7 +493,7 @@ export default function AddRecipeScreen({ navigation, route }) {
                     onPress={() => setShowUnitPickerIOS((prev) => !prev)}
                     style={({ pressed }) => [
                       styles.unitFieldButton,
-                      pressed && styles.pressed,
+                      pressed && shared.pressed,
                     ]}
                   >
                     <Text style={styles.unitFieldText}>{ingredientUnit}</Text>
@@ -516,7 +517,7 @@ export default function AddRecipeScreen({ navigation, route }) {
                   accessibilityRole="button"
                   accessibilityLabel="Add ingredient"
                   onPress={addIngredient}
-                  style={({ pressed }) => [styles.addIconButton, pressed && styles.pressed]}
+                  style={({ pressed }) => [styles.addIconButton, pressed && shared.pressed]}
                 >
                   <Ionicons name="add" size={22} color={colors.text} />
                 </Pressable>
@@ -529,7 +530,7 @@ export default function AddRecipeScreen({ navigation, route }) {
                       accessibilityRole="button"
                       accessibilityLabel="Done selecting unit"
                       onPress={() => setShowUnitPickerIOS(false)}
-                      style={({ pressed }) => [styles.iosPickerDone, pressed && styles.pressed]}
+                      style={({ pressed }) => [styles.iosPickerDone, pressed && shared.pressed]}
                     >
                       <Text style={styles.iosPickerDoneText}>Done</Text>
                     </Pressable>
@@ -559,7 +560,7 @@ export default function AddRecipeScreen({ navigation, route }) {
                         accessibilityLabel={`Remove ${ing.name}`}
                         onPress={() => removeIngredient(idx)}
                         hitSlop={10}
-                        style={({ pressed }) => [styles.removeButton, pressed && styles.pressed]}
+                        style={({ pressed }) => [styles.removeButton, pressed && shared.pressed]}
                       >
                         <Ionicons name="close" size={18} color={colors.text} />
                       </Pressable>
@@ -578,7 +579,7 @@ export default function AddRecipeScreen({ navigation, route }) {
                   accessibilityRole="button"
                   onPress={onClear}
                   disabled={isSaving}
-                  style={({ pressed }) => [styles.clearButton, pressed && styles.pressed]}
+                  style={({ pressed }) => [shared.pillButton, styles.clearButton, pressed && shared.pressed]}
                 >
                   <Text style={styles.clearButtonText}>Clear</Text>
                 </Pressable>
@@ -588,9 +589,10 @@ export default function AddRecipeScreen({ navigation, route }) {
                 onPress={onSave}
                 disabled={!canSave}
                 style={({ pressed }) => [
+                  shared.pillButton,
                   styles.saveButton,
                   !canSave && styles.saveButtonDisabled,
-                  pressed && canSave && styles.saveButtonPressed,
+                  pressed && canSave && shared.pressed,
                 ]}
               >
                 <Text style={styles.saveButtonText}>{isSaving ? 'Saving...' : 'Save'}</Text>
@@ -649,18 +651,6 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 28,
     backgroundColor: colors.accent,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 5,
-  },
-  fabPressed: {
-    opacity: 0.85,
   },
   cardScroll: {
     flexGrow: 1,
@@ -844,13 +834,9 @@ const styles = StyleSheet.create({
   },
   clearButton: {
     minWidth: 110,
-    borderRadius: 9999,
-    borderWidth: 1,
-    borderColor: colors.border,
     backgroundColor: '#fff',
     paddingVertical: 12,
     paddingHorizontal: 18,
-    alignItems: 'center',
   },
   clearButtonText: {
     color: colors.text,
@@ -858,24 +844,16 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     minWidth: 110,
-    borderRadius: 9999,
     backgroundColor: colors.accent,
     paddingVertical: 12,
     paddingHorizontal: 18,
-    alignItems: 'center',
   },
   saveButtonDisabled: {
     opacity: 0.6,
   },
-  saveButtonPressed: {
-    opacity: 0.85,
-  },
   saveButtonText: {
     color: '#fff',
     fontWeight: '700',
-  },
-  pressed: {
-    opacity: 0.85,
   },
   imagePicker: {
     height: 120,

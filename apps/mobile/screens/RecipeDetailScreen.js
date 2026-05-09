@@ -3,6 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import ScreenShell from '../components/ScreenShell';
+import shared from '../sharedStyles';
 import { colors } from '../theme';
 import { supabase } from '../utils/supabase';
 
@@ -93,9 +94,9 @@ export default function RecipeDetailScreen({ route, navigation }) {
 
   return (
     <ScreenShell navigation={navigation} activeTab="recipes">
-      <View style={styles.outerContainer}>
+      <View style={shared.outerContainer}>
         <ScrollView
-          style={styles.scroll}
+          style={shared.scroll}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
@@ -113,7 +114,7 @@ export default function RecipeDetailScreen({ route, navigation }) {
                 accessibilityLabel="Back"
                 onPress={() => navigation.goBack()}
                 hitSlop={10}
-                style={({ pressed }) => [styles.backButton, pressed && styles.backButtonPressed]}
+                style={({ pressed }) => [shared.circleButton, styles.backButton, pressed && shared.pressed]}
               >
                 <Ionicons name="arrow-back" size={24} color={colors.text} />
               </Pressable>
@@ -186,7 +187,7 @@ export default function RecipeDetailScreen({ route, navigation }) {
                       accessibilityRole="button"
                       accessibilityLabel="Schedule recipe"
                       onPress={onSchedulePress}
-                      style={({ pressed }) => [styles.scheduleButton, pressed && styles.scheduleButtonPressed]}
+                      style={({ pressed }) => [shared.pillButton, styles.scheduleButton, pressed && shared.pressed]}
                     >
                       <Text style={styles.scheduleButtonText}>Schedule</Text>
                     </Pressable>
@@ -195,7 +196,7 @@ export default function RecipeDetailScreen({ route, navigation }) {
                       accessibilityRole="button"
                       accessibilityLabel="Edit recipe"
                       onPress={onEditPress}
-                      style={({ pressed }) => [styles.editButton, pressed && styles.editButtonPressed]}
+                      style={({ pressed }) => [styles.editButton, pressed && shared.pressed]}
                     >
                       <Image source={editIcon} style={styles.editIcon} resizeMode="contain" />
                     </Pressable>
@@ -211,13 +212,6 @@ export default function RecipeDetailScreen({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
-  outerContainer: {
-    flex: 1,
-    alignSelf: 'stretch',
-  },
-  scroll: {
-    flex: 1,
-  },
   scrollContent: {
     paddingBottom: 24,
   },
@@ -243,18 +237,6 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 28,
     backgroundColor: colors.accent,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 5,
-  },
-  backButtonPressed: {
-    opacity: 0.85,
   },
   card: {
     backgroundColor: '#fff',
@@ -335,14 +317,8 @@ const styles = StyleSheet.create({
   },
   scheduleButton: {
     backgroundColor: colors.accent,
-    borderRadius: 9999,
-    borderWidth: 1,
-    borderColor: colors.border,
     paddingVertical: 10,
     paddingHorizontal: 20,
-  },
-  scheduleButtonPressed: {
-    opacity: 0.85,
   },
   scheduleButtonText: {
     color: colors.white,
@@ -359,9 +335,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 4,
-  },
-  editButtonPressed: {
-    opacity: 0.85,
   },
   editIcon: {
     width: 24,

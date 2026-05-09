@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import ScreenShell from '../components/ScreenShell';
 import { useRecipes } from '../providers/RecipesProvider';
+import shared from '../sharedStyles';
 import { colors } from '../theme';
 
 const placeholderImage = require('../assets/no-picture.png');
@@ -25,7 +26,7 @@ export default function RecipesScreen({ navigation }) {
 
   const renderListHeader = () => (
     <View style={styles.pageHeaderRow}>
-      <Text style={styles.pageTitle}>{pageTitle}</Text>
+      <Text style={shared.pageTitle}>{pageTitle}</Text>
     </View>
   );
 
@@ -80,7 +81,7 @@ export default function RecipesScreen({ navigation }) {
         accessibilityRole="button"
         accessibilityLabel="Add recipe"
         onPress={() => navigation.navigate('AddRecipe')}
-        style={({ pressed }) => [styles.fab, pressed && styles.fabPressed]}
+        style={({ pressed }) => [shared.fabArea, shared.fabMainButton, pressed && shared.pressed]}
       >
         <Ionicons name="add" size={26} color={colors.text} />
       </Pressable>
@@ -103,14 +104,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: 6,
-    marginBottom: 16,
-  },
-  pageTitle: {
-    flex: 1,
-    textAlign: 'left',
-    fontSize: 28,
-    fontWeight: '700',
-    color: colors.text,
   },
   recipeCard: {
     height: 126,
@@ -164,28 +157,6 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 15,
     fontWeight: '600',
-  },
-  fab: {
-    position: 'absolute',
-    right: 20,
-    bottom: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.accent,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 20,
-    shadowColor: '#000',
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 5,
-  },
-  fabPressed: {
-    opacity: 0.85,
   },
   pressed: {
     opacity: 0.8,
