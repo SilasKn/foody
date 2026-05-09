@@ -1,6 +1,6 @@
 import { useFocusEffect } from '@react-navigation/native';
-import { useCallback, useState } from 'react';
-import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useRef, useState } from 'react';
+import { Animated, ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import ScreenShell from '../components/ScreenShell';
 import { colors } from '../theme';
 import { supabase } from '../utils/supabase';
@@ -22,6 +22,24 @@ function parseDayHeader(isoDate) {
 export default function CalendarScreen({ navigation }) {
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const anim = useRef(new Animated.Value(0)).current;
+
+  function toggleMenu() {
+    const toValue = menuOpen ? 0 : 1;
+    setMenuOpen(!menuOpen);
+    Animated.spring(anim, { toValue, useNativeDriver: true, friction: 6 }).start();
+  }
+
+  function subButtonStyle(offsetMultiplier) {
+    return {
+      opacity: anim,
+      transform: [{ translateY: anim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [20 * offsetMultiplier, 0],
+      }) }],
+    };
+  }
 
   useFocusEffect(
     useCallback(() => {
@@ -114,7 +132,14 @@ export default function CalendarScreen({ navigation }) {
               <View key={group.date}>
                 <Text style={styles.dayHeader}>{parseDayHeader(group.date)}</Text>
                 {group.entries.map(entry => (
-                  <View key={entry.id} style={styles.recipeRow}>
+                  <Pressable
+                    key={entry.id}
+                    accessibilityRole="button"
+                    onPress={() => navigation.navigate('RecipeDetail', {
+                      recipe: { id: entry.recipe_id, name: entry.recipes?.name ?? '' },
+                    })}
+                    style={({ pressed }) => [styles.recipeRow, pressed && { opacity: 0.75 }]}
+                  >
                     <View style={styles.recipeImageWrapper}>
                       <Image
                         source={entry.imageUrl ? { uri: entry.imageUrl } : placeholderImage}
@@ -128,12 +153,33 @@ export default function CalendarScreen({ navigation }) {
                       </Text>
                     </View>
                     <Text style={styles.mealType}>{entry.scheduled_as}</Text>
-                  </View>
+                  </Pressable>
                 ))}
               </View>
             ))
           )}
         </ScrollView>
+
+        <View style={styles.fabArea} pointerEvents="box-none">
+          <Animated.View style={[styles.subButton, subButtonStyle(2)]}>
+            <Pressable style={styles.iconCircle} onPress={() => {}}>
+              <Image source={require('../assets/trashcan-icon.png')} style={styles.fabIcon} />
+            </Pressable>
+          </Animated.View>
+          <Animated.View style={[styles.subButton, subButtonStyle(1)]}>
+            <Pressable style={styles.iconCircle} onPress={() => {}}>
+              <Image source={require('../assets/calendar-icon.png')} style={styles.fabIcon} />
+            </Pressable>
+          </Animated.View>
+          <Pressable
+            style={({ pressed }) => [styles.iconCircle, styles.fabMainButton, pressed && { opacity: 0.8 }]}
+            onPress={toggleMenu}
+            accessibilityRole="button"
+            accessibilityLabel="Open menu"
+          >
+            <Image source={require('../assets/icon_drei_punkte.png')} style={styles.fabIcon} />
+          </Pressable>
+        </View>
       </View>
     </ScreenShell>
   );
@@ -150,7 +196,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 4,
     paddingTop: 8,
-    paddingBottom: 24,
+    paddingBottom: 100,
   },
   pageTitle: {
     fontSize: 28,
@@ -207,5 +253,38 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textMuted,
     marginLeft: 8,
+  },
+  fabArea: {
+    position: 'absolute',
+    right: 5,
+    bottom: 20,
+    alignItems: 'center',
+    zIndex: 20,
+  },
+  subButton: {
+    marginBottom: 10,
+  },
+  iconCircle: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: colors.cream,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 5,
+  },
+  fabIcon: {
+    width: 26,
+    height: 26,
+    resizeMode: 'contain',
+  },
+  fabMainButton: {
+    backgroundColor: colors.accent,
   },
 });

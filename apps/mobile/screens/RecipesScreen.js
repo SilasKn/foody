@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
   pageTitle: {
     flex: 1,
     textAlign: 'left',
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '700',
     color: colors.text,
   },
