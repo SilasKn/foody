@@ -587,7 +587,7 @@ export default function AddRecipeScreen({ navigation, route }) {
             </ScrollView>
 
             <View style={styles.buttonRow}>
-              {!editRecipe && (
+              {/* {!editRecipe && (
                 <Pressable
                   accessibilityRole="button"
                   onPress={onClear}
@@ -596,7 +596,7 @@ export default function AddRecipeScreen({ navigation, route }) {
                 >
                   <Text style={styles.clearButtonText}>Clear</Text>
                 </Pressable>
-              )}
+              )} */}
               <Pressable
                 accessibilityRole="button"
                 onPress={onSave}
