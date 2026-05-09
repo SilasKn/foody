@@ -1,30 +1,39 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../providers/AuthProvider';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../theme';
 
-function TabPill({ label, active, onPress }) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.pill,
-        active ? styles.pillActive : styles.pillInactive,
-        pressed && styles.pillPressed,
-      ]}
-    >
-      <Text style={styles.pillLabel}>{label}</Text>
-    </Pressable>
-  );
-}
+const TAB_INDEX = { home: 0, recipes: 1, calendar: 2 };
+const TABS = [
+  { label: 'Home',     key: 'home',     route: 'Start'    },
+  { label: 'Recipes',  key: 'recipes',  route: 'Recipes'  },
+  { label: 'Calendar', key: 'calendar', route: 'Calendar' },
+];
 
 export default function ScreenShell({ navigation, activeTab, hideTabBar, children }) {
   const insets = useSafeAreaInsets();
   const { session, signOut } = useAuth();
   const [logoutVisible, setLogoutVisible] = useState(false);
+  const [tabContainerWidth, setTabContainerWidth] = useState(0);
+  const slideAnim = useRef(new Animated.Value(TAB_INDEX[activeTab] ?? 0)).current;
+
+  useEffect(() => {
+    Animated.spring(slideAnim, {
+      toValue: TAB_INDEX[activeTab] ?? 0,
+      useNativeDriver: true,
+      damping: 20,
+      stiffness: 200,
+    }).start();
+  }, [activeTab]);
+
+  const innerWidth = Math.max(tabContainerWidth - 6, 0);
+  const tabWidth = innerWidth / 3;
+  const indicatorTranslateX = slideAnim.interpolate({
+    inputRange: [0, 1, 2],
+    outputRange: [0, tabWidth, 2 * tabWidth],
+  });
 
   const onUserPress = () => {
     if (session) return setLogoutVisible(true);
@@ -51,28 +60,37 @@ export default function ScreenShell({ navigation, activeTab, hideTabBar, childre
 
       <View style={styles.body}>{children}</View>
 
-      {!hideTabBar && <View
-        style={[
-          styles.tabBar,
-          { paddingBottom: Math.max(insets.bottom, 8) },
-        ]}
-      >
-        <TabPill
-          label="Home"
-          active={activeTab === 'home'}
-          onPress={() => navigation.navigate('Start')}
-        />
-        <TabPill
-          label="Recipes"
-          active={activeTab === 'recipes'}
-          onPress={() => navigation.navigate('Recipes')}
-        />
-        <TabPill
-          label="Calendar"
-          active={activeTab === 'calendar'}
-          onPress={() => navigation.navigate('Calendar')}
-        />
-      </View>}
+      {!hideTabBar && (
+        <View style={[styles.tabBar, { paddingBottom: Math.max(insets.bottom, 8) }]}>
+          <View
+            style={styles.tabContainer}
+            onLayout={(e) => setTabContainerWidth(e.nativeEvent.layout.width)}
+          >
+            <Animated.View
+              style={[
+                styles.activeIndicator,
+                {
+                  width: tabWidth,
+                  transform: [{ translateX: indicatorTranslateX }],
+                },
+              ]}
+            />
+            {TABS.map(({ label, key, route }) => (
+              <Pressable
+                key={key}
+                style={styles.tab}
+                onPress={() => navigation.navigate(route)}
+                accessibilityRole="button"
+                accessibilityLabel={label}
+              >
+                <Text style={[styles.tabLabel, activeTab === key && styles.tabLabelActive]}>
+                  {label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      )}
 
       <Modal
         transparent
@@ -137,40 +155,38 @@ const styles = StyleSheet.create({
   },
   tabBar: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     paddingHorizontal: 16,
     paddingTop: 12,
     backgroundColor: colors.cream,
-    gap: 6,
   },
-  pill: {
+  tabContainer: {
     flex: 1,
+    height: 50,
+    flexDirection: 'row',
+    backgroundColor: colors.white,
     borderRadius: 9999,
-    paddingVertical: 12,
-    paddingHorizontal: 6,
+    padding: 3,
+  },
+  activeIndicator: {
+    position: 'absolute',
+    top: 3,
+    bottom: 3,
+    left: 3,
+    borderRadius: 9999,
+    backgroundColor: colors.accent,
+  },
+  tab: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: 2,
-    minWidth: 0,
   },
-  pillInactive: {
-    backgroundColor: colors.pillInactive,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  pillActive: {
-    backgroundColor: colors.pillActive,
-    borderWidth: 2,
-    borderColor: colors.border,
-  },
-  pillPressed: {
-    opacity: 0.85,
-  },
-  pillLabel: {
+  tabLabel: {
     fontSize: 13,
     fontWeight: '700',
     color: colors.text,
+  },
+  tabLabelActive: {
+    color: colors.white,
   },
   backdrop: {
     flex: 1,
