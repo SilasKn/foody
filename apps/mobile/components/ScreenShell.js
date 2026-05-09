@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.cream,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: 15,
   },
   tabBar: {
     flexDirection: 'row',

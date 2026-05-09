@@ -13,6 +13,11 @@ function formatDate(iso) {
   return new Date(iso).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 }
 
+function formatScheduleDate(isoDate) {
+  const [year, month, day] = isoDate.split('-');
+  return `${day}.${month}.${year.slice(2)}`;
+}
+
 export default function RecipeDetailScreen({ route, navigation }) {
   const { recipe } = route.params;
   const [details, setDetails] = useState(null);
@@ -25,13 +30,15 @@ export default function RecipeDetailScreen({ route, navigation }) {
       async function load() {
         setLoading(true);
         const [
-          { data: rec,     error: recErr },
-          { data: ings,    error: ingsErr },
-          { data: imgData, error: imgErr },
+          { data: rec,       error: recErr },
+          { data: ings,      error: ingsErr },
+          { data: imgData,   error: imgErr },
+          { data: schedules },
         ] = await Promise.all([
           supabase.from('recipes').select('name, description, created_at').eq('id', recipe.id).single(),
           supabase.from('recipe_ingredients').select('quantity, unit, ingredients(name)').eq('recipe_id', recipe.id),
           supabase.from('recipe_images').select('file_path').eq('recipe_id', recipe.id).maybeSingle(),
+          supabase.from('recipe_schedule').select('scheduled_for, scheduled_as').eq('recipe_id', recipe.id).order('scheduled_for', { ascending: true }),
         ]);
 
         let imageUrl = null;
@@ -43,7 +50,7 @@ export default function RecipeDetailScreen({ route, navigation }) {
         }
 
         if (active) {
-          setDetails({ ...rec, ingredients: ings ?? [], imageUrl, imagePath: imgData?.file_path ?? null });
+          setDetails({ ...rec, ingredients: ings ?? [], schedules: schedules ?? [], imageUrl, imagePath: imgData?.file_path ?? null });
           setLoading(false);
         }
       }
@@ -52,6 +59,13 @@ export default function RecipeDetailScreen({ route, navigation }) {
       return () => { active = false; };
     }, [recipe.id])
   );
+
+  const onSchedulePress = () => {
+    if (!details) return;
+    navigation.navigate('ScheduleRecipe', {
+      recipe: { id: recipe.id, name: details.name, imageUrl: details.imageUrl ?? null },
+    });
+  };
 
   const onEditPress = () => {
     if (!details) return;
@@ -135,14 +149,42 @@ export default function RecipeDetailScreen({ route, navigation }) {
                     )}
                   </View>
 
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Edit recipe"
-                    onPress={onEditPress}
-                    style={({ pressed }) => [styles.editButton, pressed && styles.editButtonPressed]}
-                  >
-                    <Image source={editIcon} style={styles.editIcon} resizeMode="contain" />
-                  </Pressable>
+                  <View style={styles.sectionDivider} />
+
+                  <View style={styles.section}>
+                    <Text style={styles.sectionLabel}>Scheduled for:</Text>
+                    {details.schedules.length === 0 ? (
+                      <Text style={styles.placeholderText}>Not scheduled yet.</Text>
+                    ) : (
+                      details.schedules.map((entry, index) => (
+                        <View key={index} style={styles.ingredientRow}>
+                          <Text style={styles.ingredientText}>
+                            — {formatScheduleDate(entry.scheduled_for)} as {entry.scheduled_as}
+                          </Text>
+                        </View>
+                      ))
+                    )}
+                  </View>
+
+                  <View style={styles.actionsRow}>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="Schedule recipe"
+                      onPress={onSchedulePress}
+                      style={({ pressed }) => [styles.scheduleButton, pressed && styles.scheduleButtonPressed]}
+                    >
+                      <Text style={styles.scheduleButtonText}>Schedule</Text>
+                    </Pressable>
+
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="Edit recipe"
+                      onPress={onEditPress}
+                      style={({ pressed }) => [styles.editButton, pressed && styles.editButtonPressed]}
+                    >
+                      <Image source={editIcon} style={styles.editIcon} resizeMode="contain" />
+                    </Pressable>
+                  </View>
                 </>
               )}
             </View>
@@ -264,8 +306,29 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.text,
   },
+  actionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  scheduleButton: {
+    backgroundColor: colors.accent,
+    borderRadius: 9999,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+  },
+  scheduleButtonPressed: {
+    opacity: 0.85,
+  },
+  scheduleButtonText: {
+    color: colors.white,
+    fontWeight: '600',
+    fontSize: 15,
+  },
   editButton: {
-    alignSelf: 'flex-end',
     width: 48,
     height: 48,
     borderRadius: 28,

@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { View, Text } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AddRecipeScreen from './screens/AddRecipeScreen';
+import ScheduleRecipeScreen from './screens/ScheduleRecipeScreen';
 import CalendarScreen from './screens/CalendarScreen';
 import LoginScreen from './screens/LoginScreen';
 import RecipeDetailScreen from './screens/RecipeDetailScreen';
@@ -44,6 +45,7 @@ function AppRoutes() {
           <Stack.Screen name="Recipes" component={RecipesScreen} />
           <Stack.Screen name="Calendar" component={CalendarScreen} />
           <Stack.Screen name="RecipeDetail" component={RecipeDetailScreen} />
+          <Stack.Screen name="ScheduleRecipe" component={ScheduleRecipeScreen} />
           <Stack.Screen
             name="AddRecipe"
             component={AddRecipeScreen}
