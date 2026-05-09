@@ -1,6 +1,8 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useRef, useState } from 'react';
-import { Animated, ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Animated, ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ScreenShell from '../components/ScreenShell';
 import shared from '../sharedStyles';
 import { colors } from '../theme';
@@ -24,7 +26,10 @@ export default function CalendarScreen({ navigation }) {
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [deleteMode, setDeleteMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState(new Set());
   const anim = useRef(new Animated.Value(0)).current;
+  const insets = useSafeAreaInsets();
 
   function toggleMenu() {
     const toValue = menuOpen ? 0 : 1;
@@ -40,6 +45,43 @@ export default function CalendarScreen({ navigation }) {
         outputRange: [20 * offsetMultiplier, 0],
       }) }],
     };
+  }
+
+  function enterDeleteMode() {
+    setSelectedIds(new Set());
+    setMenuOpen(false);
+    anim.setValue(0);
+    setDeleteMode(true);
+  }
+
+  function exitDeleteMode() {
+    setDeleteMode(false);
+    setSelectedIds(new Set());
+  }
+
+  function toggleSelect(id) {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  async function handleDelete() {
+    if (selectedIds.size === 0) {
+      setDeleteMode(false);
+      return;
+    }
+    const ids = [...selectedIds];
+    setGroups(prev =>
+      prev
+        .map(g => ({ ...g, entries: g.entries.filter(e => !selectedIds.has(e.id)) }))
+        .filter(g => g.entries.length > 0)
+    );
+    setDeleteMode(false);
+    setSelectedIds(new Set());
+    const { error } = await supabase.from('recipe_schedule').delete().in('id', ids);
+    if (error) Alert.alert('Error', 'Could not delete the selected entries.');
   }
 
   useFocusEffect(
@@ -62,7 +104,6 @@ export default function CalendarScreen({ navigation }) {
 
         const rawEntries = entries ?? [];
 
-        // Batch-fetch images for all unique recipe IDs
         const uniqueIds = [...new Set(rawEntries.map(e => e.recipe_id))];
         let imageUrlMap = {};
 
@@ -87,7 +128,6 @@ export default function CalendarScreen({ navigation }) {
           }
         }
 
-        // Group entries by date
         const grouped = [];
         let currentDate = null;
         let currentGroup = null;
@@ -115,11 +155,14 @@ export default function CalendarScreen({ navigation }) {
   );
 
   return (
-    <ScreenShell navigation={navigation} activeTab="calendar">
+    <ScreenShell navigation={navigation} activeTab="calendar" hideTabBar={deleteMode}>
       <View style={shared.outerContainer}>
         <ScrollView
           style={shared.scroll}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[
+            styles.scrollContent,
+            deleteMode && { paddingBottom: 100 + insets.bottom },
+          ]}
           showsVerticalScrollIndicator={false}
         >
           <Text style={shared.pageTitle}>Upcoming recipes</Text>
@@ -136,11 +179,25 @@ export default function CalendarScreen({ navigation }) {
                   <Pressable
                     key={entry.id}
                     accessibilityRole="button"
-                    onPress={() => navigation.navigate('RecipeDetail', {
-                      recipe: { id: entry.recipe_id, name: entry.recipes?.name ?? '' },
-                    })}
+                    onPress={() => {
+                      if (deleteMode) {
+                        toggleSelect(entry.id);
+                      } else {
+                        navigation.navigate('RecipeDetail', {
+                          recipe: { id: entry.recipe_id, name: entry.recipes?.name ?? '' },
+                        });
+                      }
+                    }}
                     style={({ pressed }) => [styles.recipeRow, pressed && { opacity: 0.75 }]}
                   >
+                    {deleteMode && (
+                      <Ionicons
+                        name={selectedIds.has(entry.id) ? 'checkbox' : 'square-outline'}
+                        size={24}
+                        color={selectedIds.has(entry.id) ? colors.accent : colors.textMuted}
+                        style={styles.checkboxIcon}
+                      />
+                    )}
                     <View style={styles.recipeImageWrapper}>
                       <Image
                         source={entry.imageUrl ? { uri: entry.imageUrl } : placeholderImage}
@@ -162,26 +219,47 @@ export default function CalendarScreen({ navigation }) {
         </ScrollView>
       </View>
 
-      <View style={shared.fabArea} pointerEvents="box-none">
-        <Animated.View style={subButtonStyle(2)}>
-          <Pressable style={shared.fabSubButton} onPress={() => {}}>
-            <Image source={require('../assets/trashcan-icon.png')} style={styles.fabIcon} />
+      {!deleteMode && (
+        <View style={shared.fabArea} pointerEvents="box-none">
+          <Animated.View style={subButtonStyle(2)}>
+            <Pressable style={shared.fabSubButton} onPress={enterDeleteMode}>
+              <Image source={require('../assets/trashcan-icon.png')} style={styles.fabIcon} />
+            </Pressable>
+          </Animated.View>
+          <Animated.View style={subButtonStyle(1)}>
+            <Pressable style={shared.fabSubButton} onPress={() => {}}>
+              <Image source={require('../assets/calendar-icon.png')} style={styles.fabIcon} />
+            </Pressable>
+          </Animated.View>
+          <Pressable
+            style={({ pressed }) => [shared.fabMainButton, pressed && shared.pressed]}
+            onPress={toggleMenu}
+            accessibilityRole="button"
+            accessibilityLabel="Open menu"
+          >
+            <Image source={require('../assets/icon_drei_punkte.png')} style={styles.fabIcon} />
           </Pressable>
-        </Animated.View>
-        <Animated.View style={subButtonStyle(1)}>
-          <Pressable style={shared.fabSubButton} onPress={() => {}}>
-            <Image source={require('../assets/calendar-icon.png')} style={styles.fabIcon} />
+        </View>
+      )}
+
+      {deleteMode && (
+        <View style={[styles.actionBar, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+          <Pressable
+            style={({ pressed }) => [shared.pillButton, styles.backBtn, pressed && shared.pressed]}
+            onPress={exitDeleteMode}
+            accessibilityRole="button"
+          >
+            <Text style={styles.backBtnLabel}>Back</Text>
           </Pressable>
-        </Animated.View>
-        <Pressable
-          style={({ pressed }) => [shared.fabMainButton, pressed && shared.pressed]}
-          onPress={toggleMenu}
-          accessibilityRole="button"
-          accessibilityLabel="Open menu"
-        >
-          <Image source={require('../assets/icon_drei_punkte.png')} style={styles.fabIcon} />
-        </Pressable>
-      </View>
+          <Pressable
+            style={({ pressed }) => [shared.pillButton, styles.deleteBtn, pressed && shared.pressed]}
+            onPress={handleDelete}
+            accessibilityRole="button"
+          >
+            <Text style={styles.deleteBtnLabel}>Delete</Text>
+          </Pressable>
+        </View>
+      )}
     </ScreenShell>
   );
 }
@@ -211,6 +289,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 8,
+  },
+  checkboxIcon: {
+    marginRight: 10,
   },
   recipeImageWrapper: {
     width: 64,
@@ -245,5 +326,36 @@ const styles = StyleSheet.create({
     width: 26,
     height: 26,
     resizeMode: 'contain',
+  },
+  actionBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    backgroundColor: colors.cream,
+  },
+  backBtn: {
+    flex: 1,
+    paddingVertical: 18,
+    backgroundColor: colors.white,
+  },
+  backBtnLabel: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  deleteBtn: {
+    flex: 1,
+    paddingVertical: 18,
+    backgroundColor: colors.danger,
+  },
+  deleteBtnLabel: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.white,
   },
 });

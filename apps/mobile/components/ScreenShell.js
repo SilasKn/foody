@@ -21,7 +21,7 @@ function TabPill({ label, active, onPress }) {
   );
 }
 
-export default function ScreenShell({ navigation, activeTab, children }) {
+export default function ScreenShell({ navigation, activeTab, hideTabBar, children }) {
   const insets = useSafeAreaInsets();
   const { session, signOut } = useAuth();
   const [logoutVisible, setLogoutVisible] = useState(false);
@@ -51,7 +51,7 @@ export default function ScreenShell({ navigation, activeTab, children }) {
 
       <View style={styles.body}>{children}</View>
 
-      <View
+      {!hideTabBar && <View
         style={[
           styles.tabBar,
           { paddingBottom: Math.max(insets.bottom, 8) },
@@ -72,7 +72,7 @@ export default function ScreenShell({ navigation, activeTab, children }) {
           active={activeTab === 'calendar'}
           onPress={() => navigation.navigate('Calendar')}
         />
-      </View>
+      </View>}
 
       <Modal
         transparent

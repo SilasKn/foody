@@ -45,13 +45,21 @@ function AppRoutes() {
           <Stack.Screen name="Recipes" component={RecipesScreen} />
           <Stack.Screen name="Calendar" component={CalendarScreen} />
           <Stack.Screen name="RecipeDetail" component={RecipeDetailScreen} />
-          <Stack.Screen name="ScheduleRecipe" component={ScheduleRecipeScreen} />
+          <Stack.Screen
+            name="ScheduleRecipe"
+            component={ScheduleRecipeScreen}
+            options={{
+              presentation: 'transparentModal',
+              animation: 'none',
+              contentStyle: { backgroundColor: 'transparent' },
+            }}
+          />
           <Stack.Screen
             name="AddRecipe"
             component={AddRecipeScreen}
             options={{
               presentation: 'transparentModal',
-              animation: 'slide_from_bottom',
+              animation: 'none',
               contentStyle: { backgroundColor: 'transparent' },
             }}
           />

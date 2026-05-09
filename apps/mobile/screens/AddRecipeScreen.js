@@ -4,6 +4,8 @@ import * as ImagePicker from 'expo-image-picker';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
+  Animated,
+  Dimensions,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -26,6 +28,15 @@ import { uploadImage } from '../utils/imageUpload';
 import { supabase } from '../utils/supabase';
 
 export default function AddRecipeScreen({ navigation, route }) {
+  const backdropAnim = useRef(new Animated.Value(0)).current;
+  const cardSlideAnim = useRef(new Animated.Value(Dimensions.get('window').height)).current;
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(backdropAnim, { toValue: 1, duration: 250, useNativeDriver: true }),
+      Animated.spring(cardSlideAnim, { toValue: 0, useNativeDriver: true, damping: 25, stiffness: 200 }),
+    ]).start();
+  }, []);
+
   const unitOptions = ['g', 'ml', 'unit'];
   const { user } = useAuth();
   const { prependRecipe, refreshRecipesForMode, filterModes } = useRecipes();
@@ -369,13 +380,15 @@ export default function AddRecipeScreen({ navigation, route }) {
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+    <View style={styles.container}>
+      <Animated.View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.35)', opacity: backdropAnim }]} />
+      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <View style={styles.modalBody}>
-          <View style={styles.card}>
+          <Animated.View style={[styles.card, { transform: [{ translateY: cardSlideAnim }] }]}>
             <View style={styles.backRow}>
               <Pressable
                 accessibilityRole="button"
@@ -598,24 +611,24 @@ export default function AddRecipeScreen({ navigation, route }) {
                 <Text style={styles.saveButtonText}>{isSaving ? 'Saving...' : 'Save'}</Text>
               </Pressable>
             </View>
-          </View>
+          </Animated.View>
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: { flex: 1 },
   safe: {
     flex: 1,
-    backgroundColor: 'transparent',
   },
   flex: { flex: 1 },
   modalBody: {
     flex: 1,
     paddingHorizontal: 24,
     paddingVertical: 16,
-    backgroundColor: 'transparent',
     justifyContent: 'center',
   },
   card: {

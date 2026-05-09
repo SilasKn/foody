@@ -1,8 +1,8 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
-import { Alert, Image, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import ScreenShell from '../components/ScreenShell';
+import { useEffect, useRef, useState } from 'react';
+import { Alert, Animated, Dimensions, Image, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../providers/AuthProvider';
 import { colors } from '../theme';
 import { supabase } from '../utils/supabase';
@@ -18,9 +18,19 @@ function formatDateDisplay(date) {
 }
 
 export default function ScheduleRecipeScreen({ route, navigation }) {
+  const backdropAnim = useRef(new Animated.Value(0)).current;
+  const cardSlideAnim = useRef(new Animated.Value(Dimensions.get('window').height)).current;
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(backdropAnim, { toValue: 1, duration: 250, useNativeDriver: true }),
+      Animated.spring(cardSlideAnim, { toValue: 0, useNativeDriver: true, damping: 25, stiffness: 200 }),
+    ]).start();
+  }, []);
+
   const { recipe } = route.params;
   const { user } = useAuth();
   const [selectedDate, setSelectedDate] = useState(null);
+  const [tempPickerDate, setTempPickerDate] = useState(null);
   const [showPicker, setShowPicker] = useState(false);
   const [mealType, setMealType] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -32,7 +42,7 @@ export default function ScheduleRecipeScreen({ route, navigation }) {
       setShowPicker(false);
       if (event.type === 'set' && date) setSelectedDate(date);
     } else {
-      if (date) setSelectedDate(date);
+      if (date) setTempPickerDate(date);
     }
   };
 
@@ -57,41 +67,46 @@ export default function ScheduleRecipeScreen({ route, navigation }) {
   };
 
   return (
-    <ScreenShell navigation={navigation} activeTab="recipes">
-      <View style={styles.outerContainer}>
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.card}>
-            <View style={styles.imageSection}>
-              <View style={styles.imageWrapper}>
-                <Image
-                  source={recipe.imageUrl ? { uri: recipe.imageUrl } : placeholderImage}
-                  style={styles.image}
-                  resizeMode="cover"
-                />
-              </View>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Back"
-                onPress={() => navigation.goBack()}
-                hitSlop={10}
-                style={({ pressed }) => [styles.backButton, pressed && { opacity: 0.85 }]}
-              >
-                <Ionicons name="arrow-back" size={24} color={colors.text} />
-              </Pressable>
+    <View style={styles.container}>
+      <Animated.View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.35)', opacity: backdropAnim }]} />
+      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+      <View style={styles.modalBody}>
+        <Animated.View style={[styles.card, { transform: [{ translateY: cardSlideAnim }] }]}>
+          <View style={styles.imageSection}>
+            <View style={styles.imageWrapper}>
+              <Image
+                source={recipe.imageUrl ? { uri: recipe.imageUrl } : placeholderImage}
+                style={styles.image}
+                resizeMode="cover"
+              />
             </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Back"
+              onPress={() => navigation.goBack()}
+              hitSlop={10}
+              style={({ pressed }) => [styles.backButton, pressed && { opacity: 0.85 }]}
+            >
+              <Ionicons name="arrow-back" size={24} color={colors.text} />
+            </Pressable>
+          </View>
 
-            <View style={styles.divider} />
+          <View style={styles.divider} />
 
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
             <View style={styles.cardContent}>
               <Text style={styles.sectionLabel}>Schedule for :</Text>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Select date"
-                onPress={() => setShowPicker(true)}
+                onPress={() => {
+                  setTempPickerDate(selectedDate ?? new Date());
+                  setShowPicker(true);
+                }}
                 style={({ pressed }) => [styles.dateDropdown, pressed && { opacity: 0.8 }]}
               >
                 <Text style={[styles.dateDropdownText, !selectedDate && styles.datePlaceholder]}>
@@ -137,8 +152,8 @@ export default function ScheduleRecipeScreen({ route, navigation }) {
                 <Text style={styles.scheduleButtonText}>{saving ? 'Saving…' : 'Schedule'}</Text>
               </Pressable>
             </View>
-          </View>
-        </ScrollView>
+          </ScrollView>
+        </Animated.View>
       </View>
 
       {Platform.OS === 'ios' ? (
@@ -149,19 +164,23 @@ export default function ScheduleRecipeScreen({ route, navigation }) {
           onRequestClose={() => setShowPicker(false)}
         >
           <Pressable style={styles.pickerBackdrop} onPress={() => setShowPicker(false)}>
-            <View style={styles.pickerCard}>
+            <Pressable style={styles.pickerCard} onPress={() => {}}>
               <DateTimePicker
-                value={selectedDate ?? new Date()}
+                value={tempPickerDate ?? new Date()}
                 mode="date"
                 display="spinner"
                 minimumDate={new Date()}
                 onChange={onDateChange}
                 locale="de-DE"
+                themeVariant="light"
               />
-              <Pressable style={styles.pickerDone} onPress={() => setShowPicker(false)}>
+              <Pressable style={styles.pickerDone} onPress={() => {
+                if (tempPickerDate) setSelectedDate(tempPickerDate);
+                setShowPicker(false);
+              }}>
                 <Text style={styles.pickerDoneText}>Done</Text>
               </Pressable>
-            </View>
+            </Pressable>
           </Pressable>
         </Modal>
       ) : (
@@ -175,22 +194,26 @@ export default function ScheduleRecipeScreen({ route, navigation }) {
           />
         )
       )}
-    </ScreenShell>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  outerContainer: {
-    flex: 1,
-    alignSelf: 'stretch',
-  },
-  scroll: {
+  container: { flex: 1 },
+  safe: {
     flex: 1,
   },
-  scrollContent: {
-    paddingBottom: 24,
+  modalBody: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    justifyContent: 'center',
   },
   card: {
+    width: '100%',
+    height: '85%',
+    maxHeight: '85%',
     backgroundColor: colors.white,
     borderRadius: 28,
     borderWidth: 1,
@@ -201,7 +224,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     elevation: 3,
     overflow: 'hidden',
-    marginVertical: 20,
   },
   imageSection: {
     position: 'relative',
@@ -238,6 +260,13 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: colors.border,
+  },
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 24,
   },
   cardContent: {
     padding: 24,
