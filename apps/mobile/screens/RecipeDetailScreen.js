@@ -1,7 +1,7 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import ScreenShell from '../components/ScreenShell';
 import { colors } from '../theme';
 import { supabase } from '../utils/supabase';
@@ -38,7 +38,7 @@ export default function RecipeDetailScreen({ route, navigation }) {
           supabase.from('recipes').select('name, description, created_at').eq('id', recipe.id).single(),
           supabase.from('recipe_ingredients').select('quantity, unit, ingredients(name)').eq('recipe_id', recipe.id),
           supabase.from('recipe_images').select('file_path').eq('recipe_id', recipe.id).maybeSingle(),
-          supabase.from('recipe_schedule').select('scheduled_for, scheduled_as').eq('recipe_id', recipe.id).order('scheduled_for', { ascending: true }),
+          supabase.from('recipe_schedule').select('id, scheduled_for, scheduled_as').eq('recipe_id', recipe.id).order('scheduled_for', { ascending: true }),
         ]);
 
         let imageUrl = null;
@@ -59,6 +59,12 @@ export default function RecipeDetailScreen({ route, navigation }) {
       return () => { active = false; };
     }, [recipe.id])
   );
+
+  const onDeleteSchedule = async (id) => {
+    setDetails(prev => ({ ...prev, schedules: prev.schedules.filter(s => s.id !== id) }));
+    const { error } = await supabase.from('recipe_schedule').delete().eq('id', id);
+    if (error) Alert.alert('Error', 'Could not delete schedule entry.');
+  };
 
   const onSchedulePress = () => {
     if (!details) return;
@@ -156,11 +162,20 @@ export default function RecipeDetailScreen({ route, navigation }) {
                     {details.schedules.length === 0 ? (
                       <Text style={styles.placeholderText}>Not scheduled yet.</Text>
                     ) : (
-                      details.schedules.map((entry, index) => (
-                        <View key={index} style={styles.ingredientRow}>
+                      details.schedules.map((entry) => (
+                        <View key={entry.id} style={styles.scheduleEntryRow}>
                           <Text style={styles.ingredientText}>
                             — {formatScheduleDate(entry.scheduled_for)} as {entry.scheduled_as}
                           </Text>
+                          <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel="Delete schedule entry"
+                            onPress={() => onDeleteSchedule(entry.id)}
+                            hitSlop={8}
+                            style={({ pressed }) => pressed && { opacity: 0.5 }}
+                          >
+                            <Ionicons name="close" size={16} color={colors.textMuted} />
+                          </Pressable>
                         </View>
                       ))
                     )}
@@ -300,6 +315,12 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   ingredientRow: {
+    paddingVertical: 4,
+  },
+  scheduleEntryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingVertical: 4,
   },
   ingredientText: {
