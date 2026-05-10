@@ -6,6 +6,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { colors } from '../theme';
 
 const TAB_INDEX = { home: 0, recipes: 1, calendar: 2 };
+let lastTabIndex = 0;
 const TABS = [
   { label: 'Home',     key: 'home',     route: 'Start'    },
   { label: 'Recipes',  key: 'recipes',  route: 'Recipes'  },
@@ -17,9 +18,10 @@ export default function ScreenShell({ navigation, activeTab, hideTabBar, childre
   const { session, signOut } = useAuth();
   const [logoutVisible, setLogoutVisible] = useState(false);
   const [tabContainerWidth, setTabContainerWidth] = useState(0);
-  const slideAnim = useRef(new Animated.Value(TAB_INDEX[activeTab] ?? 0)).current;
+  const slideAnim = useRef(new Animated.Value(lastTabIndex)).current;
 
   useEffect(() => {
+    lastTabIndex = TAB_INDEX[activeTab] ?? 0;
     Animated.spring(slideAnim, {
       toValue: TAB_INDEX[activeTab] ?? 0,
       useNativeDriver: true,
@@ -164,7 +166,7 @@ const styles = StyleSheet.create({
     height: 50,
     flexDirection: 'row',
     backgroundColor: colors.white,
-    borderRadius: 9999,
+  borderRadius: 9999,
     padding: 3,
   },
   activeIndicator: {
