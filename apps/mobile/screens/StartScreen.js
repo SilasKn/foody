@@ -161,13 +161,13 @@ export default function StartScreen({ navigation }) {
           <Text style={[shared.typography.body, styles.emptyText]}>Nothing scheduled yet.</Text>
         )}
 
-        <View style={styles.fridgeHeaderRow}>
-          <View style={styles.fridgeHeaderText}>
-            <Text style={[shared.typography.h3, styles.sectionTitle]}>Prepare your fridge</Text>
-            <Text style={[shared.typography.sub2, styles.sectionSubtitle]}>
-              Everything to buy for the next
-            </Text>
-          </View>
+        <Text style={[shared.typography.h3, styles.sectionTitle, styles.fridgeTitle]}>
+          Prepare your fridge
+        </Text>
+        <View style={styles.fridgeSubtitleRow}>
+          <Text style={[shared.typography.sub2, styles.fridgeSubtitleInline]}>
+            Everything to buy for the next
+          </Text>
           <Pressable
             onPress={() => setRangePickerOpen(true)}
             style={({ pressed }) => [styles.rangePill, pressed && styles.pressed]}
@@ -285,14 +285,19 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.8,
   },
-  fridgeHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 12,
+  fridgeTitle: {
     marginTop: 28,
   },
-  fridgeHeaderText: {
-    flex: 1,
+  fridgeSubtitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 14,
+  },
+  fridgeSubtitleInline: {
+    color: colors.textMuted,
+    flexShrink: 1,
   },
   rangePill: {
     flexDirection: 'row',
@@ -304,7 +309,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     paddingHorizontal: 14,
     paddingVertical: 6,
-    marginBottom: 14,
+    borderWidth: 1,
+    borderStyle: 'solid',
+    borderColor: 'red',
   },
   rangePillText: {
     color: colors.text,
