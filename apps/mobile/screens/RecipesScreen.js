@@ -44,11 +44,11 @@ export default function RecipesScreen({ navigation }) {
           resizeMode="cover"
         />
         <View style={styles.recipeCardContent}>
-          <Text style={[shared.typography.h3, styles.recipeTitle]} numberOfLines={1}>
+          <Text style={[shared.typography.sub1, styles.recipeTitle]} numberOfLines={1}>
             {item.name}
           </Text>
-          <Text style={[shared.typography.sub1, styles.recipeDate]}>Added: {item.dateLabel}</Text>
-          <Text style={[shared.typography.sub2, styles.recipeAuthor]}>{item.authorLabel}</Text>
+          <Text style={[shared.typography.sub2, styles.recipeDate]}>Added: {item.dateLabel}</Text>
+          <Text style={[shared.typography.bodySmall, styles.recipeAuthor]}>{item.authorLabel}</Text>
         </View>
       </View>
     </Pressable>

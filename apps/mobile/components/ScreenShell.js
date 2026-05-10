@@ -52,7 +52,7 @@ export default function ScreenShell({ navigation, activeTab, hideTabBar, childre
           accessibilityRole="button"
           accessibilityLabel="Go to home"
         >
-          <Text style={[shared.typography.h1, styles.logo]}>
+          <Text style={[styles.logo]}>
             foody<Text style={styles.logoDot}>.</Text>
           </Text>
         </Pressable>
@@ -143,6 +143,8 @@ const styles = StyleSheet.create({
   },
   logo: {
     color: colors.text,
+    fontSize: 24,
+    fontWeight: 700
   },
   logoDot: {
     color: colors.accent,
