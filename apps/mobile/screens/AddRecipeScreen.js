@@ -407,7 +407,7 @@ export default function AddRecipeScreen({ navigation, route }) {
                   hitSlop={10}
                   style={({ pressed }) => [pressed && shared.pressed]}
                 >
-                  <Text style={styles.deleteText}>Delete</Text>
+                  <Text style={[shared.typography.sub1, styles.deleteText]}>Delete</Text>
                 </Pressable>
               )}
             </View>
@@ -418,7 +418,7 @@ export default function AddRecipeScreen({ navigation, route }) {
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
             >
-              <Text style={styles.label}>Recipe name</Text>
+              <Text style={[shared.typography.sub2, styles.label]}>Recipe name</Text>
               <TextInput
                 value={recipeName}
                 onChangeText={setRecipeName}
@@ -428,7 +428,7 @@ export default function AddRecipeScreen({ navigation, route }) {
                 returnKeyType="next"
               />
 
-              <Text style={styles.label}>Recipe description</Text>
+              <Text style={[shared.typography.sub2, styles.label]}>Recipe description</Text>
               <TextInput
                 value={recipeDescription}
                 onChangeText={setRecipeDescription}
@@ -439,7 +439,7 @@ export default function AddRecipeScreen({ navigation, route }) {
                 textAlignVertical="top"
               />
 
-              <Text style={styles.label}>Recipe Image</Text>
+              <Text style={[shared.typography.sub2, styles.label]}>Recipe Image</Text>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={selectedImage ? 'Change recipe image' : 'Add recipe image'}
@@ -455,13 +455,13 @@ export default function AddRecipeScreen({ navigation, route }) {
                     />
                     <View style={styles.imageOverlay} pointerEvents="none">
                       <Ionicons name="camera-outline" size={28} color={colors.white} />
-                      <Text style={styles.imageOverlayText}>Edit</Text>
+                      <Text style={[shared.typography.sub2, styles.imageOverlayText]}>Edit</Text>
                     </View>
                   </>
                 ) : (
                   <View style={styles.imagePlaceholder}>
                     <Ionicons name="camera-outline" size={28} color={colors.textMuted} />
-                    <Text style={styles.imagePlaceholderText}>Add photo</Text>
+                    <Text style={[shared.typography.sub2, styles.imagePlaceholderText]}>Add photo</Text>
                   </View>
                 )}
               </Pressable>
@@ -472,11 +472,11 @@ export default function AddRecipeScreen({ navigation, route }) {
                   onPress={onRemoveImage}
                   style={({ pressed }) => [styles.removeImageButton, pressed && shared.pressed]}
                 >
-                  <Text style={styles.removeImageText}>Remove image</Text>
+                  <Text style={[shared.typography.bodySmall, styles.removeImageText]}>Remove image</Text>
                 </Pressable>
               )}
 
-              <Text style={styles.label}>Ingredients</Text>
+              <Text style={[shared.typography.sub2, styles.label]}>Ingredients</Text>
               <View style={styles.ingredientRow}>
                 <TextInput
                   value={ingredientInput}
@@ -509,7 +509,7 @@ export default function AddRecipeScreen({ navigation, route }) {
                       pressed && shared.pressed,
                     ]}
                   >
-                    <Text style={styles.unitFieldText}>{ingredientUnit}</Text>
+                    <Text style={[shared.typography.sub2, styles.unitFieldText]}>{ingredientUnit}</Text>
                     <Ionicons name="chevron-down" size={18} color={colors.text} />
                   </Pressable>
                 ) : (
@@ -538,21 +538,21 @@ export default function AddRecipeScreen({ navigation, route }) {
               {Platform.OS === 'ios' && showUnitPickerIOS && (
                 <View style={styles.iosPickerPanel}>
                   <View style={styles.iosPickerHeader}>
-                    <Text style={styles.iosPickerTitle}>Unit</Text>
+                    <Text style={[shared.typography.sub2, styles.iosPickerTitle]}>Unit</Text>
                     <Pressable
                       accessibilityRole="button"
                       accessibilityLabel="Done selecting unit"
                       onPress={() => setShowUnitPickerIOS(false)}
                       style={({ pressed }) => [styles.iosPickerDone, pressed && shared.pressed]}
                     >
-                      <Text style={styles.iosPickerDoneText}>Done</Text>
+                      <Text style={[shared.typography.bodySmall, styles.iosPickerDoneText]}>Done</Text>
                     </Pressable>
                   </View>
                   <Picker
                     selectedValue={ingredientUnit}
                     onValueChange={(value) => setIngredientUnit(value)}
                     style={styles.iosPicker}
-                    itemStyle={styles.iosPickerItem}
+                    itemStyle={[shared.typography.sub1, styles.iosPickerItem]}
                   >
                     {unitOptions.map((unit) => (
                       <Picker.Item key={unit} label={unit} value={unit} />
@@ -565,7 +565,7 @@ export default function AddRecipeScreen({ navigation, route }) {
                 <View style={styles.ingredientsList}>
                   {ingredients.map((ing, idx) => (
                     <View key={`${ing.name}-${ing.quantity}-${ing.unit}-${idx}`} style={styles.ingredientItem}>
-                      <Text style={styles.ingredientText}>
+                      <Text style={[shared.typography.sub1, styles.ingredientText]}>
                         {ing.name} - {ing.quantity} {ing.unit}
                       </Text>
                       <Pressable
@@ -582,8 +582,8 @@ export default function AddRecipeScreen({ navigation, route }) {
                 </View>
               )}
 
-              {!!errorMessage && <Text style={styles.error}>{errorMessage}</Text>}
-              {!!toastMessage && <Text style={styles.toast}>{toastMessage}</Text>}
+              {!!errorMessage && <Text style={[shared.typography.body, styles.error]}>{errorMessage}</Text>}
+              {!!toastMessage && <Text style={[shared.typography.body, styles.toast]}>{toastMessage}</Text>}
             </ScrollView>
 
             <View style={styles.buttonRow}>
@@ -608,7 +608,7 @@ export default function AddRecipeScreen({ navigation, route }) {
                   pressed && canSave && shared.pressed,
                 ]}
               >
-                <Text style={styles.saveButtonText}>{isSaving ? 'Saving...' : 'Save'}</Text>
+                <Text style={[shared.typography.sub1, styles.saveButtonText]}>{isSaving ? 'Saving...' : 'Save'}</Text>
               </Pressable>
             </View>
           </Animated.View>
@@ -655,8 +655,6 @@ const styles = StyleSheet.create({
   },
   deleteText: {
     color: colors.danger,
-    fontWeight: '600',
-    fontSize: 15,
     textDecorationLine: 'underline',
   },
   backButton: {
@@ -675,8 +673,6 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
   },
   label: {
-    fontSize: 13,
-    fontWeight: '700',
     color: colors.text,
     marginBottom: 8,
   },
@@ -727,8 +723,6 @@ const styles = StyleSheet.create({
   },
   unitFieldText: {
     color: colors.text,
-    fontWeight: '600',
-    fontSize: 14,
   },
   pickerWrap: {
     width: 92,
@@ -761,8 +755,6 @@ const styles = StyleSheet.create({
   },
   iosPickerTitle: {
     color: colors.text,
-    fontWeight: '700',
-    fontSize: 13,
   },
   iosPickerDone: {
     borderWidth: 1,
@@ -774,15 +766,12 @@ const styles = StyleSheet.create({
   },
   iosPickerDoneText: {
     color: colors.text,
-    fontWeight: '700',
-    fontSize: 12,
   },
   iosPicker: {
     height: 170,
   },
   iosPickerItem: {
     color: colors.text,
-    fontSize: 18,
   },
   addIconButton: {
     flexShrink: 0,
@@ -812,7 +801,6 @@ const styles = StyleSheet.create({
   },
   ingredientText: {
     color: colors.text,
-    fontWeight: '600',
     flex: 1,
     paddingRight: 10,
   },
@@ -828,12 +816,10 @@ const styles = StyleSheet.create({
   },
   error: {
     color: '#B00020',
-    fontWeight: '600',
     marginBottom: 10,
   },
   toast: {
     color: '#1B5E20',
-    fontWeight: '700',
     marginBottom: 10,
   },
   buttonRow: {
@@ -853,7 +839,6 @@ const styles = StyleSheet.create({
   },
   clearButtonText: {
     color: colors.text,
-    fontWeight: '700',
   },
   saveButton: {
     minWidth: 110,
@@ -866,7 +851,6 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     color: '#fff',
-    fontWeight: '700',
   },
   imagePicker: {
     height: 120,
@@ -885,8 +869,6 @@ const styles = StyleSheet.create({
   },
   imagePlaceholderText: {
     color: colors.textMuted,
-    fontSize: 13,
-    fontWeight: '600',
   },
   imagePreview: {
     width: '100%',
@@ -901,8 +883,6 @@ const styles = StyleSheet.create({
   },
   imageOverlayText: {
     color: colors.white,
-    fontSize: 13,
-    fontWeight: '600',
   },
   removeImageButton: {
     marginBottom: 14,
@@ -910,8 +890,6 @@ const styles = StyleSheet.create({
   },
   removeImageText: {
     color: colors.danger,
-    fontSize: 12,
-    fontWeight: '600',
     textDecorationLine: 'underline',
   },
 });

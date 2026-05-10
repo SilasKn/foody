@@ -4,6 +4,7 @@ import { useAuth } from '../providers/AuthProvider';
 import { Animated, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../theme';
+import shared from '../sharedStyles';
 
 const TAB_INDEX = { home: 0, recipes: 1, calendar: 2 };
 let lastTabIndex = 0;
@@ -51,7 +52,7 @@ export default function ScreenShell({ navigation, activeTab, hideTabBar, childre
           accessibilityRole="button"
           accessibilityLabel="Go to home"
         >
-          <Text style={styles.logo}>
+          <Text style={[shared.typography.h1, styles.logo]}>
             foody<Text style={styles.logoDot}>.</Text>
           </Text>
         </Pressable>
@@ -85,7 +86,7 @@ export default function ScreenShell({ navigation, activeTab, hideTabBar, childre
                 accessibilityRole="button"
                 accessibilityLabel={label}
               >
-                <Text style={[styles.tabLabel, activeTab === key && styles.tabLabelActive]}>
+                <Text style={[shared.typography.sub2, styles.tabLabel, activeTab === key && styles.tabLabelActive]}>
                   {label}
                 </Text>
               </Pressable>
@@ -102,20 +103,20 @@ export default function ScreenShell({ navigation, activeTab, hideTabBar, childre
       >
         <Pressable style={styles.backdrop} onPress={() => setLogoutVisible(false)}>
           <Pressable style={styles.dialogCard} onPress={() => {}}>
-            <Text style={styles.dialogTitle}>Log out?</Text>
-            <Text style={styles.dialogMessage}>Do you really want to log out?</Text>
+            <Text style={[shared.typography.h2, styles.dialogTitle]}>Log out?</Text>
+            <Text style={[shared.typography.body, styles.dialogMessage]}>Do you really want to log out?</Text>
             <View style={styles.dialogButtons}>
               <Pressable
                 style={({ pressed }) => [styles.dialogBtn, styles.dialogBtnCancel, pressed && styles.dialogBtnPressed]}
                 onPress={() => setLogoutVisible(false)}
               >
-                <Text style={styles.dialogBtnLabel}>Cancel</Text>
+                <Text style={[shared.typography.sub2, styles.dialogBtnLabel]}>Cancel</Text>
               </Pressable>
               <Pressable
                 style={({ pressed }) => [styles.dialogBtn, styles.dialogBtnConfirm, pressed && styles.dialogBtnPressed]}
                 onPress={() => { setLogoutVisible(false); signOut(); }}
               >
-                <Text style={[styles.dialogBtnLabel, styles.dialogBtnLabelConfirm]}>Log out</Text>
+                <Text style={[shared.typography.sub2, styles.dialogBtnLabel, styles.dialogBtnLabelConfirm]}>Log out</Text>
               </Pressable>
             </View>
           </Pressable>
@@ -141,8 +142,6 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   logo: {
-    fontSize: 22,
-    fontWeight: '700',
     color: colors.text,
   },
   logoDot: {
@@ -183,8 +182,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   tabLabel: {
-    fontSize: 13,
-    fontWeight: '700',
     color: colors.text,
   },
   tabLabelActive: {
@@ -210,13 +207,10 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   dialogTitle: {
-    fontSize: 22,
-    fontWeight: '700',
     color: colors.text,
     marginBottom: 8,
   },
   dialogMessage: {
-    fontSize: 15,
     color: colors.text,
     opacity: 0.7,
   },
@@ -246,8 +240,6 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   dialogBtnLabel: {
-    fontSize: 13,
-    fontWeight: '700',
     color: colors.text,
   },
   dialogBtnLabelConfirm: {

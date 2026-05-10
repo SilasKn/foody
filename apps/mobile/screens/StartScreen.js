@@ -81,8 +81,8 @@ export default function StartScreen({ navigation }) {
       >
         <Text style={shared.pageTitle}>Home</Text>
 
-        <Text style={styles.sectionTitle}>Upcoming</Text>
-        <Text style={styles.sectionSubtitle}>Next scheduled recipe</Text>
+        <Text style={[shared.typography.h3, styles.sectionTitle]}>Upcoming</Text>
+        <Text style={[shared.typography.sub2, styles.sectionSubtitle]}>Next scheduled recipe</Text>
 
         {loading ? (
           <ActivityIndicator color={colors.accent} style={styles.loader} />
@@ -99,12 +99,12 @@ export default function StartScreen({ navigation }) {
               resizeMode="cover"
             />
             <View style={styles.cardContent}>
-              <Text style={styles.cardName} numberOfLines={1}>{upcoming.recipes?.name ?? '—'}</Text>
-              <Text style={styles.cardDate}>Scheduled for: {formatUpcomingDate(upcoming.scheduled_for)}</Text>
+              <Text style={[shared.typography.h3, styles.cardName]} numberOfLines={1}>{upcoming.recipes?.name ?? '—'}</Text>
+              <Text style={[shared.typography.sub1, styles.cardDate]}>Scheduled for: {formatUpcomingDate(upcoming.scheduled_for)}</Text>
             </View>
           </Pressable>
         ) : (
-          <Text style={styles.emptyText}>Nothing scheduled yet.</Text>
+          <Text style={[shared.typography.body, styles.emptyText]}>Nothing scheduled yet.</Text>
         )}
       </ScrollView>
     </ScreenShell>
@@ -121,14 +121,11 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: '700',
     color: colors.text,
     textDecorationLine: 'underline',
     marginBottom: 4,
   },
   sectionSubtitle: {
-    fontSize: 14,
     color: colors.textMuted,
     marginBottom: 14,
   },
@@ -136,7 +133,6 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   emptyText: {
-    fontSize: 15,
     color: colors.textMuted,
     fontStyle: 'italic',
     marginTop: 8,
@@ -166,15 +162,10 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   cardDate: {
-    fontSize: 17,
-    fontWeight: '500',
     color: colors.text,
   },
   cardName: {
-    fontSize: 24,
-    fontWeight: '700',
     color: colors.text,
-    lineHeight: 36,
   },
   pressed: {
     opacity: 0.8,

@@ -44,11 +44,11 @@ export default function RecipesScreen({ navigation }) {
           resizeMode="cover"
         />
         <View style={styles.recipeCardContent}>
-          <Text style={styles.recipeTitle} numberOfLines={1}>
+          <Text style={[shared.typography.h3, styles.recipeTitle]} numberOfLines={1}>
             {item.name}
           </Text>
-          <Text style={styles.recipeDate}>Added: {item.dateLabel}</Text>
-          <Text style={styles.recipeAuthor}>{item.authorLabel}</Text>
+          <Text style={[shared.typography.sub1, styles.recipeDate]}>Added: {item.dateLabel}</Text>
+          <Text style={[shared.typography.sub2, styles.recipeAuthor]}>{item.authorLabel}</Text>
         </View>
       </View>
     </Pressable>
@@ -75,7 +75,7 @@ export default function RecipesScreen({ navigation }) {
         </View>
         {searchVisible && (
           <TextInput
-            style={styles.searchBar}
+            style={[shared.typography.body, styles.searchBar]}
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholder="Search..."
@@ -93,11 +93,11 @@ export default function RecipesScreen({ navigation }) {
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             isLoading ? (
-              <Text style={styles.infoText}>Loading recipes...</Text>
+              <Text style={[shared.typography.body, styles.infoText]}>Loading recipes...</Text>
             ) : errorMessage ? (
-              <Text style={styles.errorText}>{errorMessage}</Text>
+              <Text style={[shared.typography.body, styles.errorText]}>{errorMessage}</Text>
             ) : (
-              <Text style={styles.infoText}>{emptyText}</Text>
+              <Text style={[shared.typography.body, styles.infoText]}>{emptyText}</Text>
             )
           }
         />
@@ -160,32 +160,22 @@ const styles = StyleSheet.create({
   },
   recipeDate: {
     color: colors.text,
-    fontSize: 17,
-    fontWeight: '500',
   },
   recipeTitle: {
     color: colors.text,
-    fontSize: 24,
-    fontWeight: '700',
-    lineHeight: 36,
   },
   recipeAuthor: {
     color: colors.text,
-    fontSize: 14,
     opacity: 0.75,
-    fontWeight: '600',
   },
   infoText: {
     color: colors.text,
     opacity: 0.8,
     marginTop: 10,
-    fontSize: 15,
   },
   errorText: {
     color: '#B00020',
     marginTop: 10,
-    fontSize: 15,
-    fontWeight: '600',
   },
   pressed: {
     opacity: 0.8,
@@ -204,7 +194,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.white,
-    fontSize: 16,
     color: colors.text,
   },
 });

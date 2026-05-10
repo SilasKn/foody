@@ -1,6 +1,15 @@
+import { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
+import {
+  Poppins_300Light,
+  Poppins_400Regular,
+  Poppins_500Medium,
+  Poppins_600SemiBold,
+} from '@expo-google-fonts/poppins';
 import { View, Text } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AddRecipeScreen from './screens/AddRecipeScreen';
@@ -13,6 +22,8 @@ import StartScreen from './screens/StartScreen';
 import { colors } from './theme';
 import { AuthProvider, useAuth } from './providers/AuthProvider';
 import { RecipesProvider } from './providers/RecipesProvider';
+
+SplashScreen.preventAutoHideAsync();
 
 const Stack = createNativeStackNavigator();
 
@@ -77,6 +88,19 @@ function AppRoutes() {
 }
 
 export default function App() {
+  const [fontsLoaded] = useFonts({
+    'Poppins-Light':    Poppins_300Light,
+    'Poppins-Regular':  Poppins_400Regular,
+    'Poppins-Medium':   Poppins_500Medium,
+    'Poppins-SemiBold': Poppins_600SemiBold,
+  });
+
+  useEffect(() => {
+    if (fontsLoaded) SplashScreen.hideAsync();
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) return null;
+
   return (
     <AuthProvider>
       <SafeAreaProvider>

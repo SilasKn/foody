@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Alert, Animated, Dimensions, Image, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../providers/AuthProvider';
+import shared from '../sharedStyles';
 import { colors } from '../theme';
 import { supabase } from '../utils/supabase';
 
@@ -99,7 +100,7 @@ export default function ScheduleRecipeScreen({ route, navigation }) {
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.cardContent}>
-              <Text style={styles.sectionLabel}>Schedule for :</Text>
+              <Text style={[shared.typography.h3, styles.sectionLabel]}>Schedule for :</Text>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Select date"
@@ -109,7 +110,7 @@ export default function ScheduleRecipeScreen({ route, navigation }) {
                 }}
                 style={({ pressed }) => [styles.dateDropdown, pressed && { opacity: 0.8 }]}
               >
-                <Text style={[styles.dateDropdownText, !selectedDate && styles.datePlaceholder]}>
+                <Text style={[shared.typography.body, styles.dateDropdownText, !selectedDate && styles.datePlaceholder]}>
                   {selectedDate ? formatDateDisplay(selectedDate) : 'TT.MM.JJJJ'}
                 </Text>
                 <Ionicons name="chevron-down" size={20} color={colors.text} />
@@ -117,7 +118,7 @@ export default function ScheduleRecipeScreen({ route, navigation }) {
 
               <View style={styles.spacer} />
 
-              <Text style={styles.sectionLabel}>As type of meal:</Text>
+              <Text style={[shared.typography.h3, styles.sectionLabel]}>As type of meal:</Text>
               <View style={styles.mealGrid}>
                 {MEAL_TYPES.map((type) => (
                   <Pressable
@@ -131,7 +132,7 @@ export default function ScheduleRecipeScreen({ route, navigation }) {
                       pressed && { opacity: 0.8 },
                     ]}
                   >
-                    <Text style={[styles.mealPillText, mealType === type && styles.mealPillTextActive]}>
+                    <Text style={[shared.typography.sub2, styles.mealPillText, mealType === type && styles.mealPillTextActive]}>
                       {type}
                     </Text>
                   </Pressable>
@@ -149,7 +150,7 @@ export default function ScheduleRecipeScreen({ route, navigation }) {
                   pressed && canSchedule && !saving && { opacity: 0.85 },
                 ]}
               >
-                <Text style={styles.scheduleButtonText}>{saving ? 'Saving…' : 'Schedule'}</Text>
+                <Text style={[shared.typography.sub1, styles.scheduleButtonText]}>{saving ? 'Saving…' : 'Schedule'}</Text>
               </Pressable>
             </View>
           </ScrollView>
@@ -178,7 +179,7 @@ export default function ScheduleRecipeScreen({ route, navigation }) {
                 if (tempPickerDate) setSelectedDate(tempPickerDate);
                 setShowPicker(false);
               }}>
-                <Text style={styles.pickerDoneText}>Done</Text>
+                <Text style={[shared.typography.sub1, styles.pickerDoneText]}>Done</Text>
               </Pressable>
             </Pressable>
           </Pressable>
@@ -272,8 +273,6 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   sectionLabel: {
-    fontSize: 16,
-    fontWeight: '700',
     color: colors.text,
     marginBottom: 10,
   },
@@ -289,7 +288,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
   },
   dateDropdownText: {
-    fontSize: 15,
     color: colors.text,
   },
   datePlaceholder: {
@@ -317,9 +315,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent,
   },
   mealPillText: {
-    fontSize: 15,
     color: colors.text,
-    fontWeight: '500',
   },
   mealPillTextActive: {
     color: colors.white,
@@ -338,8 +334,6 @@ const styles = StyleSheet.create({
   },
   scheduleButtonText: {
     color: colors.white,
-    fontWeight: '600',
-    fontSize: 15,
   },
   pickerBackdrop: {
     flex: 1,
@@ -360,8 +354,6 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   pickerDoneText: {
-    fontSize: 16,
-    fontWeight: '600',
     color: colors.accent,
   },
 });

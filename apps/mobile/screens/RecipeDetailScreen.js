@@ -127,28 +127,28 @@ export default function RecipeDetailScreen({ route, navigation }) {
                 <ActivityIndicator size="large" color={colors.accent} style={styles.loader} />
               ) : (
                 <>
-                  <Text style={styles.recipeName}>{details.name}</Text>
-                  <Text style={styles.dateText}>Created {formatDate(details.created_at)}</Text>
+                  <Text style={[shared.typography.h2, styles.recipeName]}>{details.name}</Text>
+                  <Text style={[shared.typography.sub2, styles.dateText]}>Created {formatDate(details.created_at)}</Text>
 
                   <View style={styles.sectionDivider} />
 
                   <View style={styles.section}>
-                    <Text style={styles.sectionLabel}>Description</Text>
+                    <Text style={[shared.typography.h3, styles.sectionLabel]}>Description</Text>
                     {details.description ? (
-                      <Text style={styles.bodyText}>{details.description}</Text>
+                      <Text style={[shared.typography.body, styles.bodyText]}>{details.description}</Text>
                     ) : (
-                      <Text style={styles.placeholderText}>No description.</Text>
+                      <Text style={[shared.typography.body, styles.placeholderText]}>No description.</Text>
                     )}
                   </View>
 
                   <View style={styles.section}>
-                    <Text style={styles.sectionLabel}>Ingredients</Text>
+                    <Text style={[shared.typography.h3, styles.sectionLabel]}>Ingredients</Text>
                     {details.ingredients.length === 0 ? (
-                      <Text style={styles.placeholderText}>No ingredients listed.</Text>
+                      <Text style={[shared.typography.body, styles.placeholderText]}>No ingredients listed.</Text>
                     ) : (
                       details.ingredients.map((item, index) => (
                         <View key={index} style={styles.ingredientRow}>
-                          <Text style={styles.ingredientText}>
+                          <Text style={[shared.typography.body, styles.ingredientText]}>
                             {[item.quantity, item.unit, item.ingredients?.name].filter(Boolean).join(' ')}
                           </Text>
                         </View>
@@ -159,13 +159,13 @@ export default function RecipeDetailScreen({ route, navigation }) {
                   <View style={styles.sectionDivider} />
 
                   <View style={styles.section}>
-                    <Text style={styles.sectionLabel}>Scheduled for:</Text>
+                    <Text style={[shared.typography.h3, styles.sectionLabel]}>Scheduled for:</Text>
                     {details.schedules.length === 0 ? (
-                      <Text style={styles.placeholderText}>Not scheduled yet.</Text>
+                      <Text style={[shared.typography.body, styles.placeholderText]}>Not scheduled yet.</Text>
                     ) : (
                       details.schedules.map((entry) => (
                         <View key={entry.id} style={styles.scheduleEntryRow}>
-                          <Text style={styles.ingredientText}>
+                          <Text style={[shared.typography.body, styles.ingredientText]}>
                             — {formatScheduleDate(entry.scheduled_for)} as {entry.scheduled_as}
                           </Text>
                           <Pressable
@@ -189,7 +189,7 @@ export default function RecipeDetailScreen({ route, navigation }) {
                       onPress={onSchedulePress}
                       style={({ pressed }) => [shared.pillButton, styles.scheduleButton, pressed && shared.pressed]}
                     >
-                      <Text style={styles.scheduleButtonText}>Schedule</Text>
+                      <Text style={[shared.typography.sub1, styles.scheduleButtonText]}>Schedule</Text>
                     </Pressable>
 
                     <Pressable
@@ -262,13 +262,10 @@ const styles = StyleSheet.create({
     marginVertical: 32,
   },
   recipeName: {
-    fontSize: 24,
-    fontWeight: '700',
     color: colors.text,
     marginBottom: 4,
   },
   dateText: {
-    fontSize: 13,
     color: colors.textMuted,
     marginBottom: 16,
   },
@@ -281,18 +278,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   sectionLabel: {
-    fontSize: 16,
-    fontWeight: '600',
     color: colors.text,
     marginBottom: 8,
   },
   bodyText: {
-    fontSize: 15,
     color: colors.text,
-    lineHeight: 22,
   },
   placeholderText: {
-    fontSize: 15,
     color: colors.textMuted,
     fontStyle: 'italic',
   },
@@ -306,7 +298,6 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   ingredientText: {
-    fontSize: 15,
     color: colors.text,
   },
   actionsRow: {
@@ -322,8 +313,6 @@ const styles = StyleSheet.create({
   },
   scheduleButtonText: {
     color: colors.white,
-    fontWeight: '600',
-    fontSize: 15,
   },
   editButton: {
     width: 48,

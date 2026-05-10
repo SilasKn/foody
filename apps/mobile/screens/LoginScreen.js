@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 
 import { colors } from '../theme';
+import shared from '../sharedStyles';
 import { useAuth } from '../providers/AuthProvider';
 
 export default function LoginScreen() {
@@ -66,7 +67,7 @@ export default function LoginScreen() {
       <KeyboardAvoidingView style={styles.safe} behavior="padding">
         <ScrollView contentContainerStyle={styles.container}>
           <View style={styles.header}>
-            <Text style={styles.logo}>
+            <Text style={[shared.typography.h1, styles.logo]}>
               foody
               <Text style={styles.logoDot}>.</Text>
             </Text>
@@ -81,21 +82,21 @@ export default function LoginScreen() {
               onPress={() => onModeChange('signin')}
               style={({ pressed }) => [styles.modePill, mode === 'signin' && styles.modePillActive, pressed && styles.pressed]}
             >
-              <Text style={styles.modePillText}>Sign in</Text>
+              <Text style={[shared.typography.sub2, styles.modePillText]}>Sign in</Text>
             </Pressable>
             <Pressable
               accessibilityRole="button"
               onPress={() => onModeChange('signup')}
               style={({ pressed }) => [styles.modePill, mode === 'signup' && styles.modePillActive, pressed && styles.pressed]}
             >
-              <Text style={styles.modePillText}>Sign up</Text>
+              <Text style={[shared.typography.sub2, styles.modePillText]}>Sign up</Text>
             </Pressable>
           </View>
 
           <View style={styles.form}>
             {mode === 'signup' && (
               <>
-                <Text style={styles.label}>Username</Text>
+                <Text style={[shared.typography.sub2, styles.label]}>Username</Text>
                 <TextInput
                   value={username}
                   onChangeText={setUsername}
@@ -108,7 +109,7 @@ export default function LoginScreen() {
               </>
             )}
 
-            <Text style={styles.label}>Email</Text>
+            <Text style={[shared.typography.sub2, styles.label]}>Email</Text>
             <TextInput
               value={email}
               onChangeText={setEmail}
@@ -120,7 +121,7 @@ export default function LoginScreen() {
               style={styles.input}
             />
 
-            <Text style={styles.label}>Password</Text>
+            <Text style={[shared.typography.sub2, styles.label]}>Password</Text>
             <TextInput
               value={password}
               onChangeText={setPassword}
@@ -130,8 +131,8 @@ export default function LoginScreen() {
               style={styles.input}
             />
 
-            {!!errorMessage && <Text style={styles.error}>{errorMessage}</Text>}
-            {!!infoMessage && <Text style={styles.info}>{infoMessage}</Text>}
+            {!!errorMessage && <Text style={[shared.typography.body, styles.error]}>{errorMessage}</Text>}
+            {!!infoMessage && <Text style={[shared.typography.body, styles.info]}>{infoMessage}</Text>}
 
             <Pressable
               accessibilityRole="button"
@@ -148,13 +149,13 @@ export default function LoginScreen() {
                 pressed && !isSubmitting && styles.primaryButtonPressed,
               ]}
             >
-              <Text style={styles.primaryButtonText}>
+              <Text style={[shared.typography.sub1, styles.primaryButtonText]}>
                 {isSubmitting ? 'Please wait…' : mode === 'signin' ? 'Sign in' : 'Create account'}
               </Text>
             </Pressable>
 
             {mode === 'signup' && (
-              <Text style={styles.hint}>
+              <Text style={[shared.typography.bodySmall, styles.hint]}>
                 If email confirmations are enabled, you may need to confirm your email before logging in.
               </Text>
             )}
@@ -189,8 +190,6 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   logo: {
-    fontSize: 22,
-    fontWeight: '700',
     color: colors.text,
   },
   logoDot: {
@@ -217,8 +216,6 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   modePillText: {
-    fontSize: 13,
-    fontWeight: '700',
     color: colors.text,
   },
   pressed: {
@@ -229,8 +226,6 @@ const styles = StyleSheet.create({
     paddingTop: 16,
   },
   label: {
-    fontSize: 13,
-    fontWeight: '700',
     color: colors.text,
     marginBottom: 8,
   },
@@ -245,12 +240,10 @@ const styles = StyleSheet.create({
   },
   error: {
     color: '#B00020',
-    fontWeight: '600',
     marginBottom: 14,
   },
   info: {
     color: '#1B5E20',
-    fontWeight: '600',
     marginBottom: 14,
   },
   primaryButton: {
@@ -267,14 +260,10 @@ const styles = StyleSheet.create({
   },
   primaryButtonText: {
     color: '#fff',
-    fontSize: 15,
-    fontWeight: '700',
   },
   hint: {
     marginTop: 12,
     color: '#444',
-    fontSize: 12,
-    lineHeight: 16,
   },
 });
 

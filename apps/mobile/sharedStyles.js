@@ -1,11 +1,20 @@
 import { StyleSheet } from 'react-native';
 import { colors } from './theme';
 
-export default StyleSheet.create({
+const typography = {
+  h1:        { fontFamily: 'Poppins-SemiBold', fontSize: 34, lineHeight: 48 },
+  h2:        { fontFamily: 'Poppins-SemiBold', fontSize: 28, lineHeight: 40 },
+  h3:        { fontFamily: 'Poppins-SemiBold', fontSize: 22, lineHeight: 32 },
+  sub1:      { fontFamily: 'Poppins-SemiBold', fontSize: 17, lineHeight: 24 },
+  sub2:      { fontFamily: 'Poppins-Medium',   fontSize: 15, lineHeight: 22 },
+  body:      { fontFamily: 'Poppins-Regular',  fontSize: 17, lineHeight: 26 },
+  bodySmall: { fontFamily: 'Poppins-Light',    fontSize: 15, lineHeight: 22 },
+};
+
+const styles = StyleSheet.create({
 
   pageTitle: {
-    fontSize: 28,
-    fontWeight: '700',
+    ...typography.h1,
     color: colors.text,
     marginBottom: 16,
   },
@@ -90,3 +99,5 @@ export default StyleSheet.create({
   },
 
 });
+
+export default { ...styles, typography };

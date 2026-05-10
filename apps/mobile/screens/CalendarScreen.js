@@ -170,11 +170,11 @@ export default function CalendarScreen({ navigation }) {
           {loading ? (
             <ActivityIndicator size="large" color={colors.accent} style={styles.loader} />
           ) : groups.length === 0 ? (
-            <Text style={styles.emptyText}>Nothing scheduled yet.</Text>
+            <Text style={[shared.typography.body, styles.emptyText]}>Nothing scheduled yet.</Text>
           ) : (
             groups.map(group => (
               <View key={group.date}>
-                <Text style={styles.dayHeader}>{parseDayHeader(group.date)}</Text>
+                <Text style={[shared.typography.h3, styles.dayHeader]}>{parseDayHeader(group.date)}</Text>
                 {group.entries.map(entry => (
                   <Pressable
                     key={entry.id}
@@ -206,11 +206,11 @@ export default function CalendarScreen({ navigation }) {
                       />
                     </View>
                     <View style={styles.recipeInfo}>
-                      <Text style={styles.recipeName} numberOfLines={2}>
+                      <Text style={[shared.typography.sub1, styles.recipeName]} numberOfLines={2}>
                         {entry.recipes?.name ?? '—'}
                       </Text>
                     </View>
-                    <Text style={styles.mealType}>{entry.scheduled_as}</Text>
+                    <Text style={[shared.typography.sub2, styles.mealType]}>{entry.scheduled_as}</Text>
                   </Pressable>
                 ))}
               </View>
@@ -249,14 +249,14 @@ export default function CalendarScreen({ navigation }) {
             onPress={exitDeleteMode}
             accessibilityRole="button"
           >
-            <Text style={styles.backBtnLabel}>Back</Text>
+            <Text style={[shared.typography.sub1, styles.backBtnLabel]}>Back</Text>
           </Pressable>
           <Pressable
             style={({ pressed }) => [shared.pillButton, styles.deleteBtn, pressed && shared.pressed]}
             onPress={handleDelete}
             accessibilityRole="button"
           >
-            <Text style={styles.deleteBtnLabel}>Delete</Text>
+            <Text style={[shared.typography.sub1, styles.deleteBtnLabel]}>Delete</Text>
           </Pressable>
         </View>
       )}
@@ -273,14 +273,11 @@ const styles = StyleSheet.create({
     marginTop: 48,
   },
   emptyText: {
-    fontSize: 15,
     color: colors.textMuted,
     fontStyle: 'italic',
     marginTop: 24,
   },
   dayHeader: {
-    fontSize: 18,
-    fontWeight: '700',
     color: colors.text,
     marginTop: 24,
     marginBottom: 8,
@@ -313,12 +310,9 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   recipeName: {
-    fontSize: 15,
-    fontWeight: '600',
     color: colors.text,
   },
   mealType: {
-    fontSize: 13,
     color: colors.textMuted,
     marginLeft: 8,
   },
@@ -344,8 +338,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
   },
   backBtnLabel: {
-    fontSize: 15,
-    fontWeight: '700',
     color: colors.text,
   },
   deleteBtn: {
@@ -354,8 +346,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.danger,
   },
   deleteBtnLabel: {
-    fontSize: 15,
-    fontWeight: '700',
     color: colors.white,
   },
 });
