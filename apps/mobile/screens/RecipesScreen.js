@@ -1,12 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect } from 'react';
-import { FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { FlatList, Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import ScreenShell from '../components/ScreenShell';
 import { useRecipes } from '../providers/RecipesProvider';
 import shared from '../sharedStyles';
 import { colors } from '../theme';
 
 const placeholderImage = require('../assets/no-picture.png');
+const searchIcon = require('../assets/search-icon.png');
 
 export default function RecipesScreen({ navigation }) {
   const {
@@ -21,14 +22,15 @@ export default function RecipesScreen({ navigation }) {
     loadRecipesForMode(filterModes.MINE);
   }, [filterModes.MINE, loadRecipesForMode]);
 
+  const [searchVisible, setSearchVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
   const pageTitle = 'Your Recipes';
   const emptyText = 'No own recipes yet.';
 
-  const renderListHeader = () => (
-    <View style={styles.pageHeaderRow}>
-      <Text style={shared.pageTitle}>{pageTitle}</Text>
-    </View>
-  );
+  const filteredRecipes = searchQuery.trim()
+    ? recipes.filter(r => r.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    : recipes;
 
   const renderRecipeCard = ({ item }) => (
     <Pressable
@@ -58,13 +60,37 @@ export default function RecipesScreen({ navigation }) {
       activeTab="recipes"
     >
       <View style={styles.content}>
+        <View style={styles.pageHeaderRow}>
+          <Text style={shared.pageTitle}>{pageTitle}</Text>
+          <Pressable
+            onPress={() => {
+              setSearchVisible(v => !v);
+              setSearchQuery('');
+            }}
+            style={({ pressed }) => pressed && styles.pressed}
+            hitSlop={10}
+          >
+            <Image source={searchIcon} style={styles.searchIcon} />
+          </Pressable>
+        </View>
+        {searchVisible && (
+          <TextInput
+            style={styles.searchBar}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder="Search..."
+            placeholderTextColor={colors.textMuted}
+            autoFocus
+            clearButtonMode="while-editing"
+          />
+        )}
         <FlatList
-          data={isLoading || errorMessage ? [] : recipes}
+          style={styles.list}
+          data={isLoading || errorMessage ? [] : filteredRecipes}
           keyExtractor={(item) => String(item.id)}
           renderItem={renderRecipeCard}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
-          ListHeaderComponent={renderListHeader}
           ListEmptyComponent={
             isLoading ? (
               <Text style={styles.infoText}>Loading recipes...</Text>
@@ -92,6 +118,9 @@ export default function RecipesScreen({ navigation }) {
 const styles = StyleSheet.create({
   content: {
     alignSelf: 'stretch',
+    flex: 1,
+  },
+  list: {
     flex: 1,
   },
   listContent: {
@@ -160,5 +189,22 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.8,
+  },
+  searchIcon: {
+    width: 22,
+    height: 22,
+    opacity: 0.5,
+    tintColor: colors.text,
+  },
+  searchBar: {
+    marginBottom: 14,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 9999,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.white,
+    fontSize: 16,
+    color: colors.text,
   },
 });
