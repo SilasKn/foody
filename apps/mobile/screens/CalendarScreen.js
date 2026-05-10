@@ -165,7 +165,7 @@ export default function CalendarScreen({ navigation }) {
           ]}
           showsVerticalScrollIndicator={false}
         >
-          <Text style={shared.pageTitle}>Upcoming recipes</Text>
+          <Text style={shared.pageTitle}>Scheduled recipes</Text>
 
           {loading ? (
             <ActivityIndicator size="large" color={colors.accent} style={styles.loader} />
