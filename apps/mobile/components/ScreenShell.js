@@ -1,42 +1,39 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../providers/AuthProvider';
-import { Animated, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../theme';
 import shared from '../sharedStyles';
 
-const TAB_INDEX = { home: 0, recipes: 1, calendar: 2 };
-let lastTabIndex = 0;
 const TABS = [
-  { label: 'Home',     key: 'home',     route: 'Start'    },
-  { label: 'Recipes',  key: 'recipes',  route: 'Recipes'  },
-  { label: 'Calendar', key: 'calendar', route: 'Calendar' },
+  {
+    label: 'Home',
+    key: 'home',
+    route: 'Start',
+    iconActive:   require('../assets/navbar/home_icon_green.png'),
+    iconInactive: require('../assets/navbar/home_icon_black.png'),
+  },
+  {
+    label: 'Recipes',
+    key: 'recipes',
+    route: 'Recipes',
+    iconActive:   require('../assets/navbar/recipe_icon_green.png'),
+    iconInactive: require('../assets/navbar/recipe_icon_black.png'),
+  },
+  {
+    label: 'Calendar',
+    key: 'calendar',
+    route: 'Calendar',
+    iconActive:   require('../assets/navbar/calendar-icon_green.png'),
+    iconInactive: require('../assets/navbar/calendar-icon_black.png'),
+  },
 ];
 
 export default function ScreenShell({ navigation, activeTab, hideTabBar, children }) {
   const insets = useSafeAreaInsets();
   const { session, signOut } = useAuth();
   const [logoutVisible, setLogoutVisible] = useState(false);
-  const [tabContainerWidth, setTabContainerWidth] = useState(0);
-  const slideAnim = useRef(new Animated.Value(lastTabIndex)).current;
-
-  useEffect(() => {
-    lastTabIndex = TAB_INDEX[activeTab] ?? 0;
-    Animated.spring(slideAnim, {
-      toValue: TAB_INDEX[activeTab] ?? 0,
-      useNativeDriver: true,
-      damping: 20,
-      stiffness: 200,
-    }).start();
-  }, [activeTab]);
-
-  const innerWidth = Math.max(tabContainerWidth - 6, 0);
-  const tabWidth = innerWidth / 3;
-  const indicatorTranslateX = slideAnim.interpolate({
-    inputRange: [0, 1, 2],
-    outputRange: [0, tabWidth, 2 * tabWidth],
-  });
 
   const onUserPress = () => {
     if (session) return setLogoutVisible(true);
@@ -65,32 +62,34 @@ export default function ScreenShell({ navigation, activeTab, hideTabBar, childre
 
       {!hideTabBar && (
         <View style={[styles.tabBar, { paddingBottom: Math.max(insets.bottom, 8) }]}>
-          <View
-            style={styles.tabContainer}
-            onLayout={(e) => setTabContainerWidth(e.nativeEvent.layout.width)}
-          >
-            <Animated.View
-              style={[
-                styles.activeIndicator,
-                {
-                  width: tabWidth,
-                  transform: [{ translateX: indicatorTranslateX }],
-                },
-              ]}
-            />
-            {TABS.map(({ label, key, route }) => (
-              <Pressable
-                key={key}
-                style={styles.tab}
-                onPress={() => navigation.navigate(route)}
-                accessibilityRole="button"
-                accessibilityLabel={label}
-              >
-                <Text style={[shared.typography.sub2, styles.tabLabel, activeTab === key && styles.tabLabelActive]}>
-                  {label}
-                </Text>
-              </Pressable>
-            ))}
+          <View style={styles.tabContainer}>
+            {TABS.map(({ label, key, route, iconActive, iconInactive }) => {
+              const isActive = activeTab === key;
+              return (
+                <Pressable
+                  key={key}
+                  style={styles.tab}
+                  onPress={() => navigation.navigate(route)}
+                  accessibilityRole="button"
+                  accessibilityLabel={label}
+                >
+                  <Image
+                    source={isActive ? iconActive : iconInactive}
+                    style={styles.tabIcon}
+                    resizeMode="contain"
+                  />
+                  <Text
+                    style={[
+                      shared.typography.sub2,
+                      styles.tabLabel,
+                      isActive && styles.tabLabelActive,
+                    ]}
+                  >
+                    {label}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </View>
         </View>
       )}
@@ -129,7 +128,7 @@ export default function ScreenShell({ navigation, activeTab, hideTabBar, childre
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: colors.headerBg,
+    backgroundColor: colors.cream,
   },
   header: {
     flexDirection: 'row',
@@ -137,9 +136,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 18,
     paddingVertical: 14,
-    backgroundColor: colors.headerBg,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
+    backgroundColor: colors.cream,
   },
   logo: {
     color: colors.text,
@@ -159,35 +156,30 @@ const styles = StyleSheet.create({
   tabBar: {
     flexDirection: 'row',
     paddingHorizontal: 16,
-    paddingTop: 12,
+    paddingTop: 10,
     backgroundColor: colors.cream,
   },
   tabContainer: {
     flex: 1,
-    height: 50,
     flexDirection: 'row',
-    backgroundColor: colors.white,
-  borderRadius: 9999,
-    padding: 3,
-  },
-  activeIndicator: {
-    position: 'absolute',
-    top: 3,
-    bottom: 3,
-    left: 3,
-    borderRadius: 9999,
-    backgroundColor: colors.accent,
   },
   tab: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 4,
+  },
+  tabIcon: {
+    width: 22,
+    height: 22,
   },
   tabLabel: {
     color: colors.text,
+    fontSize: 12,
+    lineHeight: 16,
   },
   tabLabelActive: {
-    color: colors.white,
+    color: colors.accent,
   },
   backdrop: {
     flex: 1,

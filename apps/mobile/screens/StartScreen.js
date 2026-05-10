@@ -38,6 +38,7 @@ function formatUpcomingDate(isoDate) {
 
 export default function StartScreen({ navigation }) {
   const { user } = useAuth();
+  const displayName = user?.user_metadata?.display_name ?? null;
   const [upcoming, setUpcoming] = useState(null);
   const [loading, setLoading] = useState(true);
   const [rangeKey, setRangeKey] = useState('2d');
@@ -133,7 +134,9 @@ export default function StartScreen({ navigation }) {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={shared.pageTitle}>Home</Text>
+        <Text style={shared.pageTitle}>
+          {displayName ? `Hello, ${displayName}!` : 'Hello!'}
+        </Text>
 
         <Text style={[shared.typography.h3, styles.sectionTitle]}>Upcoming</Text>
         <Text style={[shared.typography.sub2, styles.sectionSubtitle]}>Next scheduled recipe</Text>
@@ -309,9 +312,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     paddingHorizontal: 14,
     paddingVertical: 6,
-    borderWidth: 1,
-    borderStyle: 'solid',
-    borderColor: 'red',
   },
   rangePillText: {
     color: colors.text,
