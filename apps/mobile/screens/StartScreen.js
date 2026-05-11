@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import AppHeader from '../components/AppHeader';
 import ScreenShell from '../components/ScreenShell';
 import { useAuth } from '../providers/AuthProvider';
 import shared from '../sharedStyles';
@@ -134,6 +135,7 @@ export default function StartScreen({ navigation }) {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
+        <AppHeader navigation={navigation} />
         <Text style={shared.pageTitle}>
           {displayName ? `Hello, ${displayName}!` : 'Hello!'}
         </Text>
@@ -242,6 +244,7 @@ const styles = StyleSheet.create({
     color: colors.text,
     textDecorationLine: 'underline',
     marginBottom: 4,
+    marginTop: 10,
   },
   sectionSubtitle: {
     color: colors.textMuted,
@@ -258,15 +261,9 @@ const styles = StyleSheet.create({
   card: {
     height: 126,
     borderRadius: 30,
-    borderWidth: 1,
-    borderColor: colors.border,
     backgroundColor: colors.white,
     overflow: 'hidden',
     flexDirection: 'row',
-    shadowColor: '#000',
-    shadowOpacity: 0.16,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
     elevation: 4,
   },
   cardImage: {
@@ -309,7 +306,7 @@ const styles = StyleSheet.create({
     borderRadius: 9999,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.white,
+    backgroundColor: colors.cream,
     paddingHorizontal: 14,
     paddingVertical: 6,
   },
@@ -319,15 +316,9 @@ const styles = StyleSheet.create({
   fridgeCard: {
     backgroundColor: colors.white,
     borderRadius: 24,
-    borderWidth: 1,
-    borderColor: colors.border,
     padding: 18,
     minHeight: 120,
     marginTop: 4,
-    shadowColor: '#000',
-    shadowOpacity: 0.16,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
     elevation: 4,
   },
   ingRow: {

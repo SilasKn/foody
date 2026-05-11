@@ -34,8 +34,6 @@ const styles = StyleSheet.create({
     height: 54,
     borderRadius: 27,
     backgroundColor: colors.accent,
-    borderWidth: 1,
-    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
@@ -74,13 +72,8 @@ const styles = StyleSheet.create({
 
   // Partial base for circular navigation buttons (back buttons) — compose with local size/bg
   circleButton: {
-    borderWidth: 1,
-    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
     shadowOffset: { width: 0, height: 6 },
     elevation: 5,
   },
@@ -88,8 +81,6 @@ const styles = StyleSheet.create({
   // Base for pill-shaped action buttons — compose with local backgroundColor, padding
   pillButton: {
     borderRadius: 9999,
-    borderWidth: 1,
-    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },

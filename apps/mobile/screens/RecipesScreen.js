@@ -59,31 +59,7 @@ export default function RecipesScreen({ navigation }) {
       navigation={navigation}
       activeTab="recipes"
     >
-      <View style={styles.content}>
-        <View style={styles.pageHeaderRow}>
-          <Text style={shared.pageTitle}>{pageTitle}</Text>
-          <Pressable
-            onPress={() => {
-              setSearchVisible(v => !v);
-              setSearchQuery('');
-            }}
-            style={({ pressed }) => pressed && styles.pressed}
-            hitSlop={10}
-          >
-            <Image source={searchIcon} style={styles.searchIcon} />
-          </Pressable>
-        </View>
-        {searchVisible && (
-          <TextInput
-            style={[shared.typography.body, styles.searchBar]}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholder="Search..."
-            placeholderTextColor={colors.textMuted}
-            autoFocus
-            clearButtonMode="while-editing"
-          />
-        )}
+      <View style={shared.outerContainer}>
         <FlatList
           style={styles.list}
           data={isLoading || errorMessage ? [] : filteredRecipes}
@@ -91,6 +67,34 @@ export default function RecipesScreen({ navigation }) {
           renderItem={renderRecipeCard}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          ListHeaderComponent={
+            <View>
+              <View style={styles.pageHeaderRow}>
+                <Text style={shared.pageTitle}>{pageTitle}</Text>
+                <Pressable
+                  onPress={() => {
+                    setSearchVisible(v => !v);
+                    setSearchQuery('');
+                  }}
+                  style={({ pressed }) => pressed && styles.pressed}
+                  hitSlop={10}
+                >
+                  <Image source={searchIcon} style={styles.searchIcon} />
+                </Pressable>
+              </View>
+              {searchVisible && (
+                <TextInput
+                  style={[shared.typography.body, styles.searchBar]}
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  placeholder="Search..."
+                  placeholderTextColor={colors.textMuted}
+                  autoFocus
+                  clearButtonMode="while-editing"
+                />
+              )}
+            </View>
+          }
           ListEmptyComponent={
             isLoading ? (
               <Text style={[shared.typography.body, styles.infoText]}>Loading recipes...</Text>
@@ -116,10 +120,6 @@ export default function RecipesScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  content: {
-    alignSelf: 'stretch',
-    flex: 1,
-  },
   list: {
     flex: 1,
   },
@@ -137,8 +137,6 @@ const styles = StyleSheet.create({
   recipeCard: {
     height: 126,
     borderRadius: 30,
-    borderWidth: 1,
-    borderColor: colors.border,
     backgroundColor: '#fff',
     overflow: 'hidden',
     flexDirection: 'row',
