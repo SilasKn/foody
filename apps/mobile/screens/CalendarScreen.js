@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Alert, Animated, ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MonthCalendar from '../components/MonthCalendar';
@@ -30,13 +30,31 @@ export default function CalendarScreen({ navigation }) {
   const [deleteMode, setDeleteMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [viewMode, setViewMode] = useState('list');
+  const [selectedDate, setSelectedDate] = useState(null);
   const anim = useRef(new Animated.Value(0)).current;
   const insets = useSafeAreaInsets();
+
+  const scheduledCountsByDate = useMemo(() => {
+    const m = {};
+    for (const g of groups) m[g.date] = g.entries.length;
+    return m;
+  }, [groups]);
+
+  const entriesByDate = useMemo(() => {
+    const m = {};
+    for (const g of groups) m[g.date] = g.entries;
+    return m;
+  }, [groups]);
 
   function toggleMenu() {
     const toValue = menuOpen ? 0 : 1;
     setMenuOpen(!menuOpen);
     Animated.spring(anim, { toValue, useNativeDriver: true, friction: 6 }).start();
+  }
+
+  function closeMenu() {
+    setMenuOpen(false);
+    Animated.spring(anim, { toValue: 0, useNativeDriver: true, friction: 6 }).start();
   }
 
   function subButtonStyle(offsetMultiplier) {
@@ -67,6 +85,51 @@ export default function CalendarScreen({ navigation }) {
       next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
+  }
+
+  function renderScheduledEntry(entry, { showCheckbox = false } = {}) {
+    return (
+      <Pressable
+        key={entry.id}
+        accessibilityRole="button"
+        onPress={() => {
+          if (deleteMode) {
+            toggleSelect(entry.id);
+          } else {
+            navigation.navigate('RecipeDetail', {
+              recipe: { id: entry.recipe_id, name: entry.recipes?.name ?? '' },
+            });
+          }
+        }}
+        style={({ pressed }) => [styles.recipeRow, pressed && { opacity: 0.75 }]}
+      >
+        {showCheckbox && deleteMode && (
+          <Ionicons
+            name={selectedIds.has(entry.id) ? 'checkbox' : 'square-outline'}
+            size={24}
+            color={selectedIds.has(entry.id) ? colors.accent : colors.textMuted}
+            style={styles.checkboxIcon}
+          />
+        )}
+        <View style={styles.recipeImageWrapper}>
+          <Image
+            source={entry.imageUrl ? { uri: entry.imageUrl } : placeholderImage}
+            style={styles.recipeImage}
+            resizeMode="cover"
+          />
+        </View>
+        <View style={styles.recipeInfo}>
+          <Text style={[shared.typography.sub1, styles.recipeName]} numberOfLines={2}>
+            {entry.recipes?.name ?? '—'}
+          </Text>
+        </View>
+        <View style={styles.mealTypePill}>
+          <Text style={[shared.typography.sub2, styles.mealTypePillLabel]}>
+            {entry.scheduled_as}
+          </Text>
+        </View>
+      </Pressable>
+    );
   }
 
   async function handleDelete() {
@@ -170,7 +233,27 @@ export default function CalendarScreen({ navigation }) {
           <Text style={shared.pageTitle}>Scheduled recipes</Text>
 
           {viewMode === 'calendar' ? (
-            <MonthCalendar />
+            <>
+              <MonthCalendar
+                scheduledCountsByDate={scheduledCountsByDate}
+                selectedDate={selectedDate}
+                onSelectDate={iso => setSelectedDate(prev => (prev === iso ? null : iso))}
+              />
+              {selectedDate && (
+                <View style={styles.dayListSection}>
+                  <Text style={[shared.typography.sub2, styles.dayListHeader]}>
+                    Scheduled for the picked date:
+                  </Text>
+                  {(entriesByDate[selectedDate] ?? []).length === 0 ? (
+                    <Text style={[shared.typography.body, styles.emptyText]}>
+                      Nothing scheduled for this day.
+                    </Text>
+                  ) : (
+                    entriesByDate[selectedDate].map(entry => renderScheduledEntry(entry))
+                  )}
+                </View>
+              )}
+            </>
           ) : loading ? (
             <ActivityIndicator size="large" color={colors.accent} style={styles.loader} />
           ) : groups.length === 0 ? (
@@ -179,48 +262,7 @@ export default function CalendarScreen({ navigation }) {
             groups.map(group => (
               <View key={group.date}>
                 <Text style={[shared.typography.h3, styles.dayHeader]}>{parseDayHeader(group.date)}</Text>
-                {group.entries.map(entry => (
-                  <Pressable
-                    key={entry.id}
-                    accessibilityRole="button"
-                    onPress={() => {
-                      if (deleteMode) {
-                        toggleSelect(entry.id);
-                      } else {
-                        navigation.navigate('RecipeDetail', {
-                          recipe: { id: entry.recipe_id, name: entry.recipes?.name ?? '' },
-                        });
-                      }
-                    }}
-                    style={({ pressed }) => [styles.recipeRow, pressed && { opacity: 0.75 }]}
-                  >
-                    {deleteMode && (
-                      <Ionicons
-                        name={selectedIds.has(entry.id) ? 'checkbox' : 'square-outline'}
-                        size={24}
-                        color={selectedIds.has(entry.id) ? colors.accent : colors.textMuted}
-                        style={styles.checkboxIcon}
-                      />
-                    )}
-                    <View style={styles.recipeImageWrapper}>
-                      <Image
-                        source={entry.imageUrl ? { uri: entry.imageUrl } : placeholderImage}
-                        style={styles.recipeImage}
-                        resizeMode="cover"
-                      />
-                    </View>
-                    <View style={styles.recipeInfo}>
-                      <Text style={[shared.typography.sub1, styles.recipeName]} numberOfLines={2}>
-                        {entry.recipes?.name ?? '—'}
-                      </Text>
-                    </View>
-                    <View style={styles.mealTypePill}>
-                      <Text style={[shared.typography.sub2, styles.mealTypePillLabel]}>
-                        {entry.scheduled_as}
-                      </Text>
-                    </View>
-                  </Pressable>
-                ))}
+                {group.entries.map(entry => renderScheduledEntry(entry, { showCheckbox: true }))}
               </View>
             ))
           )}
@@ -229,15 +271,20 @@ export default function CalendarScreen({ navigation }) {
 
       {!deleteMode && (
         <View style={shared.fabArea} pointerEvents="box-none">
-          <Animated.View style={subButtonStyle(2)}>
-            <Pressable style={shared.fabSubButton} onPress={enterDeleteMode}>
-              <Image source={require('../assets/trashcan-icon.png')} style={styles.fabIcon} />
-            </Pressable>
-          </Animated.View>
+          {viewMode === 'list' && (
+            <Animated.View style={subButtonStyle(2)}>
+              <Pressable style={shared.fabSubButton} onPress={enterDeleteMode}>
+                <Image source={require('../assets/trashcan-icon.png')} style={styles.fabIcon} />
+              </Pressable>
+            </Animated.View>
+          )}
           <Animated.View style={subButtonStyle(1)}>
             <Pressable
               style={shared.fabSubButton}
-              onPress={() => setViewMode(m => (m === 'list' ? 'calendar' : 'list'))}
+              onPress={() => {
+                setViewMode(m => (m === 'list' ? 'calendar' : 'list'));
+                closeMenu();
+              }}
               accessibilityRole="button"
               accessibilityLabel={viewMode === 'list' ? 'Show calendar view' : 'Show list view'}
             >
@@ -298,6 +345,13 @@ const styles = StyleSheet.create({
   dayHeader: {
     color: colors.text,
     marginTop: 24,
+    marginBottom: 8,
+  },
+  dayListSection: {
+    marginTop: 16,
+  },
+  dayListHeader: {
+    color: colors.textMuted,
     marginBottom: 8,
   },
   recipeRow: {

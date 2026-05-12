@@ -7,7 +7,15 @@ import { colors } from '../theme';
 const WEEKDAY_LABELS = ['Mo', 'Tue', 'We', 'Thur', 'Fri', 'Sat', 'Sun'];
 const TOTAL_CELLS = 42;
 
-export default function MonthCalendar() {
+function isoFor(y, mZeroBased, d) {
+  return `${y}-${String(mZeroBased + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+}
+
+export default function MonthCalendar({
+  scheduledCountsByDate = {},
+  selectedDate = null,
+  onSelectDate,
+}) {
   const [viewed, setViewed] = useState(() => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1);
@@ -79,21 +87,35 @@ export default function MonthCalendar() {
                 const i = rowIdx * 7 + colIdx;
                 const day = cells[i];
                 const isLastCol = colIdx === 6;
+                const iso = day !== null ? isoFor(year, month, day) : null;
+                const isSelected = iso !== null && iso === selectedDate;
+                const count = iso !== null ? (scheduledCountsByDate[iso] ?? 0) : 0;
                 return (
-                  <View
+                  <Pressable
                     key={colIdx}
                     style={[styles.cell, !isLastCol && styles.cellBorderRight]}
+                    onPress={day !== null ? () => onSelectDate?.(iso) : undefined}
+                    disabled={day === null}
                   >
                     {day !== null && (
-                      day === todayDate ? (
-                        <View style={styles.todayCircle}>
+                      <View style={[styles.dayContent, isSelected && styles.dayContentSelected]}>
+                        {day === todayDate ? (
+                          <View style={styles.todayCircle}>
+                            <Text style={[shared.typography.sub1, styles.cellText]}>{day}</Text>
+                          </View>
+                        ) : (
                           <Text style={[shared.typography.sub1, styles.cellText]}>{day}</Text>
-                        </View>
-                      ) : (
-                        <Text style={[shared.typography.sub1, styles.cellText]}>{day}</Text>
-                      )
+                        )}
+                        {count > 0 && (
+                          <View style={styles.dotsRow}>
+                            {Array.from({ length: count }).map((_, dotIdx) => (
+                              <View key={dotIdx} style={styles.dot} />
+                            ))}
+                          </View>
+                        )}
+                      </View>
                     )}
-                  </View>
+                  </Pressable>
                 );
               })}
             </View>
@@ -170,5 +192,32 @@ const styles = StyleSheet.create({
     backgroundColor: colors.pillActive,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  dayContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  dayContentSelected: {
+    borderColor: colors.textMuted,
+  },
+  dotsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    marginTop: 2,
+    maxWidth: 28,
+  },
+  dot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.accent,
+    marginHorizontal: 1,
+    marginVertical: 1,
   },
 });
