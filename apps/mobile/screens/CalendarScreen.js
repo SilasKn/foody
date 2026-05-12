@@ -3,6 +3,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useRef, useState } from 'react';
 import { Alert, Animated, ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import MonthCalendar from '../components/MonthCalendar';
 import ScreenShell from '../components/ScreenShell';
 import shared from '../sharedStyles';
 import { colors } from '../theme';
@@ -28,6 +29,7 @@ export default function CalendarScreen({ navigation }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [deleteMode, setDeleteMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
+  const [viewMode, setViewMode] = useState('list');
   const anim = useRef(new Animated.Value(0)).current;
   const insets = useSafeAreaInsets();
 
@@ -167,7 +169,9 @@ export default function CalendarScreen({ navigation }) {
         >
           <Text style={shared.pageTitle}>Scheduled recipes</Text>
 
-          {loading ? (
+          {viewMode === 'calendar' ? (
+            <MonthCalendar />
+          ) : loading ? (
             <ActivityIndicator size="large" color={colors.accent} style={styles.loader} />
           ) : groups.length === 0 ? (
             <Text style={[shared.typography.body, styles.emptyText]}>Nothing scheduled yet.</Text>
@@ -231,8 +235,18 @@ export default function CalendarScreen({ navigation }) {
             </Pressable>
           </Animated.View>
           <Animated.View style={subButtonStyle(1)}>
-            <Pressable style={shared.fabSubButton} onPress={() => {}}>
-              <Image source={require('../assets/calendar-icon.png')} style={styles.fabIcon} />
+            <Pressable
+              style={shared.fabSubButton}
+              onPress={() => setViewMode(m => (m === 'list' ? 'calendar' : 'list'))}
+              accessibilityRole="button"
+              accessibilityLabel={viewMode === 'list' ? 'Show calendar view' : 'Show list view'}
+            >
+              <Image
+                source={viewMode === 'list'
+                  ? require('../assets/calendar-icon.png')
+                  : require('../assets/list-icon.png')}
+                style={styles.fabIcon}
+              />
             </Pressable>
           </Animated.View>
           <Pressable
