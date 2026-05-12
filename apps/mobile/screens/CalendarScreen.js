@@ -210,7 +210,11 @@ export default function CalendarScreen({ navigation }) {
                         {entry.recipes?.name ?? '—'}
                       </Text>
                     </View>
-                    <Text style={[shared.typography.sub2, styles.mealType]}>{entry.scheduled_as}</Text>
+                    <View style={styles.mealTypePill}>
+                      <Text style={[shared.typography.sub2, styles.mealTypePillLabel]}>
+                        {entry.scheduled_as}
+                      </Text>
+                    </View>
                   </Pressable>
                 ))}
               </View>
@@ -285,7 +289,16 @@ const styles = StyleSheet.create({
   recipeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
+    backgroundColor: colors.white,
+    borderRadius: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
   checkboxIcon: {
     marginRight: 10,
@@ -293,11 +306,6 @@ const styles = StyleSheet.create({
   recipeImageWrapper: {
     width: 64,
     height: 64,
-    shadowColor: '#000',
-    shadowOpacity: 0.18,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 4,
   },
   recipeImage: {
     width: 64,
@@ -312,9 +320,16 @@ const styles = StyleSheet.create({
   recipeName: {
     color: colors.text,
   },
-  mealType: {
-    color: colors.textMuted,
+  mealTypePill: {
+    backgroundColor: colors.accent,
+    borderRadius: 9999,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
     marginLeft: 8,
+    alignSelf: 'center',
+  },
+  mealTypePillLabel: {
+    color: colors.white,
   },
   fabIcon: {
     width: 26,
