@@ -15,6 +15,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AddRecipeScreen from './screens/AddRecipeScreen';
 import ScheduleRecipeScreen from './screens/ScheduleRecipeScreen';
+import RescheduleScreen from './screens/RescheduleScreen';
 import CalendarScreen from './screens/CalendarScreen';
 import LoginScreen from './screens/LoginScreen';
 import RecipeDetailScreen from './screens/RecipeDetailScreen';
@@ -60,6 +61,15 @@ function AppRoutes() {
           <Stack.Screen
             name="ScheduleRecipe"
             component={ScheduleRecipeScreen}
+            options={{
+              presentation: 'transparentModal',
+              animation: 'none',
+              contentStyle: { backgroundColor: 'transparent' },
+            }}
+          />
+          <Stack.Screen
+            name="Reschedule"
+            component={RescheduleScreen}
             options={{
               presentation: 'transparentModal',
               animation: 'none',

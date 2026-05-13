@@ -6,5 +6,8 @@
   ],
   "scripts": {
     "mobile": "npm run start -w mobile"
+  },
+  "overrides": {
+    "react-native-worklets": "0.5.1"
   }
 }

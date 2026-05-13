@@ -6,7 +6,7 @@ import Animated, { LinearTransition } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MonthCalendar from '../components/MonthCalendar';
 import ScreenShell from '../components/ScreenShell';
-import SwipeToDeleteRow from '../components/SwipeToDeleteRow';
+import SwipeActionsRow from '../components/SwipeActionsRow';
 import shared from '../sharedStyles';
 import { colors } from '../theme';
 import { supabase } from '../utils/supabase';
@@ -103,7 +103,7 @@ export default function CalendarScreen({ navigation }) {
             });
           }
         }}
-        style={({ pressed }) => [styles.recipeRow, pressed && { opacity: 0.75 }]}
+        style={styles.recipeRow}
       >
         {showCheckbox && deleteMode && (
           <Ionicons
@@ -132,6 +132,16 @@ export default function CalendarScreen({ navigation }) {
         </View>
       </Pressable>
     );
+  }
+
+  function handleReschedule(entry) {
+    navigation.navigate('Reschedule', {
+      entry: {
+        id: entry.id,
+        scheduled_for: entry.scheduled_for,
+        scheduled_as: entry.scheduled_as,
+      },
+    });
   }
 
   async function handleSwipeDelete(entryId) {
@@ -262,13 +272,14 @@ export default function CalendarScreen({ navigation }) {
                     </Text>
                   ) : (
                     entriesByDate[selectedDate].map(entry => (
-                      <SwipeToDeleteRow
+                      <SwipeActionsRow
                         key={entry.id}
                         enabled={!deleteMode}
                         onDelete={() => handleSwipeDelete(entry.id)}
+                        onReschedule={() => handleReschedule(entry)}
                       >
                         {renderScheduledEntry(entry)}
-                      </SwipeToDeleteRow>
+                      </SwipeActionsRow>
                     ))
                   )}
                 </View>
@@ -283,27 +294,31 @@ export default function CalendarScreen({ navigation }) {
               if (group.entries.length === 1) {
                 const entry = group.entries[0];
                 return (
-                  <SwipeToDeleteRow
+                  <SwipeActionsRow
                     key={group.date}
                     enabled={!deleteMode}
                     onDelete={() => handleSwipeDelete(entry.id)}
+                    onReschedule={() => handleReschedule(entry)}
+                    headerContent={
+                      <Text style={[shared.typography.h3, styles.dayHeader]}>{parseDayHeader(group.date)}</Text>
+                    }
                   >
-                    <Text style={[shared.typography.h3, styles.dayHeader]}>{parseDayHeader(group.date)}</Text>
                     {renderScheduledEntry(entry, { showCheckbox: true })}
-                  </SwipeToDeleteRow>
+                  </SwipeActionsRow>
                 );
               }
               return (
                 <Animated.View key={group.date} layout={LinearTransition.duration(220)}>
                   <Text style={[shared.typography.h3, styles.dayHeader]}>{parseDayHeader(group.date)}</Text>
                   {group.entries.map(entry => (
-                    <SwipeToDeleteRow
+                    <SwipeActionsRow
                       key={entry.id}
                       enabled={!deleteMode}
                       onDelete={() => handleSwipeDelete(entry.id)}
+                      onReschedule={() => handleReschedule(entry)}
                     >
                       {renderScheduledEntry(entry, { showCheckbox: true })}
-                    </SwipeToDeleteRow>
+                    </SwipeActionsRow>
                   ))}
                 </Animated.View>
               );
