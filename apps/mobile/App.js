@@ -11,6 +11,7 @@ import {
   Poppins_600SemiBold,
 } from '@expo-google-fonts/poppins';
 import { View, Text } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AddRecipeScreen from './screens/AddRecipeScreen';
 import ScheduleRecipeScreen from './screens/ScheduleRecipeScreen';
@@ -102,13 +103,15 @@ export default function App() {
   if (!fontsLoaded) return null;
 
   return (
-    <AuthProvider>
-      <SafeAreaProvider>
-        <RecipesProvider>
-          <AppRoutes />
-          <StatusBar style="dark" />
-        </RecipesProvider>
-      </SafeAreaProvider>
-    </AuthProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <AuthProvider>
+        <SafeAreaProvider>
+          <RecipesProvider>
+            <AppRoutes />
+            <StatusBar style="dark" />
+          </RecipesProvider>
+        </SafeAreaProvider>
+      </AuthProvider>
+    </GestureHandlerRootView>
   );
 }

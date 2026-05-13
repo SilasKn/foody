@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, View, Image } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image } from 'expo-image';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../theme';
 import shared from '../sharedStyles';
@@ -8,22 +9,22 @@ const TABS = [
     label: 'Home',
     key: 'home',
     route: 'Start',
-    iconActive:   require('../assets/navbar/home_icon_green.png'),
-    iconInactive: require('../assets/navbar/home_icon_black.png'),
+    iconActive:   require('../assets/navbar/home_icon_green.svg'),
+    iconInactive: require('../assets/navbar/home_icon_black.svg'),
   },
   {
     label: 'Recipes',
     key: 'recipes',
     route: 'Recipes',
-    iconActive:   require('../assets/navbar/recipe_icon_green.png'),
-    iconInactive: require('../assets/navbar/recipe_icon_black.png'),
+    iconActive:   require('../assets/navbar/recipe_icon_green.svg'),
+    iconInactive: require('../assets/navbar/recipe_icon_black.svg'),
   },
   {
     label: 'Calendar',
     key: 'calendar',
     route: 'Calendar',
-    iconActive:   require('../assets/navbar/calendar-icon_green.png'),
-    iconInactive: require('../assets/navbar/calendar-icon_black.png'),
+    iconActive:   require('../assets/navbar/calendar_icon_green.svg'),
+    iconInactive: require('../assets/navbar/calendar_icon_black.svg'),
   },
 ];
 
@@ -50,7 +51,7 @@ export default function ScreenShell({ navigation, activeTab, hideTabBar, childre
                   <Image
                     source={isActive ? iconActive : iconInactive}
                     style={styles.tabIcon}
-                    resizeMode="contain"
+                    contentFit="contain"
                   />
                   <Text
                     style={[

@@ -1,10 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { Alert, Animated, ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Animated as RNAnimated, ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Animated, { LinearTransition } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MonthCalendar from '../components/MonthCalendar';
 import ScreenShell from '../components/ScreenShell';
+import SwipeToDeleteRow from '../components/SwipeToDeleteRow';
 import shared from '../sharedStyles';
 import { colors } from '../theme';
 import { supabase } from '../utils/supabase';
@@ -30,8 +32,8 @@ export default function CalendarScreen({ navigation }) {
   const [deleteMode, setDeleteMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [viewMode, setViewMode] = useState('list');
-  const [selectedDate, setSelectedDate] = useState(null);
-  const anim = useRef(new Animated.Value(0)).current;
+  const [selectedDate, setSelectedDate] = useState(todayIso());
+  const anim = useRef(new RNAnimated.Value(0)).current;
   const insets = useSafeAreaInsets();
 
   const scheduledCountsByDate = useMemo(() => {
@@ -49,12 +51,12 @@ export default function CalendarScreen({ navigation }) {
   function toggleMenu() {
     const toValue = menuOpen ? 0 : 1;
     setMenuOpen(!menuOpen);
-    Animated.spring(anim, { toValue, useNativeDriver: true, friction: 6 }).start();
+    RNAnimated.spring(anim, { toValue, useNativeDriver: true, friction: 6 }).start();
   }
 
   function closeMenu() {
     setMenuOpen(false);
-    Animated.spring(anim, { toValue: 0, useNativeDriver: true, friction: 6 }).start();
+    RNAnimated.spring(anim, { toValue: 0, useNativeDriver: true, friction: 6 }).start();
   }
 
   function subButtonStyle(offsetMultiplier) {
@@ -130,6 +132,16 @@ export default function CalendarScreen({ navigation }) {
         </View>
       </Pressable>
     );
+  }
+
+  async function handleSwipeDelete(entryId) {
+    setGroups(prev =>
+      prev
+        .map(g => ({ ...g, entries: g.entries.filter(e => e.id !== entryId) }))
+        .filter(g => g.entries.length > 0)
+    );
+    const { error } = await supabase.from('recipe_schedule').delete().eq('id', entryId);
+    if (error) Alert.alert('Error', 'Could not delete the scheduling.');
   }
 
   async function handleDelete() {
@@ -249,7 +261,15 @@ export default function CalendarScreen({ navigation }) {
                       Nothing scheduled for this day.
                     </Text>
                   ) : (
-                    entriesByDate[selectedDate].map(entry => renderScheduledEntry(entry))
+                    entriesByDate[selectedDate].map(entry => (
+                      <SwipeToDeleteRow
+                        key={entry.id}
+                        enabled={!deleteMode}
+                        onDelete={() => handleSwipeDelete(entry.id)}
+                      >
+                        {renderScheduledEntry(entry)}
+                      </SwipeToDeleteRow>
+                    ))
                   )}
                 </View>
               )}
@@ -259,12 +279,35 @@ export default function CalendarScreen({ navigation }) {
           ) : groups.length === 0 ? (
             <Text style={[shared.typography.body, styles.emptyText]}>Nothing scheduled yet.</Text>
           ) : (
-            groups.map(group => (
-              <View key={group.date}>
-                <Text style={[shared.typography.h3, styles.dayHeader]}>{parseDayHeader(group.date)}</Text>
-                {group.entries.map(entry => renderScheduledEntry(entry, { showCheckbox: true }))}
-              </View>
-            ))
+            groups.map(group => {
+              if (group.entries.length === 1) {
+                const entry = group.entries[0];
+                return (
+                  <SwipeToDeleteRow
+                    key={group.date}
+                    enabled={!deleteMode}
+                    onDelete={() => handleSwipeDelete(entry.id)}
+                  >
+                    <Text style={[shared.typography.h3, styles.dayHeader]}>{parseDayHeader(group.date)}</Text>
+                    {renderScheduledEntry(entry, { showCheckbox: true })}
+                  </SwipeToDeleteRow>
+                );
+              }
+              return (
+                <Animated.View key={group.date} layout={LinearTransition.duration(220)}>
+                  <Text style={[shared.typography.h3, styles.dayHeader]}>{parseDayHeader(group.date)}</Text>
+                  {group.entries.map(entry => (
+                    <SwipeToDeleteRow
+                      key={entry.id}
+                      enabled={!deleteMode}
+                      onDelete={() => handleSwipeDelete(entry.id)}
+                    >
+                      {renderScheduledEntry(entry, { showCheckbox: true })}
+                    </SwipeToDeleteRow>
+                  ))}
+                </Animated.View>
+              );
+            })
           )}
         </ScrollView>
       </View>
@@ -272,13 +315,13 @@ export default function CalendarScreen({ navigation }) {
       {!deleteMode && (
         <View style={shared.fabArea} pointerEvents="box-none">
           {viewMode === 'list' && (
-            <Animated.View style={subButtonStyle(2)}>
+            <RNAnimated.View style={subButtonStyle(2)}>
               <Pressable style={shared.fabSubButton} onPress={enterDeleteMode}>
                 <Image source={require('../assets/trashcan-icon.png')} style={styles.fabIcon} />
               </Pressable>
-            </Animated.View>
+            </RNAnimated.View>
           )}
-          <Animated.View style={subButtonStyle(1)}>
+          <RNAnimated.View style={subButtonStyle(1)}>
             <Pressable
               style={shared.fabSubButton}
               onPress={() => {
@@ -290,12 +333,12 @@ export default function CalendarScreen({ navigation }) {
             >
               <Image
                 source={viewMode === 'list'
-                  ? require('../assets/calendar-icon.png')
+                  ? require('../assets/calendar_icon_black.svg')
                   : require('../assets/list-icon.png')}
                 style={styles.fabIcon}
               />
             </Pressable>
-          </Animated.View>
+          </RNAnimated.View>
           <Pressable
             style={({ pressed }) => [shared.fabMainButton, pressed && shared.pressed]}
             onPress={toggleMenu}
