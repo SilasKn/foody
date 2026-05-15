@@ -166,7 +166,7 @@ export default function StartScreen({ navigation }) {
 
         <View style={styles.fridgeSubtitleRow}>
           <Text style={[shared.typography.h3, styles.fridgeSubtitleInline]}>
-            Everything to buy for the next
+            Everything you need to buy
           </Text>
           <Pressable
             onPress={() => setRangePickerOpen(true)}
@@ -327,10 +327,10 @@ const styles = StyleSheet.create({
   },
   ingName: {
     flex: 1,
-    color: colors.text,
+    color: colors.white,
   },
   ingQty: {
-    color: colors.text,
+    color: colors.white,
   },
   fridgeEmpty: {
     color: colors.white,

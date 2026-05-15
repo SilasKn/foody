@@ -44,7 +44,10 @@ export default function RescheduleScreen({ route, navigation }) {
   const [mealType, setMealType] = useState(entry.scheduled_as);
   const [saving, setSaving] = useState(false);
 
-  const canReschedule = selectedDate !== null && mealType !== null;
+  const canReschedule =
+    selectedDate !== null &&
+    mealType !== null &&
+    (dateToIsoLocal(selectedDate) !== entry.scheduled_for || mealType !== entry.scheduled_as);
 
   const onDateChange = (event, date) => {
     if (Platform.OS === 'android') {
@@ -124,19 +127,30 @@ export default function RescheduleScreen({ route, navigation }) {
               ))}
             </View>
 
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Confirm reschedule"
-              onPress={onReschedule}
-              disabled={!canReschedule || saving}
-              style={({ pressed }) => [
-                styles.rescheduleButton,
-                (!canReschedule || saving) && styles.rescheduleButtonDisabled,
-                pressed && canReschedule && !saving && { opacity: 0.85 },
-              ]}
-            >
-              <Text style={[shared.typography.sub1, styles.rescheduleButtonText]}>{saving ? 'Saving…' : 'Reschedule'}</Text>
-            </Pressable>
+            <View style={styles.actionRow}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Cancel reschedule"
+                onPress={() => navigation.goBack()}
+                style={({ pressed }) => [styles.cancelButton, pressed && { opacity: 0.85 }]}
+              >
+                <Text style={[shared.typography.sub1, styles.cancelButtonText]}>Cancel</Text>
+              </Pressable>
+
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Confirm reschedule"
+                onPress={onReschedule}
+                disabled={!canReschedule || saving}
+                style={({ pressed }) => [
+                  styles.rescheduleButton,
+                  (!canReschedule || saving) && styles.rescheduleButtonDisabled,
+                  pressed && canReschedule && !saving && { opacity: 0.85 },
+                ]}
+              >
+                <Text style={[shared.typography.sub1, styles.rescheduleButtonText]}>{saving ? 'Saving…' : 'Reschedule'}</Text>
+              </Pressable>
+            </View>
           </Animated.View>
         </View>
 
@@ -254,7 +268,6 @@ const styles = StyleSheet.create({
     color: colors.white,
   },
   rescheduleButton: {
-    alignSelf: 'flex-end',
     backgroundColor: colors.accent,
     borderRadius: 9999,
     borderWidth: 1,
@@ -268,6 +281,23 @@ const styles = StyleSheet.create({
   rescheduleButtonText: {
     color: colors.white,
   },
+  actionRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    gap: 12,
+  },
+  cancelButton: {
+    backgroundColor: colors.white,
+    borderRadius: 9999,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+  },
+  cancelButtonText: {
+    color: colors.text,
+  },
   pickerBackdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',
@@ -277,7 +307,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    paddingBottom: 24,
+    paddingBottom: 10,
     borderTopWidth: 1,
     borderColor: colors.border,
   },

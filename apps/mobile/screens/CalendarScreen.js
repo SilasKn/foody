@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   dayHeader: {
-    color: colors.text,
+    color: colors.textMuted,
     marginTop: 24,
     marginBottom: 8,
   },
