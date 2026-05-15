@@ -1,13 +1,13 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Image as SvgIcon } from 'expo-image';
+import RecipeImage from '../components/RecipeImage';
 import ScreenShell from '../components/ScreenShell';
 import shared from '../sharedStyles';
 import { colors } from '../theme';
 import { supabase } from '../utils/supabase';
 
-const placeholderImage = require('../assets/no-picture.png');
 const editIcon = require('../assets/edit_icon.svg');
 
 function formatDate(iso) {
@@ -103,10 +103,10 @@ export default function RecipeDetailScreen({ route, navigation }) {
           <View style={styles.card}>
             <View style={styles.imageSection}>
               <View style={styles.imageWrapper}>
-                <Image
-                  source={details?.imageUrl ? { uri: details.imageUrl } : placeholderImage}
+                <RecipeImage
+                  imageUrl={details?.imageUrl}
+                  recipeId={recipe.id}
                   style={styles.image}
-                  resizeMode="cover"
                 />
               </View>
               <Pressable

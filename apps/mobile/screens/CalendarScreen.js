@@ -1,16 +1,15 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useMemo, useState } from 'react';
-import { Alert, ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Image as SvgIcon } from 'expo-image';
 import Animated, { LinearTransition } from 'react-native-reanimated';
 import MonthCalendar from '../components/MonthCalendar';
+import RecipeImage from '../components/RecipeImage';
 import ScreenShell from '../components/ScreenShell';
 import SwipeActionsRow from '../components/SwipeActionsRow';
 import shared from '../sharedStyles';
 import { colors } from '../theme';
 import { supabase } from '../utils/supabase';
-
-const placeholderImage = require('../assets/no-picture.png');
 
 function todayIso() {
   const now = new Date();
@@ -55,10 +54,10 @@ export default function CalendarScreen({ navigation }) {
         style={styles.recipeRow}
       >
         <View style={styles.recipeImageWrapper}>
-          <Image
-            source={entry.imageUrl ? { uri: entry.imageUrl } : placeholderImage}
+          <RecipeImage
+            imageUrl={entry.imageUrl}
+            recipeId={entry.recipe_id}
             style={styles.recipeImage}
-            resizeMode="cover"
           />
         </View>
         <View style={styles.recipeInfo}>

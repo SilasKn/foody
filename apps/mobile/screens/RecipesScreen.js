@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import { FlatList, Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Image as SvgIcon } from 'expo-image';
+import RecipeImage from '../components/RecipeImage';
 import ScreenShell from '../components/ScreenShell';
 import { useRecipes } from '../providers/RecipesProvider';
 import shared from '../sharedStyles';
 import { colors } from '../theme';
 
-const placeholderImage = require('../assets/no-picture.png');
 const searchIcon = require('../assets/search_icon.svg');
 
 export default function RecipesScreen({ navigation }) {
@@ -38,10 +38,10 @@ export default function RecipesScreen({ navigation }) {
       style={({ pressed }) => pressed && styles.pressed}
     >
       <View style={styles.recipeCard}>
-        <Image
-          source={item.imageUrl ? { uri: item.imageUrl } : placeholderImage}
+        <RecipeImage
+          imageUrl={item.imageUrl}
+          recipeId={item.id}
           style={styles.recipeCardImage}
-          resizeMode="cover"
         />
         <View style={styles.recipeCardContent}>
           <Text style={[shared.typography.sub1, styles.recipeTitle]} numberOfLines={1}>

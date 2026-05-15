@@ -1,14 +1,13 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Animated, Dimensions, Image, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Animated, Dimensions, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Image as SvgIcon } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import RecipeImage from '../components/RecipeImage';
 import { useAuth } from '../providers/AuthProvider';
 import shared from '../sharedStyles';
 import { colors } from '../theme';
 import { supabase } from '../utils/supabase';
-
-const placeholderImage = require('../assets/no-picture.png');
 
 const MEAL_TYPES = ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
 
@@ -75,10 +74,10 @@ export default function ScheduleRecipeScreen({ route, navigation }) {
         <Animated.View style={[styles.card, { transform: [{ translateY: cardSlideAnim }] }]}>
           <View style={styles.imageSection}>
             <View style={styles.imageWrapper}>
-              <Image
-                source={recipe.imageUrl ? { uri: recipe.imageUrl } : placeholderImage}
+              <RecipeImage
+                imageUrl={recipe.imageUrl}
+                recipeId={recipe.id}
                 style={styles.image}
-                resizeMode="cover"
               />
             </View>
             <Pressable

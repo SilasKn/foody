@@ -18,8 +18,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const placeholderImage = require('../assets/no-picture.png');
-
+import RecipeImage from '../components/RecipeImage';
 import { useAuth } from '../providers/AuthProvider';
 import { useRecipes } from '../providers/RecipesProvider';
 import shared from '../sharedStyles';
@@ -446,16 +445,28 @@ export default function AddRecipeScreen({ navigation, route }) {
                 onPress={pickImage}
                 style={({ pressed }) => [styles.imagePicker, pressed && shared.pressed]}
               >
-                {(displayImageUri !== null || imageRemoved) ? (
+                {displayImageUri !== null ? (
                   <>
                     <Image
-                      source={displayImageUri ? { uri: displayImageUri } : placeholderImage}
+                      source={{ uri: displayImageUri }}
                       style={styles.imagePreview}
                       resizeMode="cover"
                     />
                     <View style={styles.imageOverlay} pointerEvents="none">
                       <SvgIcon source={require('../assets/camera_icon_white.svg')} style={{ width: 28, height: 28 }} contentFit="contain" />
                       <Text style={[shared.typography.sub2, styles.imageOverlayText]}>Edit</Text>
+                    </View>
+                  </>
+                ) : editRecipe ? (
+                  <>
+                    <RecipeImage
+                      imageUrl={null}
+                      recipeId={editRecipe.id}
+                      style={styles.imagePreview}
+                    />
+                    <View style={styles.imageOverlay} pointerEvents="none">
+                      <SvgIcon source={require('../assets/camera_icon_white.svg')} style={{ width: 28, height: 28 }} contentFit="contain" />
+                      <Text style={[shared.typography.sub2, styles.imageOverlayText]}>Add photo</Text>
                     </View>
                   </>
                 ) : (

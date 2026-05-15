@@ -1,16 +1,15 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Image as SvgIcon } from 'expo-image';
 import AppHeader from '../components/AppHeader';
+import RecipeImage from '../components/RecipeImage';
 import ScreenShell from '../components/ScreenShell';
 import { useAuth } from '../providers/AuthProvider';
 import shared from '../sharedStyles';
 import { colors } from '../theme';
 import { aggregateIngredients, formatQuantity } from '../utils/aggregateIngredients';
 import { supabase } from '../utils/supabase';
-
-const placeholderImage = require('../assets/no-picture.png');
 
 const RANGE_OPTIONS = [
   { key: 'today', label: 'Today', days: 1 },
@@ -151,10 +150,10 @@ export default function StartScreen({ navigation }) {
             })}
             style={({ pressed }) => [styles.card, pressed && styles.pressed]}
           >
-            <Image
-              source={upcoming.imageUrl ? { uri: upcoming.imageUrl } : placeholderImage}
+            <RecipeImage
+              imageUrl={upcoming.imageUrl}
+              recipeId={upcoming.recipe_id}
               style={styles.cardImage}
-              resizeMode="cover"
             />
             <View style={styles.cardContent}>
               <Text style={[shared.typography.h3, styles.cardName]} numberOfLines={1}>{upcoming.recipes?.name ?? '—'}</Text>
