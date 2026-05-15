@@ -140,8 +140,7 @@ export default function StartScreen({ navigation }) {
           {displayName ? `Hello, ${displayName}!` : 'Hello!'}
         </Text>
 
-        <Text style={[shared.typography.h3, styles.sectionTitle]}>Upcoming</Text>
-        <Text style={[shared.typography.sub2, styles.sectionSubtitle]}>Next scheduled recipe</Text>
+        <Text style={[shared.typography.h3, styles.sectionSubtitle]}>Next scheduled recipe</Text>
 
         {loading ? (
           <ActivityIndicator color={colors.accent} style={styles.loader} />
@@ -166,11 +165,8 @@ export default function StartScreen({ navigation }) {
           <Text style={[shared.typography.body, styles.emptyText]}>Nothing scheduled yet.</Text>
         )}
 
-        <Text style={[shared.typography.h3, styles.sectionTitle, styles.fridgeTitle]}>
-          Prepare your fridge
-        </Text>
         <View style={styles.fridgeSubtitleRow}>
-          <Text style={[shared.typography.sub2, styles.fridgeSubtitleInline]}>
+          <Text style={[shared.typography.h3, styles.fridgeSubtitleInline]}>
             Everything to buy for the next
           </Text>
           <Pressable
@@ -294,6 +290,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 12,
     marginBottom: 14,
+    marginTop: 14
   },
   fridgeSubtitleInline: {
     color: colors.textMuted,
@@ -314,7 +311,8 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   fridgeCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.accent2,
+    color: colors.white,
     borderRadius: 24,
     padding: 18,
     minHeight: 120,
@@ -336,7 +334,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   fridgeEmpty: {
-    color: colors.textMuted,
+    color: colors.white,
     fontStyle: 'italic',
     textAlign: 'center',
     paddingVertical: 24,

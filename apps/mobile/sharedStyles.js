@@ -4,7 +4,7 @@ import { colors } from './theme';
 const typography = {
   h1:        { fontFamily: 'Poppins-SemiBold', fontSize: 32, lineHeight: 48 },
   h2:        { fontFamily: 'Poppins-SemiBold', fontSize: 26, lineHeight: 40 },
-  h3:        { fontFamily: 'Poppins-SemiBold', fontSize: 20, lineHeight: 32 },
+  h3:        { fontFamily: 'Poppins-SemiBold', fontSize: 15, lineHeight: 32 },
   sub1:      { fontFamily: 'Poppins-SemiBold', fontSize: 15, lineHeight: 24 },
   sub2:      { fontFamily: 'Poppins-Medium',   fontSize: 13, lineHeight: 22 },
   body:      { fontFamily: 'Poppins-Regular',  fontSize: 15, lineHeight: 26 },
