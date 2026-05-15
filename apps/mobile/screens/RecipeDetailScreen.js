@@ -1,14 +1,14 @@
 import { useFocusEffect } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image as SvgIcon } from 'expo-image';
 import ScreenShell from '../components/ScreenShell';
 import shared from '../sharedStyles';
 import { colors } from '../theme';
 import { supabase } from '../utils/supabase';
 
 const placeholderImage = require('../assets/no-picture.png');
-const editIcon = require('../assets/edit-icon.png');
+const editIcon = require('../assets/edit_icon.svg');
 
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
@@ -116,7 +116,7 @@ export default function RecipeDetailScreen({ route, navigation }) {
                 hitSlop={10}
                 style={({ pressed }) => [shared.circleButton, styles.backButton, pressed && shared.pressed]}
               >
-                <Ionicons name="arrow-back" size={24} color={colors.text} />
+                <SvgIcon source={require('../assets/arrow_back_icon.svg')} style={{ width: 24, height: 24 }} contentFit="contain" />
               </Pressable>
             </View>
 
@@ -175,7 +175,7 @@ export default function RecipeDetailScreen({ route, navigation }) {
                             hitSlop={8}
                             style={({ pressed }) => pressed && { opacity: 0.5 }}
                           >
-                            <Ionicons name="close" size={16} color={colors.textMuted} />
+                            <SvgIcon source={require('../assets/close_icon_grey.svg')} style={{ width: 16, height: 16 }} contentFit="contain" />
                           </Pressable>
                         </View>
                       ))
@@ -189,7 +189,7 @@ export default function RecipeDetailScreen({ route, navigation }) {
                       onPress={onEditPress}
                       style={({ pressed }) => [styles.editButton, pressed && shared.pressed]}
                     >
-                      <Image source={editIcon} style={styles.editIcon} resizeMode="contain" />
+                      <SvgIcon source={editIcon} style={styles.editIcon} contentFit="contain" />
                     </Pressable>
 
                     <Pressable

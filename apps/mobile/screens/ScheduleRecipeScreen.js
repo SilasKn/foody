@@ -1,7 +1,7 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useRef, useState } from 'react';
 import { Alert, Animated, Dimensions, Image, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image as SvgIcon } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../providers/AuthProvider';
 import shared from '../sharedStyles';
@@ -88,7 +88,7 @@ export default function ScheduleRecipeScreen({ route, navigation }) {
               hitSlop={10}
               style={({ pressed }) => [styles.backButton, pressed && { opacity: 0.85 }]}
             >
-              <Ionicons name="arrow-back" size={24} color={colors.text} />
+              <SvgIcon source={require('../assets/arrow_back_icon.svg')} style={{ width: 24, height: 24 }} contentFit="contain" />
             </Pressable>
           </View>
 
@@ -113,7 +113,7 @@ export default function ScheduleRecipeScreen({ route, navigation }) {
                 <Text style={[shared.typography.body, styles.dateDropdownText, !selectedDate && styles.datePlaceholder]}>
                   {selectedDate ? formatDateDisplay(selectedDate) : 'TT.MM.JJJJ'}
                 </Text>
-                <Ionicons name="chevron-down" size={20} color={colors.text} />
+                <SvgIcon source={require('../assets/chevron_down_icon.svg')} style={{ width: 20, height: 20 }} contentFit="contain" />
               </Pressable>
 
               <View style={styles.spacer} />

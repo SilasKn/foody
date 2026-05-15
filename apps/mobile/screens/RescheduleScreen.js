@@ -1,7 +1,7 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useRef, useState } from 'react';
 import { Alert, Animated, Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image as SvgIcon } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import shared from '../sharedStyles';
 import { colors } from '../theme';
@@ -100,7 +100,7 @@ export default function RescheduleScreen({ route, navigation }) {
               <Text style={[shared.typography.body, styles.dateDropdownText, !selectedDate && styles.datePlaceholder]}>
                 {selectedDate ? formatDateDisplay(selectedDate) : 'TT.MM.JJJJ'}
               </Text>
-              <Ionicons name="chevron-down" size={20} color={colors.text} />
+              <SvgIcon source={require('../assets/chevron_down_icon.svg')} style={{ width: 20, height: 20 }} contentFit="contain" />
             </Pressable>
 
             <Text style={[shared.typography.h3, styles.sectionLabel]}>As type of meal:</Text>

@@ -1,6 +1,6 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image as SvgIcon } from 'expo-image';
 import { useAuth } from '../providers/AuthProvider';
 import shared from '../sharedStyles';
 import { colors } from '../theme';
@@ -28,7 +28,7 @@ export default function AppHeader({ navigation }) {
           </Text>
         </Pressable>
         <Pressable hitSlop={12} accessibilityRole="button" accessibilityLabel="User menu" onPress={onUserPress}>
-          <Ionicons name="person-outline" size={26} color={colors.text} />
+          <SvgIcon source={require('../assets/person_icon.svg')} style={{ width: 26, height: 26 }} contentFit="contain" />
         </Pressable>
       </View>
 

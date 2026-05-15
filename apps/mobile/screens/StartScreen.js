@@ -1,7 +1,7 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image as SvgIcon } from 'expo-image';
 import AppHeader from '../components/AppHeader';
 import ScreenShell from '../components/ScreenShell';
 import { useAuth } from '../providers/AuthProvider';
@@ -173,7 +173,7 @@ export default function StartScreen({ navigation }) {
             onPress={() => setRangePickerOpen(true)}
             style={({ pressed }) => [styles.rangePill, pressed && styles.pressed]}
           >
-            <Ionicons name="chevron-down" size={18} color={colors.text} />
+            <SvgIcon source={require('../assets/chevron_down_icon.svg')} style={{ width: 18, height: 18 }} contentFit="contain" />
             <Text style={[shared.typography.sub2, styles.rangePillText]}>{currentRange.label}</Text>
           </Pressable>
         </View>

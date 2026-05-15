@@ -21,7 +21,6 @@ jest.mock('../../providers/RecipesProvider', () => ({
   }),
 }));
 
-jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 jest.mock('@react-native-picker/picker', () => {
   const { View } = require('react-native');
   const Picker = ({ children }) => <View>{children}</View>;

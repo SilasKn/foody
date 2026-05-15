@@ -1,6 +1,7 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useMemo, useState } from 'react';
 import { Alert, ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image as SvgIcon } from 'expo-image';
 import Animated, { LinearTransition } from 'react-native-reanimated';
 import MonthCalendar from '../components/MonthCalendar';
 import ScreenShell from '../components/ScreenShell';
@@ -251,11 +252,12 @@ export default function CalendarScreen({ navigation }) {
           accessibilityRole="button"
           accessibilityLabel={viewMode === 'list' ? 'Show calendar view' : 'Show list view'}
         >
-          <Image
+          <SvgIcon
             source={viewMode === 'list'
               ? require('../assets/calendar_icon_black.svg')
-              : require('../assets/list-icon.png')}
+              : require('../assets/list_icon.svg')}
             style={styles.fabIcon}
+            contentFit="contain"
           />
         </Pressable>
       </View>

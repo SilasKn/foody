@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import {
   KeyboardAvoidingView,
@@ -10,6 +9,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { Image as SvgIcon } from 'expo-image';
 
 import { colors } from '../theme';
 import shared from '../sharedStyles';
@@ -72,7 +72,7 @@ export default function LoginScreen() {
               <Text style={styles.logoDot}>.</Text>
             </Text>
             <View style={styles.headerRight} aria-hidden>
-              <Ionicons name="person-circle-outline" size={26} color={colors.text} />
+              <SvgIcon source={require('../assets/person_circle_icon.svg')} style={{ width: 26, height: 26 }} contentFit="contain" />
             </View>
           </View>
 

@@ -1,13 +1,13 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import { FlatList, Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image as SvgIcon } from 'expo-image';
 import ScreenShell from '../components/ScreenShell';
 import { useRecipes } from '../providers/RecipesProvider';
 import shared from '../sharedStyles';
 import { colors } from '../theme';
 
 const placeholderImage = require('../assets/no-picture.png');
-const searchIcon = require('../assets/search-icon.png');
+const searchIcon = require('../assets/search_icon.svg');
 
 export default function RecipesScreen({ navigation }) {
   const {
@@ -79,7 +79,7 @@ export default function RecipesScreen({ navigation }) {
                   style={({ pressed }) => pressed && styles.pressed}
                   hitSlop={10}
                 >
-                  <Image source={searchIcon} style={styles.searchIcon} />
+                  <SvgIcon source={searchIcon} style={styles.searchIcon} contentFit="contain" />
                 </Pressable>
               </View>
               {searchVisible && (
@@ -113,7 +113,7 @@ export default function RecipesScreen({ navigation }) {
         onPress={() => navigation.navigate('AddRecipe')}
         style={({ pressed }) => [shared.fabArea, shared.fabMainButton, pressed && shared.pressed]}
       >
-        <Ionicons name="add" size={26} color={colors.text} />
+        <SvgIcon source={require('../assets/plus_icon.svg')} style={{ width: 26, height: 26 }} contentFit="contain" />
       </Pressable>
     </ScreenShell>
   );

@@ -1,5 +1,5 @@
-import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
+import { Image as SvgIcon } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -397,7 +397,7 @@ export default function AddRecipeScreen({ navigation, route }) {
                 hitSlop={10}
                 style={({ pressed }) => [shared.circleButton, styles.backButton, pressed && shared.pressed]}
               >
-                <Ionicons name="arrow-back" size={24} color={colors.text} />
+                <SvgIcon source={require('../assets/arrow_back_icon.svg')} style={{ width: 24, height: 24 }} contentFit="contain" />
               </Pressable>
               {editRecipe && (
                 <Pressable
@@ -454,13 +454,13 @@ export default function AddRecipeScreen({ navigation, route }) {
                       resizeMode="cover"
                     />
                     <View style={styles.imageOverlay} pointerEvents="none">
-                      <Ionicons name="camera-outline" size={28} color={colors.white} />
+                      <SvgIcon source={require('../assets/camera_icon_white.svg')} style={{ width: 28, height: 28 }} contentFit="contain" />
                       <Text style={[shared.typography.sub2, styles.imageOverlayText]}>Edit</Text>
                     </View>
                   </>
                 ) : (
                   <View style={styles.imagePlaceholder}>
-                    <Ionicons name="camera-outline" size={28} color={colors.textMuted} />
+                    <SvgIcon source={require('../assets/camera_icon_grey.svg')} style={{ width: 28, height: 28 }} contentFit="contain" />
                     <Text style={[shared.typography.sub2, styles.imagePlaceholderText]}>Add photo</Text>
                   </View>
                 )}
@@ -510,7 +510,7 @@ export default function AddRecipeScreen({ navigation, route }) {
                     ]}
                   >
                     <Text style={[shared.typography.sub2, styles.unitFieldText]}>{ingredientUnit}</Text>
-                    <Ionicons name="chevron-down" size={18} color={colors.text} />
+                    <SvgIcon source={require('../assets/chevron_down_icon.svg')} style={{ width: 18, height: 18 }} contentFit="contain" />
                   </Pressable>
                 ) : (
                   <View style={styles.pickerWrap}>
@@ -532,7 +532,7 @@ export default function AddRecipeScreen({ navigation, route }) {
                   onPress={addIngredient}
                   style={({ pressed }) => [styles.addIconButton, pressed && shared.pressed]}
                 >
-                  <Ionicons name="add" size={22} color={colors.text} />
+                  <SvgIcon source={require('../assets/plus_icon.svg')} style={{ width: 22, height: 22 }} contentFit="contain" />
                 </Pressable>
               </View>
               {Platform.OS === 'ios' && showUnitPickerIOS && (
@@ -575,7 +575,7 @@ export default function AddRecipeScreen({ navigation, route }) {
                         hitSlop={10}
                         style={({ pressed }) => [styles.removeButton, pressed && shared.pressed]}
                       >
-                        <Ionicons name="close" size={18} color={colors.text} />
+                        <SvgIcon source={require('../assets/close_icon_black.svg')} style={{ width: 18, height: 18 }} contentFit="contain" />
                       </Pressable>
                     </View>
                   ))}

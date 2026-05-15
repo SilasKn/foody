@@ -1,6 +1,6 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image as SvgIcon } from 'expo-image';
 import shared from '../sharedStyles';
 import { colors } from '../theme';
 
@@ -52,7 +52,7 @@ export default function MonthCalendar({
           accessibilityRole="button"
           accessibilityLabel="Previous month"
         >
-          <Ionicons name="chevron-back" size={22} color={colors.text} />
+          <SvgIcon source={require('../assets/chevron_back_icon.svg')} style={{ width: 22, height: 22 }} contentFit="contain" />
         </Pressable>
         <Text style={[shared.typography.h3, styles.monthLabel]}>{monthLabel}</Text>
         <Pressable
@@ -61,7 +61,7 @@ export default function MonthCalendar({
           accessibilityRole="button"
           accessibilityLabel="Next month"
         >
-          <Ionicons name="chevron-forward" size={22} color={colors.text} />
+          <SvgIcon source={require('../assets/chevron_forward_icon.svg')} style={{ width: 22, height: 22 }} contentFit="contain" />
         </Pressable>
       </View>
 
