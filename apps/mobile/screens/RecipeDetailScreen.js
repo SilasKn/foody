@@ -185,20 +185,20 @@ export default function RecipeDetailScreen({ route, navigation }) {
                   <View style={styles.actionsRow}>
                     <Pressable
                       accessibilityRole="button"
-                      accessibilityLabel="Schedule recipe"
-                      onPress={onSchedulePress}
-                      style={({ pressed }) => [shared.pillButton, styles.scheduleButton, pressed && shared.pressed]}
-                    >
-                      <Text style={[shared.typography.sub1, styles.scheduleButtonText]}>Schedule</Text>
-                    </Pressable>
-
-                    <Pressable
-                      accessibilityRole="button"
                       accessibilityLabel="Edit recipe"
                       onPress={onEditPress}
                       style={({ pressed }) => [styles.editButton, pressed && shared.pressed]}
                     >
                       <Image source={editIcon} style={styles.editIcon} resizeMode="contain" />
+                    </Pressable>
+
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="Schedule recipe"
+                      onPress={onSchedulePress}
+                      style={({ pressed }) => [shared.pillButton, styles.scheduleButton, pressed && shared.pressed]}
+                    >
+                      <Text style={[shared.typography.sub1, styles.scheduleButtonText]}>Schedule</Text>
                     </Pressable>
                   </View>
                 </>

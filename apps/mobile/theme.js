@@ -1,7 +1,7 @@
 const accent = '#7A9E7E';
 
 export const colors = {
-  cream: '#FAF3E0',
+  cream: '#F6F0ED',
   white: '#FFFFFF',
   headerBg: '#FFFFFF',
   border: '#000000',
