@@ -164,6 +164,7 @@ export default function RescheduleScreen({ route, navigation }) {
             <Pressable style={styles.pickerBackdrop} onPress={() => setShowPicker(false)}>
               <Pressable style={styles.pickerCard} onPress={() => {}}>
                 <DateTimePicker
+                  style={styles.pickerSpinner}
                   value={tempPickerDate ?? new Date()}
                   mode="date"
                   display="spinner"
@@ -307,14 +308,21 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    paddingBottom: 10,
+    paddingTop: 16,
+    paddingBottom: 40,
     borderTopWidth: 1,
     borderColor: colors.border,
   },
+  pickerSpinner: {
+    alignSelf: 'center',
+  },
   pickerDone: {
     alignSelf: 'flex-end',
-    marginRight: 20,
-    marginTop: 4,
+    marginRight: 28,
+    marginTop: 8,
+    marginBottom: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
   },
   pickerDoneText: {
     color: colors.accent,

@@ -166,6 +166,7 @@ export default function ScheduleRecipeScreen({ route, navigation }) {
           <Pressable style={styles.pickerBackdrop} onPress={() => setShowPicker(false)}>
             <Pressable style={styles.pickerCard} onPress={() => {}}>
               <DateTimePicker
+                style={styles.pickerSpinner}
                 value={tempPickerDate ?? new Date()}
                 mode="date"
                 display="spinner"
@@ -347,6 +348,9 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
     borderTopWidth: 1,
     borderColor: colors.border,
+  },
+  pickerSpinner: {
+    alignSelf: 'center',
   },
   pickerDone: {
     alignSelf: 'flex-end',
