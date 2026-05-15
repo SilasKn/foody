@@ -129,7 +129,7 @@ export default function MonthCalendar({
 const styles = StyleSheet.create({
   card: {
     borderWidth: 6,
-    borderColor: colors.accent,
+    borderColor: colors.accent2,
     borderRadius: 24,
     backgroundColor: colors.white,
     padding: 12,

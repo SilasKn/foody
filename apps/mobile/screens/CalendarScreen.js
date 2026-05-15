@@ -1,9 +1,7 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { useCallback, useMemo, useRef, useState } from 'react';
-import { Alert, Animated as RNAnimated, ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import { Alert, ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { LinearTransition } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MonthCalendar from '../components/MonthCalendar';
 import ScreenShell from '../components/ScreenShell';
 import SwipeActionsRow from '../components/SwipeActionsRow';
@@ -28,13 +26,8 @@ function parseDayHeader(isoDate) {
 export default function CalendarScreen({ navigation }) {
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [deleteMode, setDeleteMode] = useState(false);
-  const [selectedIds, setSelectedIds] = useState(new Set());
   const [viewMode, setViewMode] = useState('list');
   const [selectedDate, setSelectedDate] = useState(todayIso());
-  const anim = useRef(new RNAnimated.Value(0)).current;
-  const insets = useSafeAreaInsets();
 
   const scheduledCountsByDate = useMemo(() => {
     const m = {};
@@ -48,71 +41,18 @@ export default function CalendarScreen({ navigation }) {
     return m;
   }, [groups]);
 
-  function toggleMenu() {
-    const toValue = menuOpen ? 0 : 1;
-    setMenuOpen(!menuOpen);
-    RNAnimated.spring(anim, { toValue, useNativeDriver: true, friction: 6 }).start();
-  }
-
-  function closeMenu() {
-    setMenuOpen(false);
-    RNAnimated.spring(anim, { toValue: 0, useNativeDriver: true, friction: 6 }).start();
-  }
-
-  function subButtonStyle(offsetMultiplier) {
-    return {
-      opacity: anim,
-      transform: [{ translateY: anim.interpolate({
-        inputRange: [0, 1],
-        outputRange: [20 * offsetMultiplier, 0],
-      }) }],
-    };
-  }
-
-  function enterDeleteMode() {
-    setSelectedIds(new Set());
-    setMenuOpen(false);
-    anim.setValue(0);
-    setDeleteMode(true);
-  }
-
-  function exitDeleteMode() {
-    setDeleteMode(false);
-    setSelectedIds(new Set());
-  }
-
-  function toggleSelect(id) {
-    setSelectedIds(prev => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  }
-
-  function renderScheduledEntry(entry, { showCheckbox = false } = {}) {
+  function renderScheduledEntry(entry) {
     return (
       <Pressable
         key={entry.id}
         accessibilityRole="button"
         onPress={() => {
-          if (deleteMode) {
-            toggleSelect(entry.id);
-          } else {
-            navigation.navigate('RecipeDetail', {
-              recipe: { id: entry.recipe_id, name: entry.recipes?.name ?? '' },
-            });
-          }
+          navigation.navigate('RecipeDetail', {
+            recipe: { id: entry.recipe_id, name: entry.recipes?.name ?? '' },
+          });
         }}
         style={styles.recipeRow}
       >
-        {showCheckbox && deleteMode && (
-          <Ionicons
-            name={selectedIds.has(entry.id) ? 'checkbox' : 'square-outline'}
-            size={24}
-            color={selectedIds.has(entry.id) ? colors.accent : colors.textMuted}
-            style={styles.checkboxIcon}
-          />
-        )}
         <View style={styles.recipeImageWrapper}>
           <Image
             source={entry.imageUrl ? { uri: entry.imageUrl } : placeholderImage}
@@ -152,23 +92,6 @@ export default function CalendarScreen({ navigation }) {
     );
     const { error } = await supabase.from('recipe_schedule').delete().eq('id', entryId);
     if (error) Alert.alert('Error', 'Could not delete the scheduling.');
-  }
-
-  async function handleDelete() {
-    if (selectedIds.size === 0) {
-      setDeleteMode(false);
-      return;
-    }
-    const ids = [...selectedIds];
-    setGroups(prev =>
-      prev
-        .map(g => ({ ...g, entries: g.entries.filter(e => !selectedIds.has(e.id)) }))
-        .filter(g => g.entries.length > 0)
-    );
-    setDeleteMode(false);
-    setSelectedIds(new Set());
-    const { error } = await supabase.from('recipe_schedule').delete().in('id', ids);
-    if (error) Alert.alert('Error', 'Could not delete the selected entries.');
   }
 
   useFocusEffect(
@@ -242,14 +165,11 @@ export default function CalendarScreen({ navigation }) {
   );
 
   return (
-    <ScreenShell navigation={navigation} activeTab="calendar" hideTabBar={deleteMode}>
+    <ScreenShell navigation={navigation} activeTab="calendar">
       <View style={shared.outerContainer}>
         <ScrollView
           style={shared.scroll}
-          contentContainerStyle={[
-            styles.scrollContent,
-            deleteMode && { paddingBottom: 100 + insets.bottom },
-          ]}
+          contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
           <Text style={shared.pageTitle}>Scheduled recipes</Text>
@@ -274,7 +194,6 @@ export default function CalendarScreen({ navigation }) {
                     entriesByDate[selectedDate].map(entry => (
                       <SwipeActionsRow
                         key={entry.id}
-                        enabled={!deleteMode}
                         onDelete={() => handleSwipeDelete(entry.id)}
                         onReschedule={() => handleReschedule(entry)}
                       >
@@ -296,14 +215,13 @@ export default function CalendarScreen({ navigation }) {
                 return (
                   <SwipeActionsRow
                     key={group.date}
-                    enabled={!deleteMode}
                     onDelete={() => handleSwipeDelete(entry.id)}
                     onReschedule={() => handleReschedule(entry)}
                     headerContent={
                       <Text style={[shared.typography.h3, styles.dayHeader]}>{parseDayHeader(group.date)}</Text>
                     }
                   >
-                    {renderScheduledEntry(entry, { showCheckbox: true })}
+                    {renderScheduledEntry(entry)}
                   </SwipeActionsRow>
                 );
               }
@@ -313,11 +231,10 @@ export default function CalendarScreen({ navigation }) {
                   {group.entries.map(entry => (
                     <SwipeActionsRow
                       key={entry.id}
-                      enabled={!deleteMode}
                       onDelete={() => handleSwipeDelete(entry.id)}
                       onReschedule={() => handleReschedule(entry)}
                     >
-                      {renderScheduledEntry(entry, { showCheckbox: true })}
+                      {renderScheduledEntry(entry)}
                     </SwipeActionsRow>
                   ))}
                 </Animated.View>
@@ -327,62 +244,21 @@ export default function CalendarScreen({ navigation }) {
         </ScrollView>
       </View>
 
-      {!deleteMode && (
-        <View style={shared.fabArea} pointerEvents="box-none">
-          {viewMode === 'list' && (
-            <RNAnimated.View style={subButtonStyle(2)}>
-              <Pressable style={shared.fabSubButton} onPress={enterDeleteMode}>
-                <Image source={require('../assets/trashcan-icon.png')} style={styles.fabIcon} />
-              </Pressable>
-            </RNAnimated.View>
-          )}
-          <RNAnimated.View style={subButtonStyle(1)}>
-            <Pressable
-              style={shared.fabSubButton}
-              onPress={() => {
-                setViewMode(m => (m === 'list' ? 'calendar' : 'list'));
-                closeMenu();
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={viewMode === 'list' ? 'Show calendar view' : 'Show list view'}
-            >
-              <Image
-                source={viewMode === 'list'
-                  ? require('../assets/calendar_icon_black.svg')
-                  : require('../assets/list-icon.png')}
-                style={styles.fabIcon}
-              />
-            </Pressable>
-          </RNAnimated.View>
-          <Pressable
-            style={({ pressed }) => [shared.fabMainButton, pressed && shared.pressed]}
-            onPress={toggleMenu}
-            accessibilityRole="button"
-            accessibilityLabel="Open menu"
-          >
-            <Image source={require('../assets/icon_drei_punkte.png')} style={styles.fabIcon} />
-          </Pressable>
-        </View>
-      )}
-
-      {deleteMode && (
-        <View style={[styles.actionBar, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-          <Pressable
-            style={({ pressed }) => [shared.pillButton, styles.backBtn, pressed && shared.pressed]}
-            onPress={exitDeleteMode}
-            accessibilityRole="button"
-          >
-            <Text style={[shared.typography.sub1, styles.backBtnLabel]}>Back</Text>
-          </Pressable>
-          <Pressable
-            style={({ pressed }) => [shared.pillButton, styles.deleteBtn, pressed && shared.pressed]}
-            onPress={handleDelete}
-            accessibilityRole="button"
-          >
-            <Text style={[shared.typography.sub1, styles.deleteBtnLabel]}>Delete</Text>
-          </Pressable>
-        </View>
-      )}
+      <View style={shared.fabArea} pointerEvents="box-none">
+        <Pressable
+          style={({ pressed }) => [shared.fabMainButton, pressed && shared.pressed]}
+          onPress={() => setViewMode(m => (m === 'list' ? 'calendar' : 'list'))}
+          accessibilityRole="button"
+          accessibilityLabel={viewMode === 'list' ? 'Show calendar view' : 'Show list view'}
+        >
+          <Image
+            source={viewMode === 'list'
+              ? require('../assets/calendar_icon_black.svg')
+              : require('../assets/list-icon.png')}
+            style={styles.fabIcon}
+          />
+        </Pressable>
+      </View>
     </ScreenShell>
   );
 }
@@ -420,14 +296,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
     marginBottom: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-  },
-  checkboxIcon: {
-    marginRight: 10,
   },
   recipeImageWrapper: {
     width: 64,
@@ -461,32 +329,5 @@ const styles = StyleSheet.create({
     width: 26,
     height: 26,
     resizeMode: 'contain',
-  },
-  actionBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    backgroundColor: colors.cream,
-  },
-  backBtn: {
-    flex: 1,
-    paddingVertical: 18,
-    backgroundColor: colors.white,
-  },
-  backBtnLabel: {
-    color: colors.text,
-  },
-  deleteBtn: {
-    flex: 1,
-    paddingVertical: 18,
-    backgroundColor: colors.danger,
-  },
-  deleteBtnLabel: {
-    color: colors.white,
   },
 });
