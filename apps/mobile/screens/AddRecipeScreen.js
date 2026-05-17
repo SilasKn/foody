@@ -7,7 +7,8 @@ import {
   Animated,
   Dimensions,
   Image,
-  KeyboardAvoidingView,
+  Keyboard,
+  PanResponder,
   Platform,
   Pressable,
   ScrollView,
@@ -16,7 +17,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import RecipeImage from '../components/RecipeImage';
 import { useAuth } from '../providers/AuthProvider';
@@ -27,14 +28,83 @@ import { uploadImage } from '../utils/imageUpload';
 import { supabase } from '../utils/supabase';
 
 export default function AddRecipeScreen({ navigation, route }) {
+  const insets = useSafeAreaInsets();
+  const SCREEN_H = Dimensions.get('screen').height;
+  const COLLAPSED_H = Math.round(SCREEN_H * 0.9);
+  const EXPANDED_H = SCREEN_H - insets.top;
+
   const backdropAnim = useRef(new Animated.Value(0)).current;
-  const cardSlideAnim = useRef(new Animated.Value(Dimensions.get('window').height)).current;
+  const slideAnim = useRef(new Animated.Value(SCREEN_H)).current;
+  const dragY = useRef(new Animated.Value(0)).current;
+  const heightAnim = useRef(new Animated.Value(COLLAPSED_H)).current;
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+
   useEffect(() => {
     Animated.parallel([
       Animated.timing(backdropAnim, { toValue: 1, duration: 250, useNativeDriver: true }),
-      Animated.spring(cardSlideAnim, { toValue: 0, useNativeDriver: true, damping: 25, stiffness: 200 }),
+      Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true, damping: 25, stiffness: 200 }),
     ]).start();
   }, []);
+
+  useEffect(() => {
+    const showEvt = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvt = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const onShow = (e) => {
+      setKeyboardVisible(true);
+      Animated.timing(heightAnim, {
+        toValue: EXPANDED_H,
+        duration: e?.duration ?? 250,
+        useNativeDriver: false,
+      }).start();
+    };
+    const onHide = (e) => {
+      setKeyboardVisible(false);
+      Animated.timing(heightAnim, {
+        toValue: COLLAPSED_H,
+        duration: e?.duration ?? 250,
+        useNativeDriver: false,
+      }).start();
+    };
+    const s = Keyboard.addListener(showEvt, onShow);
+    const h = Keyboard.addListener(hideEvt, onHide);
+    return () => {
+      s.remove();
+      h.remove();
+    };
+  }, [EXPANDED_H, COLLAPSED_H]);
+
+  const closeWithAnimation = () => {
+    Animated.parallel([
+      Animated.timing(backdropAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: SCREEN_H, duration: 220, useNativeDriver: true }),
+    ]).start(() => {
+      navigation.goBack();
+    });
+  };
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gs) => gs.dy > 6 && gs.dy > Math.abs(gs.dx),
+      onPanResponderMove: (_, gs) => {
+        if (gs.dy > 0) dragY.setValue(gs.dy);
+      },
+      onPanResponderRelease: (_, gs) => {
+        if (gs.dy > 120 || gs.vy > 0.6) {
+          Animated.parallel([
+            Animated.timing(backdropAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
+            Animated.timing(dragY, { toValue: SCREEN_H, duration: 220, useNativeDriver: true }),
+          ]).start(() => navigation.goBack());
+        } else {
+          Animated.spring(dragY, {
+            toValue: 0,
+            useNativeDriver: true,
+            damping: 20,
+            stiffness: 200,
+          }).start();
+        }
+      },
+    })
+  ).current;
 
   const unitOptions = ['g', 'ml', 'unit'];
   const { user } = useAuth();
@@ -369,7 +439,7 @@ export default function AddRecipeScreen({ navigation, route }) {
       }
 
       closeTimeoutRef.current = setTimeout(() => {
-        navigation.goBack();
+        closeWithAnimation();
       }, 900);
     } catch (err) {
       setErrorMessage(err?.message ?? 'Failed to save recipe.');
@@ -380,43 +450,63 @@ export default function AddRecipeScreen({ navigation, route }) {
 
   return (
     <View style={styles.container}>
-      <Animated.View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.35)', opacity: backdropAnim }]} />
-      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      <Animated.View
+        pointerEvents="none"
+        style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.45)', opacity: backdropAnim }]}
+      />
+      <Pressable
+        style={StyleSheet.absoluteFillObject}
+        onPress={() => {
+          if (keyboardVisible) {
+            Keyboard.dismiss();
+          } else {
+            closeWithAnimation();
+          }
+        }}
+      />
+      <Animated.View
+        style={[
+          styles.sheetOuter,
+          { transform: [{ translateY: Animated.add(slideAnim, dragY) }] },
+        ]}
       >
-        <View style={styles.modalBody}>
-          <Animated.View style={[styles.card, { transform: [{ translateY: cardSlideAnim }] }]}>
-            <View style={styles.backRow}>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Back"
-                onPress={() => navigation.goBack()}
-                hitSlop={10}
-                style={({ pressed }) => [shared.circleButton, styles.backButton, pressed && shared.pressed]}
-              >
-                <SvgIcon source={require('../assets/arrow_back_icon.svg')} style={{ width: 24, height: 24 }} contentFit="contain" />
-              </Pressable>
-              {editRecipe && (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Delete recipe"
-                  onPress={onDeletePress}
-                  hitSlop={10}
-                  style={({ pressed }) => [pressed && shared.pressed]}
-                >
-                  <Text style={[shared.typography.sub1, styles.deleteText]}>Delete</Text>
-                </Pressable>
-              )}
-            </View>
+        <Animated.View style={[styles.sheet, { height: heightAnim }]}>
+        <View {...panResponder.panHandlers} style={styles.dragHandleArea}>
+          <View style={styles.dragHandle} />
+        </View>
 
-            <ScrollView
-              style={styles.cardScroll}
-              contentContainerStyle={styles.cardScrollContent}
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
+        <View style={styles.headerRow}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+            onPress={closeWithAnimation}
+            hitSlop={10}
+            style={({ pressed }) => [shared.circleButton, styles.backButton, pressed && shared.pressed]}
+          >
+            <SvgIcon source={require('../assets/arrow_back_icon.svg')} style={{ width: 24, height: 24 }} contentFit="contain" />
+          </Pressable>
+          {editRecipe && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Delete recipe"
+              onPress={onDeletePress}
+              hitSlop={10}
+              style={({ pressed }) => [pressed && shared.pressed]}
             >
+              <Text style={[shared.typography.sub1, styles.deleteText]}>Delete</Text>
+            </Pressable>
+          )}
+        </View>
+
+        <ScrollView
+          style={styles.cardScroll}
+          contentContainerStyle={styles.cardScrollContent}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          alwaysBounceVertical={false}
+          overScrollMode="never"
+          showsVerticalScrollIndicator={false}
+        >
               <Text style={[shared.typography.sub2, styles.label]}>Recipe name</Text>
               <TextInput
                 value={recipeName}
@@ -595,70 +685,64 @@ export default function AddRecipeScreen({ navigation, route }) {
 
               {!!errorMessage && <Text style={[shared.typography.body, styles.error]}>{errorMessage}</Text>}
               {!!toastMessage && <Text style={[shared.typography.body, styles.toast]}>{toastMessage}</Text>}
-            </ScrollView>
+        </ScrollView>
 
-            <View style={styles.buttonRow}>
-              {/* {!editRecipe && (
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={onClear}
-                  disabled={isSaving}
-                  style={({ pressed }) => [shared.pillButton, styles.clearButton, pressed && shared.pressed]}
-                >
-                  <Text style={styles.clearButtonText}>Clear</Text>
-                </Pressable>
-              )} */}
-              <Pressable
-                accessibilityRole="button"
-                onPress={onSave}
-                disabled={!canSave}
-                style={({ pressed }) => [
-                  shared.pillButton,
-                  styles.saveButton,
-                  !canSave && styles.saveButtonDisabled,
-                  pressed && canSave && shared.pressed,
-                ]}
-              >
-                <Text style={[shared.typography.sub1, styles.saveButtonText]}>{isSaving ? 'Saving...' : 'Save'}</Text>
-              </Pressable>
-            </View>
-          </Animated.View>
+        <View style={[styles.stickyFooter, { paddingBottom: insets.bottom + 12 }]}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={onSave}
+            disabled={!canSave}
+            style={({ pressed }) => [
+              shared.pillButton,
+              styles.saveButton,
+              !canSave && styles.saveButtonDisabled,
+              pressed && canSave && shared.pressed,
+            ]}
+          >
+            <Text style={[shared.typography.sub1, styles.saveButtonText]}>{isSaving ? 'Saving...' : 'Save'}</Text>
+          </Pressable>
         </View>
-      </KeyboardAvoidingView>
-      </SafeAreaView>
+        </Animated.View>
+      </Animated.View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  safe: {
-    flex: 1,
+  sheetOuter: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
-  flex: { flex: 1 },
-  modalBody: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    justifyContent: 'center',
-  },
-  card: {
-    width: '100%',
-    height: '74%',
-    maxHeight: '74%',
-    backgroundColor: '#fff',
+  sheet: {
+    backgroundColor: colors.white,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 28,
-    padding: 18,
     shadowColor: '#000',
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 3,
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: -4 },
+    elevation: 8,
     overflow: 'hidden',
+    paddingHorizontal: 18,
   },
-  backRow: {
+  dragHandleArea: {
+    paddingTop: 8,
+    paddingBottom: 6,
+    alignItems: 'center',
+  },
+  dragHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.border,
+    opacity: 0.25,
+  },
+  headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -681,23 +765,23 @@ const styles = StyleSheet.create({
   },
   cardScrollContent: {
     flexGrow: 1,
-    paddingBottom: 12,
+    paddingBottom: 16,
   },
   label: {
     color: colors.text,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   input: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    marginBottom: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    marginBottom: 10,
   },
   textArea: {
-    height: 110,
+    height: 100,
   },
   ingredientRow: {
     marginBottom: 10,
@@ -833,23 +917,13 @@ const styles = StyleSheet.create({
     color: '#1B5E20',
     marginBottom: 10,
   },
-  buttonRow: {
+  stickyFooter: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 14,
     paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: '#DDD',
-    backgroundColor: '#fff',
-  },
-  clearButton: {
-    minWidth: 110,
-    backgroundColor: '#fff',
-    paddingVertical: 12,
-    paddingHorizontal: 18,
-  },
-  clearButtonText: {
-    color: colors.text,
+    borderTopColor: colors.border,
+    backgroundColor: colors.white,
   },
   saveButton: {
     minWidth: 110,
