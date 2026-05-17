@@ -18,8 +18,6 @@ npm run android    # Run on Android emulator
 npm run web        # Run in browser
 ```
 
-From the repo root, `npm run mobile` also starts the Expo server.
-
 No build step, linter, or test runner is configured yet.
 
 ## Environment
@@ -32,10 +30,10 @@ EXPO_PUBLIC_SUPABASE_KEY=...
 
 ## Architecture
 
-### Monorepo structure
+### Repository layout
 
 ```
-apps/mobile/     # React Native Expo app (the only app currently)
+apps/mobile/     # React Native Expo app (the only npm project)
 supabase/migrations/  # SQL migrations run against the Supabase project
 ```
 

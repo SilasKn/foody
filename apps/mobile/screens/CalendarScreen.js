@@ -11,6 +11,8 @@ import shared from '../sharedStyles';
 import { colors } from '../theme';
 import { supabase } from '../utils/supabase';
 
+const MEAL_TYPE_ORDER = { Breakfast: 0, Lunch: 1, Dinner: 2, Snack: 3 };
+
 function todayIso() {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -151,6 +153,14 @@ export default function CalendarScreen({ navigation }) {
             ...entry,
             imageUrl: imageUrlMap[entry.recipe_id] ?? null,
           });
+        }
+
+        for (const group of grouped) {
+          group.entries.sort(
+            (a, b) =>
+              (MEAL_TYPE_ORDER[a.scheduled_as] ?? 99) -
+              (MEAL_TYPE_ORDER[b.scheduled_as] ?? 99)
+          );
         }
 
         if (active) {
