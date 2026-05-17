@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "mobile",
+    "name": "foody",
     "slug": "mobile",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -13,7 +13,12 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.silasknapp.foody",
+      "buildNumber": "1",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -27,6 +32,11 @@
     },
     "plugins": [
       "@react-native-community/datetimepicker"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "16720eb7-8f49-43da-9f54-64ed23873a57"
+      }
+    }
   }
 }
