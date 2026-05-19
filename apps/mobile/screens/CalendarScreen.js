@@ -1,8 +1,9 @@
 import { useFocusEffect } from '@react-navigation/native';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Image as SvgIcon } from 'expo-image';
 import Animated, { LinearTransition } from 'react-native-reanimated';
+import DateCarousel from '../components/DateCarousel';
 import MonthCalendar from '../components/MonthCalendar';
 import RecipeImage from '../components/RecipeImage';
 import ScreenShell from '../components/ScreenShell';
@@ -42,6 +43,21 @@ export default function CalendarScreen({ navigation }) {
     for (const g of groups) m[g.date] = g.entries;
     return m;
   }, [groups]);
+
+  const visibleGroups = useMemo(
+    () => groups.filter(g => g.date >= selectedDate),
+    [groups, selectedDate]
+  );
+
+  const scrollRef = useRef(null);
+  const didMountRef = useRef(false);
+  useEffect(() => {
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      return;
+    }
+    scrollRef.current?.scrollTo({ y: 0, animated: true });
+  }, [selectedDate]);
 
   function renderScheduledEntry(entry) {
     return (
@@ -178,6 +194,7 @@ export default function CalendarScreen({ navigation }) {
     <ScreenShell navigation={navigation} activeTab="calendar">
       <View style={shared.outerContainer}>
         <ScrollView
+          ref={scrollRef}
           style={shared.scroll}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
@@ -189,7 +206,7 @@ export default function CalendarScreen({ navigation }) {
               <MonthCalendar
                 scheduledCountsByDate={scheduledCountsByDate}
                 selectedDate={selectedDate}
-                onSelectDate={iso => setSelectedDate(prev => (prev === iso ? null : iso))}
+                onSelectDate={iso => setSelectedDate(iso)}
               />
               {selectedDate && (
                 <View style={styles.dayListSection}>
@@ -214,12 +231,20 @@ export default function CalendarScreen({ navigation }) {
                 </View>
               )}
             </>
-          ) : loading ? (
-            <ActivityIndicator size="large" color={colors.accent} style={styles.loader} />
-          ) : groups.length === 0 ? (
-            <Text style={[shared.typography.body, styles.emptyText]}>Nothing scheduled yet.</Text>
           ) : (
-            groups.map(group => {
+            <>
+              <View style={styles.carouselWrapper}>
+                <DateCarousel
+                  selectedDate={selectedDate}
+                  onSelectDate={iso => setSelectedDate(iso)}
+                />
+              </View>
+              {loading ? (
+                <ActivityIndicator size="large" color={colors.accent} style={styles.loader} />
+              ) : visibleGroups.length === 0 ? (
+                <Text style={[shared.typography.body, styles.emptyText]}>Nothing scheduled yet.</Text>
+              ) : (
+                visibleGroups.map(group => {
               if (group.entries.length === 1) {
                 const entry = group.entries[0];
                 return (
@@ -249,7 +274,9 @@ export default function CalendarScreen({ navigation }) {
                   ))}
                 </Animated.View>
               );
-            })
+                })
+              )}
+            </>
           )}
         </ScrollView>
       </View>
@@ -278,6 +305,10 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingTop: 8,
     paddingBottom: 100,
+  },
+  carouselWrapper: {
+    marginHorizontal: -18,
+    marginBottom: 8,
   },
   loader: {
     marginTop: 48,
