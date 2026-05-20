@@ -1,12 +1,17 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Dimensions, FlatList, StyleSheet, Text, View } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import shared from '../sharedStyles';
 import { colors } from '../theme';
 
 const ITEM_WIDTH = 56;
-const DAYS_BEFORE = 365;
-const DAYS_AFTER = 365;
-const TOTAL_DAYS = DAYS_BEFORE + DAYS_AFTER + 1;
+const BUBBLE_SIZE = 40;
+const FUTURE_DAYS = 365;
+const TOTAL_DAYS = FUTURE_DAYS + 1;
+
+const CONTAINER_PADDING_TOP = 8;
+const WEEKDAY_LINE_HEIGHT = 22;
+const WEEKDAY_MARGIN_BOTTOM = 6;
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SIDE_PAD = (SCREEN_WIDTH - ITEM_WIDTH) / 2;
@@ -21,7 +26,7 @@ function buildDates() {
   const out = new Array(TOTAL_DAYS);
   for (let i = 0; i < TOTAL_DAYS; i++) {
     const d = new Date(anchor);
-    d.setDate(anchor.getDate() + (i - DAYS_BEFORE));
+    d.setDate(anchor.getDate() + i);
     out[i] = {
       iso: toIso(d),
       weekday: d.toLocaleDateString('en-US', { weekday: 'short' }),
@@ -31,28 +36,18 @@ function buildDates() {
   return out;
 }
 
-function DayCell({ item, isSelected }) {
+function DayCell({ item, isCenter }) {
   return (
     <View style={styles.cell}>
-      <Text
-        style={[
-          shared.typography.sub2,
-          styles.weekday,
-          isSelected && styles.weekdaySelected,
-        ]}
-      >
+      <Text style={[shared.typography.sub2, styles.weekday]}>
         {item.weekday}
       </Text>
-      <View style={[styles.bubble, isSelected && styles.bubbleSelected]}>
-        <Text
-          style={[
-            shared.typography.sub1,
-            styles.dayNumber,
-            isSelected && styles.dayNumberSelected,
-          ]}
-        >
-          {item.day}
-        </Text>
+      <View style={[styles.bubble, isCenter && styles.bubbleHidden]}>
+        {!isCenter && (
+          <Text style={[shared.typography.sub1, styles.dayNumber]}>
+            {item.day}
+          </Text>
+        )}
       </View>
     </View>
   );
@@ -60,28 +55,29 @@ function DayCell({ item, isSelected }) {
 
 export default function DateCarousel({ selectedDate, onSelectDate }) {
   const listRef = useRef(null);
-  const didMountRef = useRef(false);
-  const selfSnapRef = useRef(false);
   const dates = useMemo(() => buildDates(), []);
-  const indexByIso = useMemo(() => {
-    const m = {};
-    dates.forEach((d, i) => { m[d.iso] = i; });
-    return m;
-  }, [dates]);
+  const [centerIso, setCenterIso] = useState(dates[0].iso);
 
-  useEffect(() => {
-    if (!didMountRef.current) {
-      didMountRef.current = true;
-      return;
+  const centerDay = useMemo(() => {
+    const found = dates.find(d => d.iso === centerIso);
+    return found ? found.day : '';
+  }, [dates, centerIso]);
+
+  function handleScroll(e) {
+    const x = e.nativeEvent.contentOffset.x;
+    const idx = Math.max(0, Math.min(dates.length - 1, Math.round(x / ITEM_WIDTH)));
+    const iso = dates[idx].iso;
+    if (iso !== centerIso) {
+      setCenterIso(iso);
+      Haptics.selectionAsync();
     }
-    if (selfSnapRef.current) {
-      selfSnapRef.current = false;
-      return;
-    }
-    const idx = indexByIso[selectedDate];
-    if (idx == null) return;
-    listRef.current?.scrollToIndex({ index: idx, animated: true });
-  }, [selectedDate, indexByIso]);
+  }
+
+  function handleMomentumScrollEnd(e) {
+    const idx = Math.round(e.nativeEvent.contentOffset.x / ITEM_WIDTH);
+    const next = dates[idx];
+    if (next && next.iso !== selectedDate) onSelectDate(next.iso);
+  }
 
   return (
     <View style={styles.container}>
@@ -91,23 +87,27 @@ export default function DateCarousel({ selectedDate, onSelectDate }) {
         horizontal
         showsHorizontalScrollIndicator={false}
         keyExtractor={item => item.iso}
-        contentOffset={{ x: DAYS_BEFORE * ITEM_WIDTH, y: 0 }}
+        contentOffset={{ x: 0, y: 0 }}
         getItemLayout={(_, i) => ({ length: ITEM_WIDTH, offset: ITEM_WIDTH * i, index: i })}
         snapToInterval={ITEM_WIDTH}
         decelerationRate="fast"
+        bounces={false}
         contentContainerStyle={styles.content}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+        onMomentumScrollEnd={handleMomentumScrollEnd}
         renderItem={({ item }) => (
-          <DayCell item={item} isSelected={item.iso === selectedDate} />
+          <DayCell
+            item={item}
+            isCenter={item.iso === centerIso}
+          />
         )}
-        onMomentumScrollEnd={e => {
-          const idx = Math.round(e.nativeEvent.contentOffset.x / ITEM_WIDTH);
-          const next = dates[idx];
-          if (next && next.iso !== selectedDate) {
-            selfSnapRef.current = true;
-            onSelectDate(next.iso);
-          }
-        }}
       />
+      <View style={styles.centerAccent} pointerEvents="none">
+        <Text style={[shared.typography.sub1, styles.centerAccentNumber]}>
+          {centerDay}
+        </Text>
+      </View>
     </View>
   );
 }
@@ -115,7 +115,8 @@ export default function DateCarousel({ selectedDate, onSelectDate }) {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: colors.cream,
-    paddingVertical: 8,
+    paddingTop: CONTAINER_PADDING_TOP,
+    paddingBottom: 8,
   },
   content: {
     paddingHorizontal: SIDE_PAD,
@@ -128,25 +129,32 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     marginBottom: 6,
   },
-  weekdaySelected: {
-    color: colors.text,
-    fontFamily: 'Poppins-SemiBold',
-  },
   bubble: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: BUBBLE_SIZE,
+    height: BUBBLE_SIZE,
+    borderRadius: BUBBLE_SIZE / 2,
     backgroundColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  bubbleSelected: {
-    backgroundColor: colors.accent,
+  bubbleHidden: {
+    opacity: 0,
   },
   dayNumber: {
     color: colors.text,
   },
-  dayNumberSelected: {
+  centerAccent: {
+    position: 'absolute',
+    left: (SCREEN_WIDTH - BUBBLE_SIZE) / 2,
+    top: CONTAINER_PADDING_TOP + WEEKDAY_LINE_HEIGHT + WEEKDAY_MARGIN_BOTTOM,
+    width: BUBBLE_SIZE,
+    height: BUBBLE_SIZE,
+    borderRadius: BUBBLE_SIZE / 2,
+    backgroundColor: colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  centerAccentNumber: {
     color: colors.white,
   },
 });

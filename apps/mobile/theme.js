@@ -1,5 +1,6 @@
 const accent = '#7A9E7E';
-const accent2 = '#8C97B5'
+const accent2 = '#9FC2D5'
+// const accent2 = '#8C97B5'
 
 export const colors = {
   cream: '#F6F0ED',
