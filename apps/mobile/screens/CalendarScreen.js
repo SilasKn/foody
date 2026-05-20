@@ -1,6 +1,6 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Image as SvgIcon } from 'expo-image';
 import Animated, { LinearTransition } from 'react-native-reanimated';
 import DateCarousel from '../components/DateCarousel';
@@ -214,9 +214,14 @@ export default function CalendarScreen({ navigation }) {
                     Scheduled for the picked date:
                   </Text>
                   {(entriesByDate[selectedDate] ?? []).length === 0 ? (
-                    <Text style={[shared.typography.body, styles.emptyText]}>
-                      Nothing scheduled for this day.
-                    </Text>
+                    <View style={styles.emptyContainer}>
+                      <Text style={[shared.typography.body, styles.emptyText]}>Nothing scheduled for this day.</Text>
+                      <Image
+                        source={require('../assets/created_images/no_recipes.png')}
+                        style={styles.emptyImage}
+                        resizeMode="contain"
+                      />
+                    </View>
                   ) : (
                     entriesByDate[selectedDate].map(entry => (
                       <SwipeActionsRow
@@ -242,7 +247,14 @@ export default function CalendarScreen({ navigation }) {
               {loading ? (
                 <ActivityIndicator size="large" color={colors.accent} style={styles.loader} />
               ) : visibleGroups.length === 0 ? (
-                <Text style={[shared.typography.body, styles.emptyText]}>Nothing scheduled yet.</Text>
+                <View style={styles.emptyContainer}>
+                  <Text style={[shared.typography.body, styles.emptyText]}>Nothing scheduled yet.</Text>
+                  <Image
+                    source={require('../assets/created_images/no_recipes.png')}
+                    style={styles.emptyImage}
+                    resizeMode="contain"
+                  />
+                </View>
               ) : (
                 visibleGroups.map(group => {
               if (group.entries.length === 1) {
@@ -313,10 +325,19 @@ const styles = StyleSheet.create({
   loader: {
     marginTop: 48,
   },
+  emptyContainer: {
+    alignItems: 'center',
+    marginTop: 24,
+  },
   emptyText: {
     color: colors.textMuted,
     fontStyle: 'italic',
-    marginTop: 24,
+    textAlign: 'center',
+  },
+  emptyImage: {
+    width: 80,
+    height: 80,
+    marginTop: 12,
   },
   dayHeader: {
     color: colors.textMuted,

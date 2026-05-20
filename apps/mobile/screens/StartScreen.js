@@ -1,6 +1,6 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Image as SvgIcon } from 'expo-image';
 import AppHeader from '../components/AppHeader';
 import RecipeImage from '../components/RecipeImage';
@@ -135,8 +135,16 @@ export default function StartScreen({ navigation }) {
         showsVerticalScrollIndicator={false}
       >
         <AppHeader navigation={navigation} />
-        <Text style={shared.pageTitle}>
+        <Text style={[shared.pageTitle, styles.greeting]}>
           {displayName ? `Hello, ${displayName}!` : 'Hello!'}
+        </Text>
+        <Text style={[shared.typography.bodySmall, styles.dateSubtitle]}>
+          {new Date().toLocaleDateString('en-GB', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+          })}
         </Text>
 
         <Text style={[shared.typography.h3, styles.sectionSubtitle]}>Next scheduled recipe</Text>
@@ -181,7 +189,14 @@ export default function StartScreen({ navigation }) {
           {fridgeLoading ? (
             <ActivityIndicator color={colors.accent} />
           ) : ingredients.length === 0 ? (
-            <Text style={styles.fridgeEmpty}>No ingredients to buy</Text>
+            <View style={styles.fridgeEmptyContainer}>
+              <Text style={styles.fridgeEmpty}>No ingredients to buy</Text>
+              <Image
+                source={require('../assets/created_images/nothing_to_buy.png')}
+                style={styles.fridgeEmptyImage}
+                resizeMode="contain"
+              />
+            </View>
           ) : (
             ingredients.map((it) => (
               <View key={`${it.name}|${it.unit ?? ''}`} style={styles.ingRow}>
@@ -234,6 +249,13 @@ const styles = StyleSheet.create({
   scroll: {
     paddingTop: 8,
     paddingBottom: 32,
+  },
+  greeting: {
+    marginBottom: 2,
+  },
+  dateSubtitle: {
+    color: colors.textMuted,
+    marginBottom: 16,
   },
   sectionTitle: {
     color: colors.text,
@@ -332,11 +354,19 @@ const styles = StyleSheet.create({
   ingQty: {
     color: colors.white,
   },
+  fridgeEmptyContainer: {
+    alignItems: 'center',
+    paddingVertical: 24,
+  },
   fridgeEmpty: {
     color: colors.white,
     fontStyle: 'italic',
     textAlign: 'center',
-    paddingVertical: 24,
+  },
+  fridgeEmptyImage: {
+    width: 80,
+    height: 80,
+    marginTop: 12,
   },
   backdrop: {
     flex: 1,
