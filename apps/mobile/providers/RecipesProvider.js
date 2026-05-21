@@ -25,6 +25,7 @@ const mapRecipeRecord = (record, authorLabel, imageUrl = null) => ({
   author: record.author ?? null,
   created_at: record.created_at ?? null,
   public: Boolean(record.public),
+  servings: record.servings ?? null,
   dateLabel: formatRecipeDate(record.created_at),
   authorLabel,
   imageUrl,
@@ -121,7 +122,7 @@ export function RecipesProvider({ children }) {
     setIsLoading(true);
     setErrorMessage('');
 
-    let query = supabase.from('recipes').select('id, name, author, created_at, public');
+    let query = supabase.from('recipes').select('id, name, author, created_at, public, servings');
     if (mode === FILTER_MODES.PUBLIC) {
       query = query.eq('public', true);
     } else {

@@ -1,4 +1,3 @@
-import { Picker } from '@react-native-picker/picker';
 import { Image as SvgIcon } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -27,6 +26,92 @@ import { colors } from '../theme';
 import { uploadImage } from '../utils/imageUpload';
 import { supabase } from '../utils/supabase';
 
+function Dropdown({
+  value,
+  options,
+  onChange,
+  isOpen,
+  setIsOpen,
+  fullWidth = false,
+  listAbsolute = false,
+  accessibilityLabel,
+}) {
+  const selected = options.find((opt) => opt.value === value);
+  return (
+    <View style={fullWidth ? styles.dropdownFullWrap : null}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+        onPress={() => setIsOpen((prev) => !prev)}
+        style={({ pressed }) => [
+          styles.dropdownTrigger,
+          fullWidth ? styles.dropdownTriggerFull : styles.dropdownTriggerCompact,
+          isOpen && styles.dropdownTriggerOpen,
+          pressed && shared.pressed,
+        ]}
+      >
+        <Text style={[shared.typography.sub2, styles.dropdownTriggerText]}>
+          {selected ? selected.label : ''}
+        </Text>
+        <SvgIcon
+          source={require('../assets/chevron_down_icon.svg')}
+          style={[
+            { width: 18, height: 18 },
+            isOpen && { transform: [{ rotate: '180deg' }] },
+          ]}
+          contentFit="contain"
+        />
+      </Pressable>
+      {isOpen && (
+        <View
+          style={[
+            styles.dropdownList,
+            listAbsolute && styles.dropdownListAbsolute,
+            fullWidth && styles.dropdownListFull,
+          ]}
+        >
+          {options.map((opt, idx) => {
+            const isSelected = opt.value === value;
+            return (
+              <Pressable
+                key={String(opt.value)}
+                accessibilityRole="button"
+                accessibilityLabel={`Select ${opt.label}`}
+                onPress={() => {
+                  onChange(opt.value);
+                  setIsOpen(false);
+                }}
+                style={({ pressed }) => [
+                  styles.dropdownListItem,
+                  idx === 0 && styles.dropdownListItemFirst,
+                  pressed && shared.pressed,
+                ]}
+              >
+                <Text
+                  style={[
+                    shared.typography.sub1,
+                    styles.dropdownListItemText,
+                    isSelected && styles.dropdownListItemTextSelected,
+                  ]}
+                >
+                  {opt.label}
+                </Text>
+                {isSelected && (
+                  <SvgIcon
+                    source={require('../assets/check_icon.svg')}
+                    style={{ width: 18, height: 18 }}
+                    contentFit="contain"
+                  />
+                )}
+              </Pressable>
+            );
+          })}
+        </View>
+      )}
+    </View>
+  );
+}
+
 export default function AddRecipeScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();
   const SCREEN_H = Dimensions.get('screen').height;
@@ -37,6 +122,7 @@ export default function AddRecipeScreen({ navigation, route }) {
   const slideAnim = useRef(new Animated.Value(SCREEN_H)).current;
   const dragY = useRef(new Animated.Value(0)).current;
   const heightAnim = useRef(new Animated.Value(COLLAPSED_H)).current;
+  const scrollRef = useRef(null);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
 
   useEffect(() => {
@@ -107,6 +193,8 @@ export default function AddRecipeScreen({ navigation, route }) {
   ).current;
 
   const unitOptions = ['g', 'ml', 'unit'];
+  const servingsOptions = Array.from({ length: 10 }, (_, i) => i + 1);
+  const UNIT_LIST_HEIGHT = unitOptions.length * 44;
   const { user } = useAuth();
   const { prependRecipe, refreshRecipesForMode, filterModes } = useRecipes();
 
@@ -119,8 +207,10 @@ export default function AddRecipeScreen({ navigation, route }) {
   const [ingredientInput, setIngredientInput] = useState('');
   const [ingredientQuantityInput, setIngredientQuantityInput] = useState('');
   const [ingredientUnit, setIngredientUnit] = useState('g');
-  const [showUnitPickerIOS, setShowUnitPickerIOS] = useState(false);
+  const [isUnitOpen, setIsUnitOpen] = useState(false);
   const [ingredients, setIngredients] = useState(editRecipe?.ingredients ?? []);
+  const [servings, setServings] = useState(editRecipe?.servings ?? 1);
+  const [isServingsOpen, setIsServingsOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [imageRemoved, setImageRemoved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -140,6 +230,14 @@ export default function AddRecipeScreen({ navigation, route }) {
       if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (!isUnitOpen) return;
+    const frame = requestAnimationFrame(() => {
+      scrollRef.current?.scrollToEnd({ animated: true });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [isUnitOpen]);
 
   const showToast = (msg) => {
     setToastMessage(msg);
@@ -176,7 +274,7 @@ export default function AddRecipeScreen({ navigation, route }) {
     setIngredientInput('');
     setIngredientQuantityInput('');
     setIngredientUnit('g');
-    setShowUnitPickerIOS(false);
+    setIsUnitOpen(false);
   };
 
   const removeIngredient = (idx) => {
@@ -270,7 +368,7 @@ export default function AddRecipeScreen({ navigation, route }) {
     setIngredientInput('');
     setIngredientQuantityInput('');
     setIngredientUnit('g');
-    setShowUnitPickerIOS(false);
+    setIsUnitOpen(false);
     setIngredients([]);
     setSelectedImage(null);
     setImageRemoved(false);
@@ -326,7 +424,7 @@ export default function AddRecipeScreen({ navigation, route }) {
       if (editRecipe) {
         const { error: updateError } = await supabase
           .from('recipes')
-          .update({ name, description: recipeDescription.trim() })
+          .update({ name, description: recipeDescription.trim(), servings })
           .eq('id', editRecipe.id);
         if (updateError) throw updateError;
 
@@ -387,6 +485,7 @@ export default function AddRecipeScreen({ navigation, route }) {
               author: user.id,
               public: false,
               draft: true,
+              servings,
             })
             .select('id, name, author, created_at')
             .single();
@@ -499,8 +598,12 @@ export default function AddRecipeScreen({ navigation, route }) {
         </View>
 
         <ScrollView
+          ref={scrollRef}
           style={styles.cardScroll}
-          contentContainerStyle={styles.cardScrollContent}
+          contentContainerStyle={[
+            styles.cardScrollContent,
+            isUnitOpen && { paddingBottom: 16 + UNIT_LIST_HEIGHT },
+          ]}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
           alwaysBounceVertical={false}
@@ -600,33 +703,17 @@ export default function AddRecipeScreen({ navigation, route }) {
                     style={[styles.input, styles.quantityInput]}
                   />
                 </View>
-                {Platform.OS === 'ios' ? (
-                  <Pressable
-                    accessibilityRole="button"
+                <View style={styles.unitAnchor}>
+                  <Dropdown
+                    value={ingredientUnit}
+                    options={unitOptions.map((u) => ({ value: u, label: u }))}
+                    onChange={setIngredientUnit}
+                    isOpen={isUnitOpen}
+                    setIsOpen={setIsUnitOpen}
+                    listAbsolute
                     accessibilityLabel="Select unit"
-                    onPress={() => setShowUnitPickerIOS((prev) => !prev)}
-                    style={({ pressed }) => [
-                      styles.unitFieldButton,
-                      pressed && shared.pressed,
-                    ]}
-                  >
-                    <Text style={[shared.typography.sub2, styles.unitFieldText]}>{ingredientUnit}</Text>
-                    <SvgIcon source={require('../assets/chevron_down_icon.svg')} style={{ width: 18, height: 18 }} contentFit="contain" />
-                  </Pressable>
-                ) : (
-                  <View style={styles.pickerWrap}>
-                    <Picker
-                      selectedValue={ingredientUnit}
-                      onValueChange={(value) => setIngredientUnit(value)}
-                      style={styles.picker}
-                      dropdownIconColor={colors.text}
-                    >
-                      {unitOptions.map((unit) => (
-                        <Picker.Item key={unit} label={unit} value={unit} />
-                      ))}
-                    </Picker>
-                  </View>
-                )}
+                  />
+                </View>
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel="Add ingredient"
@@ -636,31 +723,6 @@ export default function AddRecipeScreen({ navigation, route }) {
                   <SvgIcon source={require('../assets/plus_icon.svg')} style={{ width: 22, height: 22 }} contentFit="contain" />
                 </Pressable>
               </View>
-              {Platform.OS === 'ios' && showUnitPickerIOS && (
-                <View style={styles.iosPickerPanel}>
-                  <View style={styles.iosPickerHeader}>
-                    <Text style={[shared.typography.sub2, styles.iosPickerTitle]}>Unit</Text>
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel="Done selecting unit"
-                      onPress={() => setShowUnitPickerIOS(false)}
-                      style={({ pressed }) => [styles.iosPickerDone, pressed && shared.pressed]}
-                    >
-                      <Text style={[shared.typography.bodySmall, styles.iosPickerDoneText]}>Done</Text>
-                    </Pressable>
-                  </View>
-                  <Picker
-                    selectedValue={ingredientUnit}
-                    onValueChange={(value) => setIngredientUnit(value)}
-                    style={styles.iosPicker}
-                    itemStyle={[shared.typography.sub1, styles.iosPickerItem]}
-                  >
-                    {unitOptions.map((unit) => (
-                      <Picker.Item key={unit} label={unit} value={unit} />
-                    ))}
-                  </Picker>
-                </View>
-              )}
 
               {ingredients.length > 0 && (
                 <View style={styles.ingredientsList}>
@@ -682,6 +744,17 @@ export default function AddRecipeScreen({ navigation, route }) {
                   ))}
                 </View>
               )}
+
+              <Text style={[shared.typography.sub2, styles.label]}>Servings</Text>
+              <Dropdown
+                value={servings}
+                options={servingsOptions.map((n) => ({ value: n, label: String(n) }))}
+                onChange={setServings}
+                isOpen={isServingsOpen}
+                setIsOpen={setIsServingsOpen}
+                fullWidth
+                accessibilityLabel="Select servings"
+              />
 
               {!!errorMessage && <Text style={[shared.typography.body, styles.error]}>{errorMessage}</Text>}
               {!!toastMessage && <Text style={[shared.typography.body, styles.toast]}>{toastMessage}</Text>}
@@ -804,8 +877,14 @@ const styles = StyleSheet.create({
     width: '100%',
     marginBottom: 0,
   },
-  unitFieldButton: {
-    width: 92,
+  unitAnchor: {
+    position: 'relative',
+  },
+  dropdownFullWrap: {
+    alignSelf: 'stretch',
+    marginBottom: 10,
+  },
+  dropdownTrigger: {
     height: 44,
     borderWidth: 1,
     borderColor: colors.border,
@@ -816,57 +895,57 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 12,
   },
-  unitFieldText: {
+  dropdownTriggerCompact: {
+    width: 92,
+  },
+  dropdownTriggerFull: {
+    alignSelf: 'stretch',
+  },
+  dropdownTriggerOpen: {
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    borderBottomWidth: 0,
+  },
+  dropdownTriggerText: {
     color: colors.text,
   },
-  pickerWrap: {
-    width: 92,
+  dropdownList: {
     borderWidth: 1,
+    borderTopWidth: 0,
     borderColor: colors.border,
-    borderRadius: 14,
+    borderBottomLeftRadius: 14,
+    borderBottomRightRadius: 14,
     backgroundColor: '#fff',
     overflow: 'hidden',
   },
-  picker: {
+  dropdownListAbsolute: {
+    position: 'absolute',
+    top: 44,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+    elevation: 10,
+  },
+  dropdownListFull: {
+    alignSelf: 'stretch',
+  },
+  dropdownListItem: {
     height: 44,
-  },
-  iosPickerPanel: {
-    marginTop: 10,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 14,
-    backgroundColor: '#fff',
-    overflow: 'hidden',
-  },
-  iosPickerHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#DDD',
+    borderTopWidth: 1,
+    borderTopColor: '#DDD',
   },
-  iosPickerTitle: {
+  dropdownListItemFirst: {
+    borderTopWidth: 0,
+  },
+  dropdownListItemText: {
     color: colors.text,
   },
-  iosPickerDone: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 9999,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    backgroundColor: colors.pillInactive,
-  },
-  iosPickerDoneText: {
-    color: colors.text,
-  },
-  iosPicker: {
-    height: 170,
-  },
-  iosPickerItem: {
-    color: colors.text,
+  dropdownListItemTextSelected: {
+    fontWeight: '700',
   },
   addIconButton: {
     flexShrink: 0,
