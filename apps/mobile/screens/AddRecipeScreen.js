@@ -123,7 +123,10 @@ export default function AddRecipeScreen({ navigation, route }) {
   const dragY = useRef(new Animated.Value(0)).current;
   const heightAnim = useRef(new Animated.Value(COLLAPSED_H)).current;
   const scrollRef = useRef(null);
+  const currentScrollY = useRef(0);
+  const closeScrollTimeoutRef = useRef(null);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [showUnitPadding, setShowUnitPadding] = useState(false);
 
   useEffect(() => {
     Animated.parallel([
@@ -228,15 +231,32 @@ export default function AddRecipeScreen({ navigation, route }) {
     return () => {
       if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
       if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+      if (closeScrollTimeoutRef.current) clearTimeout(closeScrollTimeoutRef.current);
     };
   }, []);
 
   useEffect(() => {
-    if (!isUnitOpen) return;
-    const frame = requestAnimationFrame(() => {
-      scrollRef.current?.scrollToEnd({ animated: true });
-    });
-    return () => cancelAnimationFrame(frame);
+    if (isUnitOpen) {
+      setShowUnitPadding(true);
+      const frame = requestAnimationFrame(() => {
+        scrollRef.current?.scrollToEnd({ animated: true });
+      });
+      return () => cancelAnimationFrame(frame);
+    }
+    if (!showUnitPadding) return;
+    const target = Math.max(0, currentScrollY.current - UNIT_LIST_HEIGHT);
+    scrollRef.current?.scrollTo({ y: target, animated: true });
+    closeScrollTimeoutRef.current = setTimeout(() => {
+      setShowUnitPadding(false);
+      closeScrollTimeoutRef.current = null;
+    }, 320);
+    return () => {
+      if (closeScrollTimeoutRef.current) {
+        clearTimeout(closeScrollTimeoutRef.current);
+        closeScrollTimeoutRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isUnitOpen]);
 
   const showToast = (msg) => {
@@ -602,8 +622,12 @@ export default function AddRecipeScreen({ navigation, route }) {
           style={styles.cardScroll}
           contentContainerStyle={[
             styles.cardScrollContent,
-            isUnitOpen && { paddingBottom: 16 + UNIT_LIST_HEIGHT },
+            showUnitPadding && { paddingBottom: 16 + UNIT_LIST_HEIGHT },
           ]}
+          onScroll={(e) => {
+            currentScrollY.current = e.nativeEvent.contentOffset.y;
+          }}
+          scrollEventThrottle={16}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
           alwaysBounceVertical={false}
