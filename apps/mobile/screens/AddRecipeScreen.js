@@ -26,6 +26,8 @@ import { colors } from '../theme';
 import { uploadImage } from '../utils/imageUpload';
 import { supabase } from '../utils/supabase';
 
+const DROPDOWN_ITEM_HEIGHT = 44;
+
 function Dropdown({
   value,
   options,
@@ -34,9 +36,47 @@ function Dropdown({
   setIsOpen,
   fullWidth = false,
   listAbsolute = false,
+  maxVisibleItems,
   accessibilityLabel,
 }) {
   const selected = options.find((opt) => opt.value === value);
+  const renderedItems = options.map((opt, idx) => {
+    const isSelected = opt.value === value;
+    return (
+      <Pressable
+        key={String(opt.value)}
+        accessibilityRole="button"
+        accessibilityLabel={`Select ${opt.label}`}
+        onPress={() => {
+          onChange(opt.value);
+          setIsOpen(false);
+        }}
+        style={({ pressed }) => [
+          styles.dropdownListItem,
+          idx === 0 && styles.dropdownListItemFirst,
+          pressed && shared.pressed,
+        ]}
+      >
+        <Text
+          style={[
+            shared.typography.sub1,
+            styles.dropdownListItemText,
+            isSelected && styles.dropdownListItemTextSelected,
+          ]}
+        >
+          {opt.label}
+        </Text>
+        {isSelected && (
+          <SvgIcon
+            source={require('../assets/check_icon.svg')}
+            style={{ width: 18, height: 18 }}
+            contentFit="contain"
+          />
+        )}
+      </Pressable>
+    );
+  });
+
   return (
     <View style={fullWidth ? styles.dropdownFullWrap : null}>
       <Pressable
@@ -70,42 +110,17 @@ function Dropdown({
             fullWidth && styles.dropdownListFull,
           ]}
         >
-          {options.map((opt, idx) => {
-            const isSelected = opt.value === value;
-            return (
-              <Pressable
-                key={String(opt.value)}
-                accessibilityRole="button"
-                accessibilityLabel={`Select ${opt.label}`}
-                onPress={() => {
-                  onChange(opt.value);
-                  setIsOpen(false);
-                }}
-                style={({ pressed }) => [
-                  styles.dropdownListItem,
-                  idx === 0 && styles.dropdownListItemFirst,
-                  pressed && shared.pressed,
-                ]}
-              >
-                <Text
-                  style={[
-                    shared.typography.sub1,
-                    styles.dropdownListItemText,
-                    isSelected && styles.dropdownListItemTextSelected,
-                  ]}
-                >
-                  {opt.label}
-                </Text>
-                {isSelected && (
-                  <SvgIcon
-                    source={require('../assets/check_icon.svg')}
-                    style={{ width: 18, height: 18 }}
-                    contentFit="contain"
-                  />
-                )}
-              </Pressable>
-            );
-          })}
+          {maxVisibleItems ? (
+            <ScrollView
+              style={{ maxHeight: maxVisibleItems * DROPDOWN_ITEM_HEIGHT }}
+              nestedScrollEnabled
+              keyboardShouldPersistTaps="handled"
+            >
+              {renderedItems}
+            </ScrollView>
+          ) : (
+            renderedItems
+          )}
         </View>
       )}
     </View>
@@ -777,6 +792,7 @@ export default function AddRecipeScreen({ navigation, route }) {
                 isOpen={isServingsOpen}
                 setIsOpen={setIsServingsOpen}
                 fullWidth
+                maxVisibleItems={3}
                 accessibilityLabel="Select servings"
               />
 
