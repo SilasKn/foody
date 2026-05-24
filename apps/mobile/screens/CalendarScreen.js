@@ -348,6 +348,7 @@ export default function CalendarScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   scrollContent: {
+    flexGrow: 1,
     paddingTop: 8,
     paddingBottom: 100,
   },
@@ -359,8 +360,9 @@ const styles = StyleSheet.create({
     marginTop: 48,
   },
   emptyContainer: {
+    flex: 1,
     alignItems: 'center',
-    marginTop: 24,
+    justifyContent: 'center',
   },
   emptyText: {
     color: colors.textMuted,
