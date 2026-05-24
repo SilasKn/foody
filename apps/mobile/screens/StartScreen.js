@@ -1,6 +1,6 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Image as SvgIcon } from 'expo-image';
 import AppHeader from '../components/AppHeader';
 import RecipeImage from '../components/RecipeImage';
@@ -176,13 +176,35 @@ export default function StartScreen({ navigation }) {
           <Text style={[shared.typography.h3, styles.fridgeSubtitleInline]}>
             Everything you need to buy
           </Text>
-          <Pressable
-            onPress={() => setRangePickerOpen(true)}
-            style={({ pressed }) => [styles.rangePill, pressed && styles.pressed]}
-          >
-            <SvgIcon source={require('../assets/chevron_down_icon.svg')} style={{ width: 18, height: 18 }} contentFit="contain" />
-            <Text style={[shared.typography.sub2, styles.rangePillText]}>{currentRange.label}</Text>
-          </Pressable>
+          <View style={styles.rangeDropdownWrap}>
+            <Pressable
+              onPress={() => setRangePickerOpen(prev => !prev)}
+              style={({ pressed }) => [styles.rangePill, pressed && styles.pressed]}
+            >
+              <SvgIcon source={require('../assets/chevron_down_icon.svg')} style={{ width: 18, height: 18 }} contentFit="contain" />
+              <Text style={[shared.typography.sub2, styles.rangePillText]}>{currentRange.label}</Text>
+            </Pressable>
+            {rangePickerOpen && (
+              <View style={styles.menuCard}>
+                {RANGE_OPTIONS.map((opt) => (
+                  <Pressable
+                    key={opt.key}
+                    onPress={() => {
+                      setRangeKey(opt.key);
+                      setRangePickerOpen(false);
+                    }}
+                    style={({ pressed }) => [
+                      styles.menuItem,
+                      opt.key === rangeKey && styles.menuItemActive,
+                      pressed && styles.pressed,
+                    ]}
+                  >
+                    <Text style={shared.typography.body}>{opt.label}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+          </View>
         </View>
 
         <View style={styles.fridgeCard}>
@@ -210,33 +232,6 @@ export default function StartScreen({ navigation }) {
         </View>
       </ScrollView>
 
-      <Modal
-        visible={rangePickerOpen}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setRangePickerOpen(false)}
-      >
-        <Pressable style={styles.backdrop} onPress={() => setRangePickerOpen(false)}>
-          <Pressable style={styles.menuCard} onPress={() => {}}>
-            {RANGE_OPTIONS.map((opt) => (
-              <Pressable
-                key={opt.key}
-                onPress={() => {
-                  setRangeKey(opt.key);
-                  setRangePickerOpen(false);
-                }}
-                style={({ pressed }) => [
-                  styles.menuItem,
-                  opt.key === rangeKey && styles.menuItemActive,
-                  pressed && styles.pressed,
-                ]}
-              >
-                <Text style={shared.typography.body}>{opt.label}</Text>
-              </Pressable>
-            ))}
-          </Pressable>
-        </Pressable>
-      </Modal>
     </ScreenShell>
   );
 }
@@ -317,6 +312,10 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     flexShrink: 1,
   },
+  rangeDropdownWrap: {
+    position: 'relative',
+    zIndex: 10,
+  },
   rangePill: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -368,13 +367,10 @@ const styles = StyleSheet.create({
     height: 80,
     marginTop: 12,
   },
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   menuCard: {
+    position: 'absolute',
+    top: 40,
+    right: 0,
     backgroundColor: colors.white,
     borderRadius: 16,
     paddingVertical: 8,

@@ -26,6 +26,7 @@ export default function RecipeDetailScreen({ route, navigation }) {
   const [details, setDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showScaled, setShowScaled] = useState(!!recipe.scheduledServings);
+  const [servingsPickerOpen, setServingsPickerOpen] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -161,30 +162,42 @@ export default function RecipeDetailScreen({ route, navigation }) {
                   </View>
 
                   <View style={styles.section}>
-                    <Text style={[shared.typography.h3, styles.sectionLabel]}>Ingredients</Text>
-
-                    {recipe.scheduledServings != null && details.servings && (
-                      <View style={styles.toggleRow}>
-                        <Pressable
-                          accessibilityRole="button"
-                          onPress={() => setShowScaled(false)}
-                          style={({ pressed }) => [styles.togglePill, !showScaled && styles.togglePillActive, pressed && shared.pressed]}
-                        >
-                          <Text style={[shared.typography.sub2, styles.togglePillText, !showScaled && styles.togglePillTextActive]}>
-                            Recipe ({details.servings})
-                          </Text>
-                        </Pressable>
-                        <Pressable
-                          accessibilityRole="button"
-                          onPress={() => setShowScaled(true)}
-                          style={({ pressed }) => [styles.togglePill, showScaled && styles.togglePillActive, pressed && shared.pressed]}
-                        >
-                          <Text style={[shared.typography.sub2, styles.togglePillText, showScaled && styles.togglePillTextActive]}>
-                            Scheduled ({recipe.scheduledServings})
-                          </Text>
-                        </Pressable>
-                      </View>
-                    )}
+                    <View style={styles.ingredientsHeader}>
+                      <Text style={[shared.typography.h3, styles.sectionLabel, { marginBottom: 0 }]}>Ingredients</Text>
+                      {recipe.scheduledServings != null && details.servings && (
+                        <View style={styles.servingsDropdownWrap}>
+                          <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel="Select servings mode"
+                            onPress={() => setServingsPickerOpen(prev => !prev)}
+                            style={({ pressed }) => [styles.servingsPill, pressed && shared.pressed]}
+                          >
+                            <SvgIcon source={require('../assets/chevron_down_icon.svg')} style={{ width: 18, height: 18 }} contentFit="contain" />
+                            <Text style={[shared.typography.sub2, styles.servingsPillText]}>
+                              {showScaled ? `Scheduled (${recipe.scheduledServings})` : `Recipe (${details.servings})`}
+                            </Text>
+                          </Pressable>
+                          {servingsPickerOpen && (
+                            <View style={styles.servingsMenuCard}>
+                              <Pressable
+                                accessibilityRole="button"
+                                onPress={() => { setShowScaled(false); setServingsPickerOpen(false); }}
+                                style={({ pressed }) => [styles.servingsMenuItem, !showScaled && styles.servingsMenuItemActive, pressed && shared.pressed]}
+                              >
+                                <Text style={shared.typography.body}>Recipe ({details.servings})</Text>
+                              </Pressable>
+                              <Pressable
+                                accessibilityRole="button"
+                                onPress={() => { setShowScaled(true); setServingsPickerOpen(false); }}
+                                style={({ pressed }) => [styles.servingsMenuItem, showScaled && styles.servingsMenuItemActive, pressed && shared.pressed]}
+                              >
+                                <Text style={shared.typography.body}>Scheduled ({recipe.scheduledServings})</Text>
+                              </Pressable>
+                            </View>
+                          )}
+                        </View>
+                      )}
+                    </View>
 
                     {details.ingredients.length === 0 ? (
                       <Text style={[shared.typography.body, styles.placeholderText]}>No ingredients listed.</Text>
@@ -258,6 +271,7 @@ export default function RecipeDetailScreen({ route, navigation }) {
           </View>
         </ScrollView>
       </View>
+
     </ScreenShell>
   );
 }
@@ -356,28 +370,50 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontStyle: 'italic',
   },
-  toggleRow: {
+  ingredientsHeader: {
     flexDirection: 'row',
-    gap: 8,
-    marginBottom: 12,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
   },
-  togglePill: {
-    paddingVertical: 6,
-    paddingHorizontal: 14,
+  servingsPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     borderRadius: 9999,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.white,
+    backgroundColor: colors.cream,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
   },
-  togglePillActive: {
-    backgroundColor: colors.accent,
-    borderColor: colors.accent,
-  },
-  togglePillText: {
+  servingsPillText: {
     color: colors.text,
   },
-  togglePillTextActive: {
-    color: colors.white,
+  servingsDropdownWrap: {
+    position: 'relative',
+    zIndex: 10,
+  },
+  servingsMenuCard: {
+    position: 'absolute',
+    top: 40,
+    right: 0,
+    backgroundColor: colors.white,
+    borderRadius: 16,
+    paddingVertical: 8,
+    minWidth: 180,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 6,
+  },
+  servingsMenuItem: {
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+  },
+  servingsMenuItemActive: {
+    backgroundColor: colors.pillActive,
   },
   ingredientRow: {
     paddingVertical: 4,
