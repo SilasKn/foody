@@ -72,7 +72,7 @@ export default function RecipeDetailScreen({ route, navigation }) {
   const onSchedulePress = () => {
     if (!details) return;
     navigation.navigate('ScheduleRecipe', {
-      recipe: { id: recipe.id, name: details.name, imageUrl: details.imageUrl ?? null },
+      recipe: { id: recipe.id, name: details.name, imageUrl: details.imageUrl ?? null, servings: details.servings ?? 1 },
     });
   };
 

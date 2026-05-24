@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Alert, Animated, Dimensions, Modal, PanResponder, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Image as SvgIcon } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Dropdown from '../components/Dropdown';
 import RecipeImage from '../components/RecipeImage';
 import { useAuth } from '../providers/AuthProvider';
 import shared from '../sharedStyles';
@@ -70,7 +71,10 @@ export default function ScheduleRecipeScreen({ route, navigation }) {
   const [tempPickerDate, setTempPickerDate] = useState(null);
   const [showPicker, setShowPicker] = useState(false);
   const [mealType, setMealType] = useState(null);
+  const [servings, setServings] = useState(recipe.servings ?? 1);
+  const [isServingsOpen, setIsServingsOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const servingsOptions = Array.from({ length: 10 }, (_, i) => i + 1);
 
   const canSchedule = selectedDate !== null && mealType !== null;
 
@@ -92,6 +96,7 @@ export default function ScheduleRecipeScreen({ route, navigation }) {
       user_id: user.id,
       scheduled_for: isoDate,
       scheduled_as: mealType,
+      servings,
     });
     setSaving(false);
     if (error) {
@@ -188,6 +193,20 @@ export default function ScheduleRecipeScreen({ route, navigation }) {
               </Pressable>
             ))}
           </View>
+
+          <View style={styles.spacer} />
+
+          <Text style={[shared.typography.h3, styles.sectionLabel]}>Servings:</Text>
+          <Dropdown
+            value={servings}
+            options={servingsOptions.map((n) => ({ value: n, label: String(n) }))}
+            onChange={setServings}
+            isOpen={isServingsOpen}
+            setIsOpen={setIsServingsOpen}
+            fullWidth
+            maxVisibleItems={3}
+            accessibilityLabel="Select servings"
+          />
         </ScrollView>
 
         <View style={[styles.stickyFooter, { paddingBottom: insets.bottom + 12 }]}>
