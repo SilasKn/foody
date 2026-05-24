@@ -12,6 +12,7 @@ import shared from '../sharedStyles';
 import { colors } from '../theme';
 import { supabase } from '../utils/supabase';
 
+const personIcon = require('../assets/person_icon.svg');
 const MEAL_TYPE_ORDER = { Breakfast: 0, Lunch: 1, Dinner: 2, Snack: 3 };
 
 function todayIso() {
@@ -66,7 +67,7 @@ export default function CalendarScreen({ navigation }) {
         accessibilityRole="button"
         onPress={() => {
           navigation.navigate('RecipeDetail', {
-            recipe: { id: entry.recipe_id, name: entry.recipes?.name ?? '' },
+            recipe: { id: entry.recipe_id, name: entry.recipes?.name ?? '', scheduledServings: entry.servings ?? null },
           });
         }}
         style={styles.recipeRow}
@@ -82,6 +83,14 @@ export default function CalendarScreen({ navigation }) {
           <Text style={[shared.typography.sub1, styles.recipeName]} numberOfLines={2}>
             {entry.recipes?.name ?? '—'}
           </Text>
+          {entry.servings != null && (
+            <View style={styles.servingsInfo}>
+              <SvgIcon source={personIcon} style={styles.servingsIcon} contentFit="contain" />
+              <Text style={[shared.typography.sub2, styles.servingsText]}>
+                {entry.servings} {entry.servings === 1 ? 'Serving' : 'Servings'}
+              </Text>
+            </View>
+          )}
         </View>
         <View style={styles.mealTypePill}>
           <Text style={[shared.typography.sub2, styles.mealTypePillLabel]}>
@@ -123,7 +132,7 @@ export default function CalendarScreen({ navigation }) {
           supabase.from('recipe_schedule').delete().lt('scheduled_for', todayIso()),
           supabase
             .from('recipe_schedule')
-            .select('id, scheduled_for, scheduled_as, recipe_id, recipes(name)')
+            .select('id, scheduled_for, scheduled_as, recipe_id, servings, recipes(name)')
             .gte('scheduled_for', todayIso())
             .order('scheduled_for', { ascending: true }),
         ]);
@@ -376,6 +385,21 @@ const styles = StyleSheet.create({
   },
   recipeName: {
     color: colors.text,
+  },
+  servingsInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  servingsIcon: {
+    width: 12,
+    height: 12,
+    marginRight: 4,
+    tintColor: colors.textMuted,
+  },
+  servingsText: {
+    color: colors.textMuted,
+    fontSize: 12,
   },
   mealTypePill: {
     backgroundColor: colors.accent,

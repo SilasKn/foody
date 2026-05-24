@@ -25,6 +25,7 @@ export default function RecipeDetailScreen({ route, navigation }) {
   const { recipe } = route.params;
   const [details, setDetails] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showScaled, setShowScaled] = useState(!!recipe.scheduledServings);
 
   useFocusEffect(
     useCallback(() => {
@@ -161,16 +162,48 @@ export default function RecipeDetailScreen({ route, navigation }) {
 
                   <View style={styles.section}>
                     <Text style={[shared.typography.h3, styles.sectionLabel]}>Ingredients</Text>
+
+                    {recipe.scheduledServings != null && details.servings && (
+                      <View style={styles.toggleRow}>
+                        <Pressable
+                          accessibilityRole="button"
+                          onPress={() => setShowScaled(false)}
+                          style={({ pressed }) => [styles.togglePill, !showScaled && styles.togglePillActive, pressed && shared.pressed]}
+                        >
+                          <Text style={[shared.typography.sub2, styles.togglePillText, !showScaled && styles.togglePillTextActive]}>
+                            Recipe ({details.servings})
+                          </Text>
+                        </Pressable>
+                        <Pressable
+                          accessibilityRole="button"
+                          onPress={() => setShowScaled(true)}
+                          style={({ pressed }) => [styles.togglePill, showScaled && styles.togglePillActive, pressed && shared.pressed]}
+                        >
+                          <Text style={[shared.typography.sub2, styles.togglePillText, showScaled && styles.togglePillTextActive]}>
+                            Scheduled ({recipe.scheduledServings})
+                          </Text>
+                        </Pressable>
+                      </View>
+                    )}
+
                     {details.ingredients.length === 0 ? (
                       <Text style={[shared.typography.body, styles.placeholderText]}>No ingredients listed.</Text>
                     ) : (
-                      details.ingredients.map((item, index) => (
-                        <View key={index} style={styles.ingredientRow}>
-                          <Text style={[shared.typography.body, styles.ingredientText]}>
-                            {[item.quantity, item.unit, item.ingredients?.name].filter(Boolean).join(' ')}
-                          </Text>
-                        </View>
-                      ))
+                      details.ingredients.map((item, index) => {
+                        const scale = showScaled && recipe.scheduledServings && details.servings
+                          ? recipe.scheduledServings / details.servings
+                          : 1;
+                        const qty = item.quantity && scale !== 1
+                          ? Math.round(item.quantity * scale * 100) / 100
+                          : item.quantity;
+                        return (
+                          <View key={index} style={styles.ingredientRow}>
+                            <Text style={[shared.typography.body, styles.ingredientText]}>
+                              {[qty, item.unit, item.ingredients?.name].filter(Boolean).join(' ')}
+                            </Text>
+                          </View>
+                        );
+                      })
                     )}
                   </View>
 
@@ -322,6 +355,29 @@ const styles = StyleSheet.create({
   placeholderText: {
     color: colors.textMuted,
     fontStyle: 'italic',
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+  },
+  togglePill: {
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 9999,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.white,
+  },
+  togglePillActive: {
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
+  },
+  togglePillText: {
+    color: colors.text,
+  },
+  togglePillTextActive: {
+    color: colors.white,
   },
   ingredientRow: {
     paddingVertical: 4,
