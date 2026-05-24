@@ -61,7 +61,7 @@ export default function StartScreen({ navigation }) {
     const end = addDaysIso(start, currentRange.days);
     const { data } = await supabase
       .from('recipe_schedule')
-      .select('scheduled_for, recipes!inner(recipe_ingredients(quantity, unit, ingredients(name)))')
+      .select('scheduled_for, servings, recipes!inner(servings, recipe_ingredients(quantity, unit, ingredients(name)))')
       .eq('user_id', user.id)
       .gte('scheduled_for', start)
       .lt('scheduled_for', end);

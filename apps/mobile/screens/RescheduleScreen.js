@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Alert, Animated, Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Image as SvgIcon } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Dropdown from '../components/Dropdown';
 import shared from '../sharedStyles';
 import { colors } from '../theme';
 import { supabase } from '../utils/supabase';
@@ -42,12 +43,15 @@ export default function RescheduleScreen({ route, navigation }) {
   const [tempPickerDate, setTempPickerDate] = useState(null);
   const [showPicker, setShowPicker] = useState(false);
   const [mealType, setMealType] = useState(entry.scheduled_as);
+  const [servings, setServings] = useState(entry.servings ?? 1);
+  const [isServingsOpen, setIsServingsOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const servingsOptions = Array.from({ length: 10 }, (_, i) => i + 1);
 
   const canReschedule =
     selectedDate !== null &&
     mealType !== null &&
-    (dateToIsoLocal(selectedDate) !== entry.scheduled_for || mealType !== entry.scheduled_as);
+    (dateToIsoLocal(selectedDate) !== entry.scheduled_for || mealType !== entry.scheduled_as || servings !== (entry.servings ?? 1));
 
   const onDateChange = (event, date) => {
     if (Platform.OS === 'android') {
@@ -64,7 +68,7 @@ export default function RescheduleScreen({ route, navigation }) {
     const isoDate = dateToIsoLocal(selectedDate);
     const { data, error } = await supabase
       .from('recipe_schedule')
-      .update({ scheduled_for: isoDate, scheduled_as: mealType })
+      .update({ scheduled_for: isoDate, scheduled_as: mealType, servings })
       .eq('id', entry.id)
       .select('id');
     setSaving(false);
@@ -125,6 +129,20 @@ export default function RescheduleScreen({ route, navigation }) {
                   </Text>
                 </Pressable>
               ))}
+            </View>
+
+            <Text style={[shared.typography.h3, styles.sectionLabel]}>Servings:</Text>
+            <View style={styles.servingsWrap}>
+              <Dropdown
+                value={servings}
+                options={servingsOptions.map((n) => ({ value: n, label: String(n) }))}
+                onChange={setServings}
+                isOpen={isServingsOpen}
+                setIsOpen={setIsServingsOpen}
+                fullWidth
+                maxVisibleItems={3}
+                accessibilityLabel="Select servings"
+              />
             </View>
 
             <View style={styles.actionRow}>
@@ -267,6 +285,9 @@ const styles = StyleSheet.create({
   },
   mealPillTextActive: {
     color: colors.white,
+  },
+  servingsWrap: {
+    marginBottom: 20,
   },
   rescheduleButton: {
     backgroundColor: colors.accent,

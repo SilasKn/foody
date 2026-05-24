@@ -107,6 +107,7 @@ export default function CalendarScreen({ navigation }) {
         id: entry.id,
         scheduled_for: entry.scheduled_for,
         scheduled_as: entry.scheduled_as,
+        servings: entry.servings,
       },
     });
   }
