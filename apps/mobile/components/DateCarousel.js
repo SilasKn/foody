@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { Dimensions, FlatList, StyleSheet, Text, View } from 'react-native';
+import { Animated, Dimensions, FlatList, StyleSheet, Text, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import shared from '../sharedStyles';
 import { colors } from '../theme';
@@ -8,7 +8,7 @@ const ITEM_WIDTH = 56;
 const BUBBLE_SIZE = 40;
 const PAST_DAYS = 7;
 const FUTURE_DAYS = 365;
-const TOTAL_DAYS = PAST_DAYS + FUTURE_DAYS + 1;
+const TOTAL_DAYS = FUTURE_DAYS + 1;
 
 const CONTAINER_PADDING_TOP = 8;
 const WEEKDAY_LINE_HEIGHT = 22;
@@ -27,12 +27,26 @@ function buildDates() {
   const out = new Array(TOTAL_DAYS);
   for (let i = 0; i < TOTAL_DAYS; i++) {
     const d = new Date(anchor);
-    d.setDate(anchor.getDate() + (i - PAST_DAYS));
+    d.setDate(anchor.getDate() + i);
     out[i] = {
       iso: toIso(d),
       weekday: d.toLocaleDateString('en-US', { weekday: 'short' }),
       day: d.getDate(),
-      past: i < PAST_DAYS,
+    };
+  }
+  return out;
+}
+
+function buildPastDates() {
+  const now = new Date();
+  const anchor = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const out = new Array(PAST_DAYS);
+  for (let i = 0; i < PAST_DAYS; i++) {
+    const d = new Date(anchor);
+    d.setDate(anchor.getDate() - (PAST_DAYS - i));
+    out[i] = {
+      weekday: d.toLocaleDateString('en-US', { weekday: 'short' }),
+      day: d.getDate(),
     };
   }
   return out;
@@ -41,12 +55,12 @@ function buildDates() {
 function DayCell({ item, isCenter }) {
   return (
     <View style={styles.cell}>
-      <Text style={[shared.typography.sub2, styles.weekday, item.past && styles.pastText]}>
+      <Text style={[shared.typography.sub2, styles.weekday]}>
         {item.weekday}
       </Text>
-      <View style={[styles.bubble, isCenter && styles.bubbleHidden, item.past && styles.pastBubble]}>
+      <View style={[styles.bubble, isCenter && styles.bubbleHidden]}>
         {!isCenter && (
-          <Text style={[shared.typography.sub1, styles.dayNumber, item.past && styles.pastText]}>
+          <Text style={[shared.typography.sub1, styles.dayNumber]}>
             {item.day}
           </Text>
         )}
@@ -57,8 +71,15 @@ function DayCell({ item, isCenter }) {
 
 export default function DateCarousel({ selectedDate, onSelectDate }) {
   const listRef = useRef(null);
+  const scrollX = useRef(new Animated.Value(0)).current;
   const dates = useMemo(() => buildDates(), []);
-  const [centerIso, setCenterIso] = useState(dates[PAST_DAYS].iso);
+  const pastDates = useMemo(() => buildPastDates(), []);
+  const [centerIso, setCenterIso] = useState(dates[0].iso);
+
+  const pastTranslateX = scrollX.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -1],
+  });
 
   const centerDay = useMemo(() => {
     const found = dates.find(d => d.iso === centerIso);
@@ -67,8 +88,7 @@ export default function DateCarousel({ selectedDate, onSelectDate }) {
 
   function handleScroll(e) {
     const x = e.nativeEvent.contentOffset.x;
-    const rawIdx = Math.max(0, Math.min(dates.length - 1, Math.round(x / ITEM_WIDTH)));
-    const idx = Math.max(PAST_DAYS, rawIdx);
+    const idx = Math.max(0, Math.min(dates.length - 1, Math.round(x / ITEM_WIDTH)));
     const iso = dates[idx].iso;
     if (iso !== centerIso) {
       setCenterIso(iso);
@@ -77,32 +97,46 @@ export default function DateCarousel({ selectedDate, onSelectDate }) {
   }
 
   function handleMomentumScrollEnd(e) {
-    const rawIdx = Math.round(e.nativeEvent.contentOffset.x / ITEM_WIDTH);
-    if (rawIdx < PAST_DAYS) {
-      listRef.current?.scrollToOffset({ offset: PAST_DAYS * ITEM_WIDTH, animated: true });
-      const today = dates[PAST_DAYS];
-      if (today && today.iso !== selectedDate) onSelectDate(today.iso);
-      return;
-    }
-    const next = dates[rawIdx];
+    const idx = Math.round(e.nativeEvent.contentOffset.x / ITEM_WIDTH);
+    const next = dates[idx];
     if (next && next.iso !== selectedDate) onSelectDate(next.iso);
   }
 
   return (
     <View style={styles.container}>
-      <FlatList
+      <Animated.View style={[styles.pastDaysRow, { transform: [{ translateX: pastTranslateX }] }]} pointerEvents="none">
+        {pastDates.map((item, i) => (
+          <View
+            key={i}
+            style={[styles.cell, { position: 'absolute', left: SIDE_PAD - (PAST_DAYS - i) * ITEM_WIDTH }]}
+          >
+            <Text style={[shared.typography.sub2, styles.weekday, styles.pastText]}>
+              {item.weekday}
+            </Text>
+            <View style={[styles.bubble, styles.pastBubble]}>
+              <Text style={[shared.typography.sub1, styles.dayNumber, styles.pastText]}>
+                {item.day}
+              </Text>
+            </View>
+          </View>
+        ))}
+      </Animated.View>
+      <Animated.FlatList
         ref={listRef}
         data={dates}
         horizontal
         showsHorizontalScrollIndicator={false}
         keyExtractor={item => item.iso}
-        contentOffset={{ x: PAST_DAYS * ITEM_WIDTH, y: 0 }}
+        contentOffset={{ x: 0, y: 0 }}
         getItemLayout={(_, i) => ({ length: ITEM_WIDTH, offset: ITEM_WIDTH * i, index: i })}
         snapToInterval={ITEM_WIDTH}
         decelerationRate="fast"
         bounces={false}
         contentContainerStyle={styles.content}
-        onScroll={handleScroll}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+          { useNativeDriver: true, listener: handleScroll }
+        )}
         scrollEventThrottle={16}
         onMomentumScrollEnd={handleMomentumScrollEnd}
         renderItem={({ item }) => (
@@ -126,6 +160,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.cream,
     paddingTop: CONTAINER_PADDING_TOP,
     paddingBottom: 8,
+    overflow: 'hidden',
+  },
+  pastDaysRow: {
+    position: 'absolute',
+    top: CONTAINER_PADDING_TOP,
+    left: 0,
+    right: 0,
+    height: WEEKDAY_LINE_HEIGHT + WEEKDAY_MARGIN_BOTTOM + BUBBLE_SIZE,
   },
   content: {
     paddingHorizontal: SIDE_PAD,
