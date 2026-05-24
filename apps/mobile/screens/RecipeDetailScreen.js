@@ -9,6 +9,8 @@ import { colors } from '../theme';
 import { supabase } from '../utils/supabase';
 
 const editIcon = require('../assets/edit_icon.svg');
+const calendarIcon = require('../assets/calendar_icon_black.svg');
+const personIcon = require('../assets/person_icon.svg');
 
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
@@ -36,7 +38,7 @@ export default function RecipeDetailScreen({ route, navigation }) {
           { data: imgData,   error: imgErr },
           { data: schedules },
         ] = await Promise.all([
-          supabase.from('recipes').select('name, description, created_at').eq('id', recipe.id).single(),
+          supabase.from('recipes').select('name, description, created_at, servings').eq('id', recipe.id).single(),
           supabase.from('recipe_ingredients').select('quantity, unit, ingredients(name)').eq('recipe_id', recipe.id),
           supabase.from('recipe_images').select('file_path').eq('recipe_id', recipe.id).maybeSingle(),
           supabase.from('recipe_schedule').select('id, scheduled_for, scheduled_as').eq('recipe_id', recipe.id).order('scheduled_for', { ascending: true }),
@@ -81,6 +83,7 @@ export default function RecipeDetailScreen({ route, navigation }) {
         id: recipe.id,
         name: details.name,
         description: details.description ?? '',
+        servings: details.servings ?? 1,
         ingredients: details.ingredients.map((i) => ({
           name: i.ingredients?.name ?? '',
           quantity: i.quantity,
@@ -128,7 +131,22 @@ export default function RecipeDetailScreen({ route, navigation }) {
               ) : (
                 <>
                   <Text style={[shared.typography.h2, styles.recipeName]}>{details.name}</Text>
-                  <Text style={[shared.typography.sub2, styles.dateText]}>Created {formatDate(details.created_at)}</Text>
+                  <View style={styles.metaStrip}>
+                    <View style={styles.metaChip}>
+                      <SvgIcon source={calendarIcon} style={styles.metaChipIcon} contentFit="contain" />
+                      <Text style={[shared.typography.sub2, styles.metaChipText]}>
+                        {formatDate(details.created_at)}
+                      </Text>
+                    </View>
+                    {details.servings != null && (
+                      <View style={styles.metaChip}>
+                        <SvgIcon source={personIcon} style={styles.metaChipIcon} contentFit="contain" />
+                        <Text style={[shared.typography.sub2, styles.metaChipText]}>
+                          {details.servings} {details.servings === 1 ? 'Serving' : 'Servings'}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
 
                   <View style={styles.sectionDivider} />
 
@@ -263,9 +281,28 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: 4,
   },
-  dateText: {
-    color: colors.textMuted,
+  metaStrip: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
     marginBottom: 16,
+  },
+  metaChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.imagePlaceholderBg,
+    borderRadius: 12,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+  },
+  metaChipIcon: {
+    width: 14,
+    height: 14,
+    marginRight: 5,
+    tintColor: colors.textMuted,
+  },
+  metaChipText: {
+    color: colors.text,
   },
   sectionDivider: {
     height: 1,
