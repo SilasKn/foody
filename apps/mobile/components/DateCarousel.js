@@ -6,8 +6,9 @@ import { colors } from '../theme';
 
 const ITEM_WIDTH = 56;
 const BUBBLE_SIZE = 40;
+const PAST_DAYS = 7;
 const FUTURE_DAYS = 365;
-const TOTAL_DAYS = FUTURE_DAYS + 1;
+const TOTAL_DAYS = PAST_DAYS + FUTURE_DAYS + 1;
 
 const CONTAINER_PADDING_TOP = 8;
 const WEEKDAY_LINE_HEIGHT = 22;
@@ -26,11 +27,12 @@ function buildDates() {
   const out = new Array(TOTAL_DAYS);
   for (let i = 0; i < TOTAL_DAYS; i++) {
     const d = new Date(anchor);
-    d.setDate(anchor.getDate() + i);
+    d.setDate(anchor.getDate() + (i - PAST_DAYS));
     out[i] = {
       iso: toIso(d),
       weekday: d.toLocaleDateString('en-US', { weekday: 'short' }),
       day: d.getDate(),
+      past: i < PAST_DAYS,
     };
   }
   return out;
@@ -39,12 +41,12 @@ function buildDates() {
 function DayCell({ item, isCenter }) {
   return (
     <View style={styles.cell}>
-      <Text style={[shared.typography.sub2, styles.weekday]}>
+      <Text style={[shared.typography.sub2, styles.weekday, item.past && styles.pastText]}>
         {item.weekday}
       </Text>
-      <View style={[styles.bubble, isCenter && styles.bubbleHidden]}>
+      <View style={[styles.bubble, isCenter && styles.bubbleHidden, item.past && styles.pastBubble]}>
         {!isCenter && (
-          <Text style={[shared.typography.sub1, styles.dayNumber]}>
+          <Text style={[shared.typography.sub1, styles.dayNumber, item.past && styles.pastText]}>
             {item.day}
           </Text>
         )}
@@ -56,7 +58,7 @@ function DayCell({ item, isCenter }) {
 export default function DateCarousel({ selectedDate, onSelectDate }) {
   const listRef = useRef(null);
   const dates = useMemo(() => buildDates(), []);
-  const [centerIso, setCenterIso] = useState(dates[0].iso);
+  const [centerIso, setCenterIso] = useState(dates[PAST_DAYS].iso);
 
   const centerDay = useMemo(() => {
     const found = dates.find(d => d.iso === centerIso);
@@ -65,7 +67,8 @@ export default function DateCarousel({ selectedDate, onSelectDate }) {
 
   function handleScroll(e) {
     const x = e.nativeEvent.contentOffset.x;
-    const idx = Math.max(0, Math.min(dates.length - 1, Math.round(x / ITEM_WIDTH)));
+    const rawIdx = Math.max(0, Math.min(dates.length - 1, Math.round(x / ITEM_WIDTH)));
+    const idx = Math.max(PAST_DAYS, rawIdx);
     const iso = dates[idx].iso;
     if (iso !== centerIso) {
       setCenterIso(iso);
@@ -74,8 +77,14 @@ export default function DateCarousel({ selectedDate, onSelectDate }) {
   }
 
   function handleMomentumScrollEnd(e) {
-    const idx = Math.round(e.nativeEvent.contentOffset.x / ITEM_WIDTH);
-    const next = dates[idx];
+    const rawIdx = Math.round(e.nativeEvent.contentOffset.x / ITEM_WIDTH);
+    if (rawIdx < PAST_DAYS) {
+      listRef.current?.scrollToOffset({ offset: PAST_DAYS * ITEM_WIDTH, animated: true });
+      const today = dates[PAST_DAYS];
+      if (today && today.iso !== selectedDate) onSelectDate(today.iso);
+      return;
+    }
+    const next = dates[rawIdx];
     if (next && next.iso !== selectedDate) onSelectDate(next.iso);
   }
 
@@ -87,7 +96,7 @@ export default function DateCarousel({ selectedDate, onSelectDate }) {
         horizontal
         showsHorizontalScrollIndicator={false}
         keyExtractor={item => item.iso}
-        contentOffset={{ x: 0, y: 0 }}
+        contentOffset={{ x: PAST_DAYS * ITEM_WIDTH, y: 0 }}
         getItemLayout={(_, i) => ({ length: ITEM_WIDTH, offset: ITEM_WIDTH * i, index: i })}
         snapToInterval={ITEM_WIDTH}
         decelerationRate="fast"
@@ -156,5 +165,11 @@ const styles = StyleSheet.create({
   },
   centerAccentNumber: {
     color: colors.white,
+  },
+  pastText: {
+    opacity: 0.3,
+  },
+  pastBubble: {
+    opacity: 0.3,
   },
 });
