@@ -858,9 +858,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.pillActive,
-    borderWidth: 1,
-    borderColor: colors.border,
   },
   error: {
     color: '#B00020',

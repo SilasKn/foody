@@ -1,6 +1,6 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Image as SvgIcon } from 'expo-image';
 import AppHeader from '../components/AppHeader';
 import RecipeImage from '../components/RecipeImage';
@@ -9,6 +9,7 @@ import { useAuth } from '../providers/AuthProvider';
 import shared from '../sharedStyles';
 import { colors } from '../theme';
 import { aggregateIngredients, formatQuantity } from '../utils/aggregateIngredients';
+import { fetchSignedImageUrls } from '../utils/fetchSignedImageUrls';
 import { supabase } from '../utils/supabase';
 
 const RANGE_OPTIONS = [
@@ -36,6 +37,12 @@ function formatUpcomingDate(isoDate) {
   return `${dayShort} ${String(d).padStart(2, '0')}.${String(m).padStart(2, '0')}.`;
 }
 
+function formatLastEaten(isoDate) {
+  if (!isoDate) return null;
+  const [year, month, day] = isoDate.split('-');
+  return `${day}.${month}.${year}`;
+}
+
 export default function StartScreen({ navigation }) {
   const { user } = useAuth();
   const displayName = user?.user_metadata?.display_name ?? null;
@@ -45,6 +52,8 @@ export default function StartScreen({ navigation }) {
   const [ingredients, setIngredients] = useState(null);
   const [fridgeLoading, setFridgeLoading] = useState(true);
   const [rangePickerOpen, setRangePickerOpen] = useState(false);
+  const [recommendations, setRecommendations] = useState([]);
+  const [recsLoading, setRecsLoading] = useState(true);
   const fridgeRequestId = useRef(0);
 
   const currentRange = RANGE_OPTIONS.find((o) => o.key === rangeKey) ?? RANGE_OPTIONS[1];
@@ -117,8 +126,42 @@ export default function StartScreen({ navigation }) {
         }
       }
 
+      async function loadRecommendations() {
+        if (!user) {
+          setRecommendations([]);
+          setRecsLoading(false);
+          return;
+        }
+        setRecsLoading(true);
+
+        const { data } = await supabase
+          .from('recipes')
+          .select('id, name, last_eaten')
+          .eq('author', user.id)
+          .eq('draft', false)
+          .order('last_eaten', { ascending: true, nullsFirst: true })
+          .limit(10);
+
+        if (!active) return;
+
+        const recipes = data ?? [];
+        const signedMap = await fetchSignedImageUrls(recipes.map((r) => r.id));
+        if (!active) return;
+
+        setRecommendations(
+          recipes.map((r) => ({
+            id: r.id,
+            name: r.name,
+            lastEaten: r.last_eaten,
+            imageUrl: signedMap[r.id] ?? null,
+          }))
+        );
+        setRecsLoading(false);
+      }
+
       load();
       loadFridgeRef.current?.();
+      loadRecommendations();
       return () => { active = false; };
     }, [])
   );
@@ -224,12 +267,51 @@ export default function StartScreen({ navigation }) {
               <View key={`${it.name}|${it.unit ?? ''}`} style={styles.ingRow}>
                 <Text style={[shared.typography.body, styles.ingName]}>{`•  ${it.name}`}</Text>
                 <Text style={[shared.typography.body, styles.ingQty]}>
-                  {[formatQuantity(it.quantity), it.unit].filter(Boolean).join(' ')}
+                  {[formatQuantity(it.quantity), it.unit === 'unit' && it.quantity > 1 ? 'units' : it.unit].filter(Boolean).join(' ')}
                 </Text>
               </View>
             ))
           )}
         </View>
+
+        <Text style={[shared.typography.h3, styles.recsSubtitle]}>Try again?</Text>
+
+        {recsLoading ? (
+          <ActivityIndicator color={colors.accent} style={styles.loader} />
+        ) : recommendations.length > 0 ? (
+          <FlatList
+            data={recommendations}
+            keyExtractor={(item) => String(item.id)}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.recsFlatList}
+            contentContainerStyle={styles.recsFlatListContent}
+            renderItem={({ item }) => (
+              <Pressable
+                onPress={() => navigation.navigate('RecipeDetail', {
+                  recipe: { id: item.id, name: item.name },
+                })}
+                style={({ pressed }) => [styles.recCard, pressed && styles.pressed]}
+              >
+                <RecipeImage
+                  imageUrl={item.imageUrl}
+                  recipeId={item.id}
+                  style={styles.recCardImage}
+                />
+                <View style={styles.recCardTextArea}>
+                  <Text style={[shared.typography.sub1, styles.recCardName]} numberOfLines={1}>
+                    {item.name}
+                  </Text>
+                  {item.lastEaten ? (
+                    <Text style={[shared.typography.bodySmall, styles.recCardDate]} numberOfLines={1}>
+                      last scheduled on: {formatLastEaten(item.lastEaten)}
+                    </Text>
+                  ) : null}
+                </View>
+              </Pressable>
+            )}
+          />
+        ) : null}
       </ScrollView>
 
     </ScreenShell>
@@ -387,5 +469,43 @@ const styles = StyleSheet.create({
   },
   menuItemActive: {
     backgroundColor: colors.pillActive,
+  },
+  recsSubtitle: {
+    color: colors.textMuted,
+    marginTop: 20,
+    marginBottom: 14,
+  },
+  recsFlatList: {
+    marginHorizontal: -18,
+  },
+  recsFlatListContent: {
+    paddingHorizontal: 18,
+    gap: 12,
+  },
+  recCard: {
+    width: 160,
+    borderRadius: 16,
+    backgroundColor: colors.white,
+    overflow: 'hidden',
+    shadowColor: colors.border,
+    shadowOpacity: 0.16,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
+  },
+  recCardImage: {
+    width: 160,
+    height: 120,
+  },
+  recCardTextArea: {
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    gap: 2,
+  },
+  recCardName: {
+    color: colors.text,
+  },
+  recCardDate: {
+    color: colors.textMuted,
   },
 });

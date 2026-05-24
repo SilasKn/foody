@@ -128,15 +128,38 @@ export default function CalendarScreen({ navigation }) {
 
       async function load() {
         setLoading(true);
+        const today = todayIso();
 
-        const [, { data: entries }] = await Promise.all([
-          supabase.from('recipe_schedule').delete().lt('scheduled_for', todayIso()),
-          supabase
-            .from('recipe_schedule')
-            .select('id, scheduled_for, scheduled_as, recipe_id, servings, recipes(name)')
-            .gte('scheduled_for', todayIso())
-            .order('scheduled_for', { ascending: true }),
-        ]);
+        const { data: pastEntries } = await supabase
+          .from('recipe_schedule')
+          .select('recipe_id, scheduled_for')
+          .lt('scheduled_for', today);
+
+        if (pastEntries && pastEntries.length > 0) {
+          const latestByRecipe = {};
+          for (const entry of pastEntries) {
+            const existing = latestByRecipe[entry.recipe_id];
+            if (!existing || entry.scheduled_for > existing) {
+              latestByRecipe[entry.recipe_id] = entry.scheduled_for;
+            }
+          }
+
+          try {
+            await Promise.all(
+              Object.entries(latestByRecipe).map(([recipeId, date]) =>
+                supabase.from('recipes').update({ last_eaten: date }).eq('id', recipeId)
+              )
+            );
+          } catch {}
+        }
+
+        await supabase.from('recipe_schedule').delete().lt('scheduled_for', today);
+
+        const { data: entries } = await supabase
+          .from('recipe_schedule')
+          .select('id, scheduled_for, scheduled_as, recipe_id, servings, recipes(name)')
+          .gte('scheduled_for', today)
+          .order('scheduled_for', { ascending: true });
 
         if (!active) return;
 
