@@ -14,12 +14,13 @@ export default {
       backgroundColor: "#ffffff"
     },
     ios: {
-      supportsTablet: true,
+      supportsTablet: false,
       bundleIdentifier: "com.silasknapp.foody",
       buildNumber: "1",
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false
-      }
+      },
+      icon: "./assets/icon.png",
     },
     android: {
       adaptiveIcon: {
@@ -35,8 +36,6 @@ export default {
       "@react-native-community/datetimepicker"
     ],
     extra: {
-      supabaseUrl: process.env.SUPABASE_URL,
-      supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
       eas: {
         projectId: "16720eb7-8f49-43da-9f54-64ed23873a57"
       }
