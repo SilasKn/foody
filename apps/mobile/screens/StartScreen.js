@@ -322,10 +322,12 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
     alignSelf: 'stretch',
+    marginHorizontal: -18,
   },
   scroll: {
     paddingTop: 8,
     paddingBottom: 32,
+    paddingHorizontal: 18,
   },
   greeting: {
     marginBottom: 2,

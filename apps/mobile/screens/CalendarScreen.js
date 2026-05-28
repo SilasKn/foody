@@ -228,7 +228,7 @@ export default function CalendarScreen({ navigation }) {
       <View style={shared.outerContainer}>
         <ScrollView
           ref={scrollRef}
-          style={shared.scroll}
+          style={[shared.scroll, styles.scrollOuter]}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
@@ -347,10 +347,14 @@ export default function CalendarScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
+  scrollOuter: {
+    marginHorizontal: -18,
+  },
   scrollContent: {
     flexGrow: 1,
     paddingTop: 8,
     paddingBottom: 100,
+    paddingHorizontal: 18,
   },
   carouselWrapper: {
     marginHorizontal: -18,
