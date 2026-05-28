@@ -7,10 +7,10 @@ import { colors } from '../theme';
 
 export default function AppHeader({ navigation }) {
   const { session, signOut } = useAuth();
-  const [logoutVisible, setLogoutVisible] = useState(false);
+  const [dropdownVisible, setDropdownVisible] = useState(false);
 
   const onUserPress = () => {
-    if (session) return setLogoutVisible(true);
+    if (session) return setDropdownVisible((v) => !v);
     navigation.navigate('Login');
   };
 
@@ -32,33 +32,33 @@ export default function AppHeader({ navigation }) {
         </Pressable>
       </View>
 
-      <Modal
-        transparent
-        visible={logoutVisible}
-        animationType="fade"
-        onRequestClose={() => setLogoutVisible(false)}
-      >
-        <Pressable style={styles.backdrop} onPress={() => setLogoutVisible(false)}>
-          <Pressable style={styles.dialogCard} onPress={() => {}}>
-            <Text style={[shared.typography.h2, styles.dialogTitle]}>Log out?</Text>
-            <Text style={[shared.typography.body, styles.dialogMessage]}>Do you really want to log out?</Text>
-            <View style={styles.dialogButtons}>
+      {dropdownVisible && (
+        <Modal
+          transparent
+          visible
+          animationType="none"
+          onRequestClose={() => setDropdownVisible(false)}
+        >
+          <Pressable style={styles.backdrop} onPress={() => setDropdownVisible(false)}>
+            <View style={styles.dropdown}>
               <Pressable
-                style={({ pressed }) => [styles.dialogBtn, styles.dialogBtnCancel, pressed && styles.dialogBtnPressed]}
-                onPress={() => setLogoutVisible(false)}
+                style={({ pressed }) => [styles.dropdownRow, pressed && styles.pressed]}
+                onPress={() => { setDropdownVisible(false); navigation.navigate('Settings'); }}
               >
-                <Text style={[shared.typography.sub2, styles.dialogBtnLabel]}>Cancel</Text>
+                <SvgIcon source={require('../assets/settings_icon.svg')} style={styles.dropdownIcon} contentFit="contain" />
+                <Text style={[shared.typography.body, styles.dropdownLabel]}>Settings</Text>
               </Pressable>
               <Pressable
-                style={({ pressed }) => [styles.dialogBtn, styles.dialogBtnConfirm, pressed && styles.dialogBtnPressed]}
-                onPress={() => { setLogoutVisible(false); signOut(); }}
+                style={({ pressed }) => [styles.dropdownRow, pressed && styles.pressed]}
+                onPress={() => { setDropdownVisible(false); signOut(); }}
               >
-                <Text style={[shared.typography.sub2, styles.dialogBtnLabel, styles.dialogBtnLabelConfirm]}>Log out</Text>
+                <SvgIcon source={require('../assets/logout_icon.svg')} style={styles.dropdownIcon} contentFit="contain" />
+                <Text style={[shared.typography.body, styles.dropdownLabel]}>Logout</Text>
               </Pressable>
             </View>
           </Pressable>
-        </Pressable>
-      </Modal>
+        </Modal>
+      )}
     </>
   );
 }
@@ -74,67 +74,45 @@ const styles = StyleSheet.create({
   logo: {
     color: colors.text,
     fontSize: 24,
-    fontWeight: 700,
+    fontFamily: 'Poppins-Bold',
   },
   logoDot: {
     color: colors.accent,
   },
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
-  dialogCard: {
-    width: '85%',
-    backgroundColor: '#fff',
-    borderRadius: 28,
-    padding: 28,
+  dropdown: {
+    position: 'absolute',
+    top: 80,
+    right: 18,
+    backgroundColor: colors.white,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: colors.border,
+    paddingVertical: 4,
+    minWidth: 150,
     shadowColor: '#000',
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
     elevation: 5,
   },
-  dialogTitle: {
-    color: colors.text,
-    marginBottom: 8,
-  },
-  dialogMessage: {
-    color: colors.text,
-    opacity: 0.7,
-  },
-  dialogButtons: {
+  dropdownRow: {
     flexDirection: 'row',
-    gap: 12,
-    marginTop: 24,
-  },
-  dialogBtn: {
-    flex: 1,
-    borderRadius: 9999,
-    paddingVertical: 14,
     alignItems: 'center',
-    justifyContent: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    gap: 10,
   },
-  dialogBtnCancel: {
-    backgroundColor: colors.pillInactive,
-    borderWidth: 1,
-    borderColor: colors.border,
+  dropdownIcon: {
+    width: 20,
+    height: 20,
   },
-  dialogBtnConfirm: {
-    backgroundColor: colors.accent,
-    borderWidth: 1,
-    borderColor: colors.border,
+  dropdownLabel: {
+    color: colors.text,
   },
-  dialogBtnPressed: {
+  pressed: {
     opacity: 0.85,
-  },
-  dialogBtnLabel: {
-    color: colors.text,
-  },
-  dialogBtnLabelConfirm: {
-    color: colors.text,
   },
 });

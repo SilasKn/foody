@@ -9,6 +9,7 @@ import {
   Poppins_400Regular,
   Poppins_500Medium,
   Poppins_600SemiBold,
+  Poppins_700Bold,
 } from '@expo-google-fonts/poppins';
 import { View, Text } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -20,6 +21,7 @@ import CalendarScreen from './screens/CalendarScreen';
 import LoginScreen from './screens/LoginScreen';
 import RecipeDetailScreen from './screens/RecipeDetailScreen';
 import RecipesScreen from './screens/RecipesScreen';
+import SettingsScreen from './screens/SettingsScreen';
 import StartScreen from './screens/StartScreen';
 import { colors } from './theme';
 import { AuthProvider, useAuth } from './providers/AuthProvider';
@@ -57,6 +59,7 @@ function AppRoutes() {
           <Stack.Screen name="Start" component={StartScreen} />
           <Stack.Screen name="Recipes" component={RecipesScreen} />
           <Stack.Screen name="Calendar" component={CalendarScreen} />
+          <Stack.Screen name="Settings" component={SettingsScreen} />
           <Stack.Screen name="RecipeDetail" component={RecipeDetailScreen} />
           <Stack.Screen
             name="ScheduleRecipe"
@@ -104,6 +107,7 @@ export default function App() {
     'Poppins-Regular':  Poppins_400Regular,
     'Poppins-Medium':   Poppins_500Medium,
     'Poppins-SemiBold': Poppins_600SemiBold,
+    'Poppins-Bold':     Poppins_700Bold,
   });
 
   useEffect(() => {

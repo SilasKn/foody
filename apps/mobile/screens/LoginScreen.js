@@ -191,6 +191,7 @@ const styles = StyleSheet.create({
   },
   logo: {
     color: colors.text,
+    fontFamily: 'Poppins-Bold',
   },
   logoDot: {
     color: colors.accent,

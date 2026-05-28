@@ -70,7 +70,7 @@ export default function RecipesScreen({ navigation }) {
           ListHeaderComponent={
             <View>
               <View style={styles.pageHeaderRow}>
-                <Text style={shared.pageTitle}>{pageTitle}</Text>
+                <Text style={[shared.pageTitle, { marginBottom: 0 }]}>{pageTitle}</Text>
                 <Pressable
                   onPress={() => {
                     setSearchVisible(v => !v);

@@ -60,6 +60,12 @@ export function AuthProvider({ children }) {
         const { error } = await supabase.auth.signOut();
         return { error };
       },
+      deleteAccount: async () => {
+        const { error } = await supabase.functions.invoke('delete-account');
+        if (error) return { error };
+        await supabase.auth.signOut();
+        return { error: null };
+      },
     };
   }, [session, user, isLoading]);
 
