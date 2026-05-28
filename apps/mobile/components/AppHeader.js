@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Image as SvgIcon } from 'expo-image';
 import { useAuth } from '../providers/AuthProvider';
@@ -8,10 +8,22 @@ import { colors } from '../theme';
 export default function AppHeader({ navigation }) {
   const { session, signOut } = useAuth();
   const [dropdownVisible, setDropdownVisible] = useState(false);
+  const [iconRect, setIconRect] = useState(null);
+  const iconRef = useRef(null);
 
   const onUserPress = () => {
-    if (session) return setDropdownVisible((v) => !v);
-    navigation.navigate('Login');
+    if (!session) {
+      navigation.navigate('Login');
+      return;
+    }
+    if (dropdownVisible) {
+      setDropdownVisible(false);
+      return;
+    }
+    iconRef.current?.measureInWindow((x, y, width, height) => {
+      setIconRect({ x, y, width, height });
+      setDropdownVisible(true);
+    });
   };
 
   return (
@@ -27,7 +39,7 @@ export default function AppHeader({ navigation }) {
             foody<Text style={styles.logoDot}>.</Text>
           </Text>
         </Pressable>
-        <Pressable hitSlop={12} accessibilityRole="button" accessibilityLabel="User menu" onPress={onUserPress}>
+        <Pressable ref={iconRef} hitSlop={12} accessibilityRole="button" accessibilityLabel="User menu" onPress={onUserPress}>
           <SvgIcon source={require('../assets/person_icon.svg')} style={{ width: 26, height: 26 }} contentFit="contain" />
         </Pressable>
       </View>
@@ -40,7 +52,12 @@ export default function AppHeader({ navigation }) {
           onRequestClose={() => setDropdownVisible(false)}
         >
           <Pressable style={styles.backdrop} onPress={() => setDropdownVisible(false)}>
-            <View style={styles.dropdown}>
+            <View
+              style={[
+                styles.dropdown,
+                iconRect && { top: iconRect.y + iconRect.height + 6 },
+              ]}
+            >
               <Pressable
                 style={({ pressed }) => [styles.dropdownRow, pressed && styles.pressed]}
                 onPress={() => { setDropdownVisible(false); navigation.navigate('Settings'); }}
@@ -88,8 +105,6 @@ const styles = StyleSheet.create({
     right: 18,
     backgroundColor: colors.white,
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
     paddingVertical: 4,
     minWidth: 150,
     shadowColor: '#000',
