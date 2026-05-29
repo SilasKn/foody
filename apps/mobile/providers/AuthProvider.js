@@ -66,6 +66,19 @@ export function AuthProvider({ children }) {
         await supabase.auth.signOut();
         return { error: null };
       },
+      updatePassword: async ({ currentPassword, newPassword }) => {
+        const { error } = await supabase.auth.updateUser({
+          password: newPassword,
+          current_password: currentPassword,
+        });
+        if (error) return { error };
+        return { error: null };
+      },
+      sendPasswordReset: async ({ email }) => {
+        const { error } = await supabase.auth.resetPasswordForEmail(email);
+        if (error) return { error };
+        return { error: null };
+      },
     };
   }, [session, user, isLoading]);
 

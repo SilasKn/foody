@@ -9,14 +9,12 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { Image as SvgIcon } from 'expo-image';
-
 import { colors } from '../theme';
 import shared from '../sharedStyles';
 import { useAuth } from '../providers/AuthProvider';
 
 export default function LoginScreen() {
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, sendPasswordReset } = useAuth();
 
   const [mode, setMode] = useState('signin'); // 'signin' | 'signup'
   const [username, setUsername] = useState('');
@@ -24,6 +22,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSendingReset, setIsSendingReset] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [infoMessage, setInfoMessage] = useState('');
 
@@ -62,6 +61,25 @@ export default function LoginScreen() {
     }
   };
 
+  const onForgotPassword = async () => {
+    if (isSubmitting || isSendingReset) return;
+    setErrorMessage('');
+    setInfoMessage('');
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
+      setErrorMessage('Enter your email above first');
+      return;
+    }
+    setIsSendingReset(true);
+    const { error } = await sendPasswordReset({ email: trimmedEmail });
+    setIsSendingReset(false);
+    if (error) {
+      setErrorMessage(error.message ?? 'Failed to send reset email');
+      return;
+    }
+    setInfoMessage('Reset email sent. Check your inbox.');
+  };
+
   return (
     <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView style={styles.safe} behavior="padding">
@@ -71,9 +89,6 @@ export default function LoginScreen() {
               foody
               <Text style={styles.logoDot}>.</Text>
             </Text>
-            <View style={styles.headerRight} aria-hidden>
-              <SvgIcon source={require('../assets/person_circle_icon.svg')} style={{ width: 26, height: 26 }} contentFit="contain" />
-            </View>
           </View>
 
           <View style={styles.modeRow}>
@@ -154,6 +169,22 @@ export default function LoginScreen() {
               </Text>
             </Pressable>
 
+            {mode === 'signin' && (
+              <Pressable
+                accessibilityRole="button"
+                onPress={onForgotPassword}
+                disabled={isSubmitting || isSendingReset}
+                style={({ pressed }) => [
+                  styles.forgotWrap,
+                  pressed && !isSubmitting && !isSendingReset && styles.pressed,
+                ]}
+              >
+                <Text style={[shared.typography.bodySmall, styles.forgotText]}>
+                  {isSendingReset ? 'Sending…' : 'Forgot password'}
+                </Text>
+              </Pressable>
+            )}
+
             {mode === 'signup' && (
               <Text style={[shared.typography.bodySmall, styles.hint]}>
                 If email confirmations are enabled, you may need to confirm your email before logging in.
@@ -184,10 +215,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.headerBg,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
-  },
-  headerRight: {
-    width: 40,
-    alignItems: 'flex-end',
   },
   logo: {
     color: colors.text,
@@ -265,6 +292,16 @@ const styles = StyleSheet.create({
   hint: {
     marginTop: 12,
     color: '#444',
+  },
+  forgotWrap: {
+    alignSelf: 'center',
+    marginTop: 14,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+  },
+  forgotText: {
+    color: colors.text,
+    textDecorationLine: 'underline',
   },
 });
 

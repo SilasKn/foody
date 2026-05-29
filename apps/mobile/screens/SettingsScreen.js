@@ -44,7 +44,10 @@ export default function SettingsScreen({ navigation }) {
         </View>
 
         <View style={styles.menuList}>
-          <Pressable style={({ pressed }) => [styles.menuItem, pressed && shared.pressed]}>
+          <Pressable
+            style={({ pressed }) => [styles.menuItem, pressed && shared.pressed]}
+            onPress={() => navigation.navigate('ChangePassword')}
+          >
             <Text style={[shared.typography.body, styles.menuLabel]}>change Password</Text>
           </Pressable>
           <View style={styles.separator} />
