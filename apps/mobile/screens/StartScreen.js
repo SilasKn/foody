@@ -274,44 +274,48 @@ export default function StartScreen({ navigation }) {
           )}
         </View>
 
-        <Text style={[shared.typography.h3, styles.recsSubtitle]}>Try again?</Text>
+        {(recsLoading || recommendations.length > 0) && (
+          <>
+            <Text style={[shared.typography.h3, styles.recsSubtitle]}>Try again?</Text>
 
-        {recsLoading ? (
-          <ActivityIndicator color={colors.accent} style={styles.loader} />
-        ) : recommendations.length > 0 ? (
-          <FlatList
-            data={recommendations}
-            keyExtractor={(item) => String(item.id)}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.recsFlatList}
-            contentContainerStyle={styles.recsFlatListContent}
-            renderItem={({ item }) => (
-              <Pressable
-                onPress={() => navigation.navigate('RecipeDetail', {
-                  recipe: { id: item.id, name: item.name },
-                })}
-                style={({ pressed }) => [styles.recCard, pressed && styles.pressed]}
-              >
-                <RecipeImage
-                  imageUrl={item.imageUrl}
-                  recipeId={item.id}
-                  style={styles.recCardImage}
-                />
-                <View style={styles.recCardTextArea}>
-                  <Text style={[shared.typography.sub1, styles.recCardName]} numberOfLines={1}>
-                    {item.name}
-                  </Text>
-                  {item.lastEaten ? (
-                    <Text style={[shared.typography.bodySmall, styles.recCardDate]} numberOfLines={1}>
-                      last scheduled on: {formatLastEaten(item.lastEaten)}
-                    </Text>
-                  ) : null}
-                </View>
-              </Pressable>
+            {recsLoading ? (
+              <ActivityIndicator color={colors.accent} style={styles.loader} />
+            ) : (
+              <FlatList
+                data={recommendations}
+                keyExtractor={(item) => String(item.id)}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.recsFlatList}
+                contentContainerStyle={styles.recsFlatListContent}
+                renderItem={({ item }) => (
+                  <Pressable
+                    onPress={() => navigation.navigate('RecipeDetail', {
+                      recipe: { id: item.id, name: item.name },
+                    })}
+                    style={({ pressed }) => [styles.recCard, pressed && styles.pressed]}
+                  >
+                    <RecipeImage
+                      imageUrl={item.imageUrl}
+                      recipeId={item.id}
+                      style={styles.recCardImage}
+                    />
+                    <View style={styles.recCardTextArea}>
+                      <Text style={[shared.typography.sub1, styles.recCardName]} numberOfLines={1}>
+                        {item.name}
+                      </Text>
+                      {item.lastEaten ? (
+                        <Text style={[shared.typography.bodySmall, styles.recCardDate]} numberOfLines={1}>
+                          last scheduled on: {formatLastEaten(item.lastEaten)}
+                        </Text>
+                      ) : null}
+                    </View>
+                  </Pressable>
+                )}
+              />
             )}
-          />
-        ) : null}
+          </>
+        )}
       </ScrollView>
 
     </ScreenShell>
