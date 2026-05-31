@@ -36,7 +36,7 @@ export default function SettingsScreen({ navigation }) {
           >
             <SvgIcon
               source={require('../assets/arrow_back_icon.svg')}
-              style={styles.backIcon}
+              style={[styles.backIcon, shared.iconOnAccent]}
               contentFit="contain"
             />
           </Pressable>
@@ -138,7 +138,6 @@ const styles = StyleSheet.create({
   backIcon: {
     width: 22,
     height: 22,
-    tintColor: colors.white,
   },
   title: {
     color: colors.text,

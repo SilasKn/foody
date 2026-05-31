@@ -283,8 +283,8 @@ export default function CalendarScreen({ navigation }) {
                 <View style={styles.emptyContainer}>
                   <Text style={[shared.typography.body, styles.emptyText]}>Nothing scheduled yet.</Text>
                   <Image
-                    source={require('../assets/created_images/no_recipes.png')}
-                    style={styles.emptyImage}
+                    source={require('../assets/created_images/empty_calendar.png')}
+                    style={styles.emptyCalendarImage}
                     resizeMode="contain"
                   />
                 </View>
@@ -337,7 +337,7 @@ export default function CalendarScreen({ navigation }) {
             source={viewMode === 'list'
               ? require('../assets/calendar_icon_black.svg')
               : require('../assets/list_icon.svg')}
-            style={styles.fabIcon}
+            style={[styles.fabIcon, shared.iconOnAccent]}
             contentFit="contain"
           />
         </Pressable>
@@ -377,6 +377,12 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     marginTop: 12,
+  },
+  emptyCalendarImage: {
+    width: 140,
+    height: 140,
+    marginTop: 16,
+    opacity: 0.9,
   },
   dayHeader: {
     color: colors.textMuted,

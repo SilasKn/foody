@@ -518,7 +518,7 @@ export default function AddRecipeScreen({ navigation, route }) {
             hitSlop={10}
             style={({ pressed }) => [shared.circleButton, styles.backButton, pressed && shared.pressed]}
           >
-            <SvgIcon source={require('../assets/arrow_back_icon.svg')} style={{ width: 24, height: 24 }} contentFit="contain" />
+            <SvgIcon source={require('../assets/arrow_back_icon.svg')} style={[{ width: 24, height: 24 }, shared.iconOnAccent]} contentFit="contain" />
           </Pressable>
           {editRecipe && (
             <Pressable

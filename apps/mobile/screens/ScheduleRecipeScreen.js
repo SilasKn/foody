@@ -139,7 +139,7 @@ export default function ScheduleRecipeScreen({ route, navigation }) {
             hitSlop={10}
             style={({ pressed }) => [styles.backButton, pressed && { opacity: 0.85 }]}
           >
-            <SvgIcon source={require('../assets/arrow_back_icon.svg')} style={{ width: 24, height: 24 }} contentFit="contain" />
+            <SvgIcon source={require('../assets/arrow_back_icon.svg')} style={[{ width: 24, height: 24 }, shared.iconOnAccent]} contentFit="contain" />
           </Pressable>
           <View {...panResponder.panHandlers} style={styles.dragHandleArea}>
             <View style={styles.dragHandle} />

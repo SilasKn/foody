@@ -8,6 +8,7 @@ import shared from '../sharedStyles';
 import { colors } from '../theme';
 
 const searchIcon = require('../assets/search_icon.svg');
+const emptyBookImage = require('../assets/created_images/empty_book.png');
 
 export default function RecipesScreen({ navigation }) {
   const {
@@ -101,7 +102,14 @@ export default function RecipesScreen({ navigation }) {
             ) : errorMessage ? (
               <Text style={[shared.typography.body, styles.errorText]}>{errorMessage}</Text>
             ) : (
-              <Text style={[shared.typography.body, styles.infoText]}>{emptyText}</Text>
+              <View style={styles.emptyState}>
+                <Text style={[shared.typography.body, styles.infoText]}>{emptyText}</Text>
+                <SvgIcon
+                  source={emptyBookImage}
+                  style={styles.emptyImage}
+                  contentFit="contain"
+                />
+              </View>
             )
           }
         />
@@ -113,7 +121,7 @@ export default function RecipesScreen({ navigation }) {
         onPress={() => navigation.navigate('AddRecipe')}
         style={({ pressed }) => [shared.fabArea, shared.fabMainButton, pressed && shared.pressed]}
       >
-        <SvgIcon source={require('../assets/plus_icon.svg')} style={{ width: 26, height: 26 }} contentFit="contain" />
+        <SvgIcon source={require('../assets/plus_icon.svg')} style={[{ width: 26, height: 26 }, shared.iconOnAccent]} contentFit="contain" />
       </Pressable>
     </ScreenShell>
   );
@@ -124,6 +132,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   listContent: {
+    flexGrow: 1,
     paddingTop: 8,
     paddingBottom: 96,
     gap: 16,
@@ -170,6 +179,17 @@ const styles = StyleSheet.create({
     color: colors.text,
     opacity: 0.8,
     marginTop: 10,
+  },
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyImage: {
+    width: 140,
+    height: 140,
+    marginTop: 16,
+    opacity: 0.9,
   },
   errorText: {
     color: '#B00020',

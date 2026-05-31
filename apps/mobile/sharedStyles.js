@@ -89,6 +89,11 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
 
+  // Tint for any icon rendered on an accent-colored ground
+  iconOnAccent: {
+    tintColor: colors.white,
+  },
+
 });
 
 export default { ...styles, typography };
