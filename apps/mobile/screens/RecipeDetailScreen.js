@@ -110,7 +110,6 @@ export default function RecipeDetailScreen({ route, navigation }) {
               <View style={styles.imageWrapper}>
                 <RecipeImage
                   imageUrl={details?.imageUrl}
-                  recipeId={recipe.id}
                   style={styles.image}
                 />
               </View>

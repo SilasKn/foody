@@ -325,7 +325,7 @@ export default function AddRecipeScreen({ navigation, route }) {
             await supabase.from('recipe_ingredients').delete().eq('recipe_id', editRecipe.id);
             await supabase.from('recipes').delete().eq('id', editRecipe.id);
             refreshRecipesForMode(filterModes.MINE);
-            navigation.navigate('Recipes');
+            navigation.reset({ index: 0, routes: [{ name: 'Recipes' }] });
           },
         },
       ]
@@ -594,7 +594,6 @@ export default function AddRecipeScreen({ navigation, route }) {
                   <>
                     <RecipeImage
                       imageUrl={null}
-                      recipeId={editRecipe.id}
                       style={styles.imagePreview}
                     />
                     <View style={styles.imageOverlay} pointerEvents="none">

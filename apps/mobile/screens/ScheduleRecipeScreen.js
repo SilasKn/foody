@@ -128,7 +128,6 @@ export default function ScheduleRecipeScreen({ route, navigation }) {
           <View style={styles.imageWrapper}>
             <RecipeImage
               imageUrl={recipe.imageUrl}
-              recipeId={recipe.id}
               style={styles.image}
             />
           </View>

@@ -1,18 +1,13 @@
-import { Image, View } from 'react-native';
-import { colors } from '../theme';
-import { pickDummyImage } from '../utils/dummyImage';
+import { Image } from 'react-native';
 
-export default function RecipeImage({ imageUrl, recipeId, style }) {
-  if (imageUrl) {
-    return <Image source={{ uri: imageUrl }} style={style} resizeMode="cover" />;
-  }
+const NO_PICTURE = require('../assets/no-picture.png');
+
+export default function RecipeImage({ imageUrl, style }) {
   return (
-    <View style={[style, { backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }]}>
-      <Image
-        source={pickDummyImage(recipeId)}
-        style={{ width: '100%', height: '100%' }}
-        resizeMode="contain"
-      />
-    </View>
+    <Image
+      source={imageUrl ? { uri: imageUrl } : NO_PICTURE}
+      style={style}
+      resizeMode="cover"
+    />
   );
 }

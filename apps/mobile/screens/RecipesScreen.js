@@ -41,7 +41,6 @@ export default function RecipesScreen({ navigation }) {
       <View style={styles.recipeCard}>
         <RecipeImage
           imageUrl={item.imageUrl}
-          recipeId={item.id}
           style={styles.recipeCardImage}
         />
         <View style={styles.recipeCardContent}>

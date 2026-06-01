@@ -75,7 +75,6 @@ export default function CalendarScreen({ navigation }) {
         <View style={styles.recipeImageWrapper}>
           <RecipeImage
             imageUrl={entry.imageUrl}
-            recipeId={entry.recipe_id}
             style={styles.recipeImage}
           />
         </View>

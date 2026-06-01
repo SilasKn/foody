@@ -203,7 +203,6 @@ export default function StartScreen({ navigation }) {
           >
             <RecipeImage
               imageUrl={upcoming.imageUrl}
-              recipeId={upcoming.recipe_id}
               style={styles.cardImage}
             />
             <View style={styles.cardContent}>
@@ -297,7 +296,6 @@ export default function StartScreen({ navigation }) {
                   >
                     <RecipeImage
                       imageUrl={item.imageUrl}
-                      recipeId={item.id}
                       style={styles.recCardImage}
                     />
                     <View style={styles.recCardTextArea}>
