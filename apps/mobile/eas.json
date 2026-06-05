@@ -18,14 +18,16 @@
       },
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "https://ciuojjrpsvjhpxdozhwy.supabase.co",
-        "EXPO_PUBLIC_SUPABASE_KEY": "sb_publishable_CeKDouinnVEvtAO7xPIVcA_Mky3SvPT"
+        "EXPO_PUBLIC_SUPABASE_KEY": "sb_publishable_CeKDouinnVEvtAO7xPIVcA_Mky3SvPT",
+        "EXPO_PUBLIC_SITE_URL": "https://foodytheapp.com"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "https://ciuojjrpsvjhpxdozhwy.supabase.co",
-        "EXPO_PUBLIC_SUPABASE_KEY": "sb_publishable_CeKDouinnVEvtAO7xPIVcA_Mky3SvPT"
+        "EXPO_PUBLIC_SUPABASE_KEY": "sb_publishable_CeKDouinnVEvtAO7xPIVcA_Mky3SvPT",
+        "EXPO_PUBLIC_SITE_URL": "https://foodytheapp.com"
       }
     }
   },

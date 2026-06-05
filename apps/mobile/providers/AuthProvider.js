@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../utils/supabase';
 
+const SITE_URL = process.env.EXPO_PUBLIC_SITE_URL ?? 'https://foodytheapp.com';
+
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
@@ -50,10 +52,11 @@ export function AuthProvider({ children }) {
       },
       signUp: async ({ email, password, displayName }) => {
         const normalizedDisplayName = displayName?.trim();
-        const payload = normalizedDisplayName
-          ? { email, password, options: { data: { display_name: normalizedDisplayName } } }
-          : { email, password };
-        const { data, error } = await supabase.auth.signUp(payload);
+        const options = {
+          emailRedirectTo: `${SITE_URL}/verify-email`,
+          ...(normalizedDisplayName ? { data: { display_name: normalizedDisplayName } } : {}),
+        };
+        const { data, error } = await supabase.auth.signUp({ email, password, options });
         return { data, error };
       },
       signOut: async () => {
