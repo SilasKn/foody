@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>foody — Password reset link</title>
-    <meta name="description" content="You opened a foody password reset link. Continue in the foody app — nothing needs to be entered on this page." />
+    <title>foody — Reset your password</title>
+    <meta name="description" content="Choose a new password for your foody account. This page only works when opened from the reset link in your email." />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -27,10 +27,65 @@
     <main class="main">
       <section class="info-section">
         <div class="info-card">
-          <h2>Continue in the foody app</h2>
-          <p class="body info-card__body">
-            You opened a password reset link from foody. There's nothing to fill in on this page — just go back to the foody app to choose a new password. If you didn't request this, you can ignore it.
-          </p>
+          <!-- Loading state (default until we know whether there is a recovery session) -->
+          <div id="state-loading">
+            <h2>Reset your password</h2>
+            <p class="body info-card__body">One moment…</p>
+          </div>
+
+          <!-- Form state: shown only with a valid recovery session -->
+          <form id="state-form" class="reset-form" hidden>
+            <h2>Choose a new password</h2>
+            <p class="body info-card__body">
+              Enter a new password for your foody account.
+            </p>
+
+            <label class="field">
+              <span class="sub2">New password</span>
+              <input
+                id="password"
+                class="input"
+                type="password"
+                autocomplete="new-password"
+                placeholder="At least 6 characters"
+                required
+              />
+            </label>
+
+            <label class="field">
+              <span class="sub2">Confirm new password</span>
+              <input
+                id="password-confirm"
+                class="input"
+                type="password"
+                autocomplete="new-password"
+                placeholder="Re-enter your new password"
+                required
+              />
+            </label>
+
+            <p id="form-error" class="form-message form-message--error" hidden></p>
+
+            <button id="submit" class="button" type="submit">Update password</button>
+          </form>
+
+          <!-- Notice state: direct visit / missing / expired / invalid link -->
+          <div id="state-notice" hidden>
+            <h2>Open this from your email</h2>
+            <p id="notice-body" class="body info-card__body">
+              This page only works when you open it from the password reset link in your
+              email. If your link has expired, request a new one from the foody app.
+            </p>
+          </div>
+
+          <!-- Success state -->
+          <div id="state-success" hidden>
+            <h2>Password updated</h2>
+            <p class="body info-card__body">
+              Your password has been changed. You can close this page and sign in to the
+              foody app with your new password.
+            </p>
+          </div>
         </div>
       </section>
     </main>
@@ -38,5 +93,152 @@
     <footer class="site-footer">
       <p class="body-small">© foody</p>
     </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+      (function () {
+        var SUPABASE_URL = "https://ciuojjrpsvjhpxdozhwy.supabase.co";
+        var PUBLISHABLE_KEY = "sb_publishable_CeKDouinnVEvtAO7xPIVcA_Mky3SvPT";
+        var MIN_PASSWORD_LENGTH = 6;
+
+        var els = {
+          loading: document.getElementById("state-loading"),
+          form: document.getElementById("state-form"),
+          notice: document.getElementById("state-notice"),
+          noticeBody: document.getElementById("notice-body"),
+          success: document.getElementById("state-success"),
+          password: document.getElementById("password"),
+          passwordConfirm: document.getElementById("password-confirm"),
+          error: document.getElementById("form-error"),
+          submit: document.getElementById("submit"),
+        };
+
+        function show(state) {
+          els.loading.hidden = state !== "loading";
+          els.form.hidden = state !== "form";
+          els.notice.hidden = state !== "notice";
+          els.success.hidden = state !== "success";
+        }
+
+        function showNotice(message) {
+          if (message) els.noticeBody.textContent = message;
+          show("notice");
+        }
+
+        // An expired or already-used link comes back as an error in the URL hash.
+        function hashError() {
+          var hash = window.location.hash || "";
+          if (!hash) return null;
+          var params = new URLSearchParams(hash.replace(/^#/, ""));
+          if (!params.get("error") && !params.get("error_description")) return null;
+          var description = params.get("error_description");
+          return description
+            ? description.replace(/\+/g, " ")
+            : "Your reset link is invalid or has expired.";
+        }
+
+        if (!window.supabase || !window.supabase.createClient) {
+          showNotice(
+            "We couldn't load the password reset tools. Check your connection and reopen the link from your email."
+          );
+          return;
+        }
+
+        var client = window.supabase.createClient(SUPABASE_URL, PUBLISHABLE_KEY, {
+          auth: {
+            detectSessionInUrl: true,
+            persistSession: false,
+            autoRefreshToken: false,
+          },
+        });
+
+        var hasSession = false;
+        var settled = false;
+
+        function enableForm() {
+          if (settled) return;
+          settled = true;
+          hasSession = true;
+          show("form");
+          els.password.focus();
+        }
+
+        client.auth.onAuthStateChange(function (event, session) {
+          if (event === "PASSWORD_RECOVERY" || session) {
+            enableForm();
+          }
+        });
+
+        // Resolve the initial state once the SDK has had a chance to parse the URL hash.
+        window.addEventListener("load", function () {
+          var error = hashError();
+          if (error) {
+            settled = true;
+            showNotice(error);
+            return;
+          }
+
+          client.auth.getSession().then(function (result) {
+            if (settled) return;
+            if (result.data && result.data.session) {
+              enableForm();
+            } else {
+              settled = true;
+              showNotice();
+            }
+          });
+        });
+
+        function setError(message) {
+          if (message) {
+            els.error.textContent = message;
+            els.error.hidden = false;
+          } else {
+            els.error.textContent = "";
+            els.error.hidden = true;
+          }
+        }
+
+        els.form.addEventListener("submit", function (e) {
+          e.preventDefault();
+          if (!hasSession) return;
+          setError("");
+
+          var password = els.password.value;
+          var confirm = els.passwordConfirm.value;
+
+          if (password.length < MIN_PASSWORD_LENGTH) {
+            setError("Password must be at least " + MIN_PASSWORD_LENGTH + " characters.");
+            return;
+          }
+          if (password !== confirm) {
+            setError("The passwords don't match.");
+            return;
+          }
+
+          els.submit.disabled = true;
+          els.submit.textContent = "Updating…";
+
+          client.auth
+            .updateUser({ password: password })
+            .then(function (result) {
+              if (result.error) {
+                setError(result.error.message || "Couldn't update your password.");
+                els.submit.disabled = false;
+                els.submit.textContent = "Update password";
+                return;
+              }
+              // Clear the in-memory recovery session and show success.
+              client.auth.signOut();
+              show("success");
+            })
+            .catch(function () {
+              setError("Something went wrong. Please try again.");
+              els.submit.disabled = false;
+              els.submit.textContent = "Update password";
+            });
+        });
+      })();
+    </script>
   </body>
 </html>

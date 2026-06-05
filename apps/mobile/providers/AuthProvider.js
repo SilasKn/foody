@@ -78,7 +78,9 @@ export function AuthProvider({ children }) {
         return { error: null };
       },
       sendPasswordReset: async ({ email }) => {
-        const { error } = await supabase.auth.resetPasswordForEmail(email);
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${SITE_URL}/reset-password`,
+        });
         if (error) return { error };
         return { error: null };
       },
