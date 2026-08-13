@@ -16,4 +16,5 @@ export const colors = {
   imagePlaceholderBg: '#E8EFED',
   textMuted: '#666666',
   danger: '#D32F2F',
+  backdrop: 'rgba(0,0,0,0.45)', // dim behind bottom sheets
 };

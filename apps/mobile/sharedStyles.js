@@ -94,6 +94,44 @@ const styles = StyleSheet.create({
     tintColor: colors.white,
   },
 
+  // Anchors a bottom sheet to the bottom of the screen
+  sheetAnchor: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+
+  // The sheet surface itself — compose with local padding/height
+  sheetSurface: {
+    backgroundColor: colors.white,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: -4 },
+    elevation: 8,
+    overflow: 'hidden',
+  },
+
+  // Grab area + grip for sheets whose handle sits on the white surface
+  dragHandleArea: {
+    paddingTop: 8,
+    paddingBottom: 6,
+    alignItems: 'center',
+  },
+
+  dragHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.border,
+    opacity: 0.25,
+  },
+
 });
 
 export default { ...styles, typography };

@@ -1,10 +1,11 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useEffect, useRef, useState } from 'react';
-import { Alert, Animated, Dimensions, Modal, PanResponder, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Alert, Animated, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Image as SvgIcon } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Dropdown from '../components/Dropdown';
 import RecipeImage from '../components/RecipeImage';
+import useBottomSheet from '../hooks/useBottomSheet';
 import { useAuth } from '../providers/AuthProvider';
 import shared from '../sharedStyles';
 import { colors } from '../theme';
@@ -20,50 +21,9 @@ function formatDateDisplay(date) {
 
 export default function ScheduleRecipeScreen({ route, navigation }) {
   const insets = useSafeAreaInsets();
-  const SCREEN_H = Dimensions.get('screen').height;
-  const SHEET_H = Math.round(SCREEN_H * 0.85);
-
-  const backdropAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(SCREEN_H)).current;
-  const dragY = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(backdropAnim, { toValue: 1, duration: 250, useNativeDriver: true }),
-      Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true, damping: 25, stiffness: 200 }),
-    ]).start();
-  }, []);
-
-  const closeWithAnimation = () => {
-    Animated.parallel([
-      Animated.timing(backdropAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: SCREEN_H, duration: 220, useNativeDriver: true }),
-    ]).start(() => navigation.goBack());
-  };
-
-  const panResponder = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gs) => gs.dy > 6 && gs.dy > Math.abs(gs.dx),
-      onPanResponderMove: (_, gs) => {
-        if (gs.dy > 0) dragY.setValue(gs.dy);
-      },
-      onPanResponderRelease: (_, gs) => {
-        if (gs.dy > 120 || gs.vy > 0.6) {
-          Animated.parallel([
-            Animated.timing(backdropAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
-            Animated.timing(dragY, { toValue: SCREEN_H, duration: 220, useNativeDriver: true }),
-          ]).start(() => navigation.goBack());
-        } else {
-          Animated.spring(dragY, {
-            toValue: 0,
-            useNativeDriver: true,
-            damping: 20,
-            stiffness: 200,
-          }).start();
-        }
-      },
-    })
-  ).current;
+  const { backdropAnim, closeWithAnimation, panHandlers, sheetTransform, screenHeight } =
+    useBottomSheet(navigation);
+  const SHEET_H = Math.round(screenHeight * 0.85);
 
   const { recipe } = route.params;
   const { user } = useAuth();
@@ -112,7 +72,7 @@ export default function ScheduleRecipeScreen({ route, navigation }) {
     <View style={styles.container}>
       <Animated.View
         pointerEvents="none"
-        style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.45)', opacity: backdropAnim }]}
+        style={[StyleSheet.absoluteFillObject, { backgroundColor: colors.backdrop, opacity: backdropAnim }]}
       />
       <Pressable
         style={StyleSheet.absoluteFillObject}
@@ -120,8 +80,9 @@ export default function ScheduleRecipeScreen({ route, navigation }) {
       />
       <Animated.View
         style={[
-          styles.sheet,
-          { height: SHEET_H, transform: [{ translateY: Animated.add(slideAnim, dragY) }] },
+          shared.sheetAnchor,
+          shared.sheetSurface,
+          { height: SHEET_H, transform: sheetTransform },
         ]}
       >
         <View style={styles.imageSection}>
@@ -140,7 +101,7 @@ export default function ScheduleRecipeScreen({ route, navigation }) {
           >
             <SvgIcon source={require('../assets/arrow_back_icon.svg')} style={[{ width: 24, height: 24 }, shared.iconOnAccent]} contentFit="contain" />
           </Pressable>
-          <View {...panResponder.panHandlers} style={styles.dragHandleArea}>
+          <View {...panHandlers} style={styles.dragHandleArea}>
             <View style={styles.dragHandle} />
           </View>
         </View>
@@ -270,23 +231,6 @@ export default function ScheduleRecipeScreen({ route, navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  sheet: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: colors.white,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    borderWidth: 1,
-    borderColor: colors.border,
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: -4 },
-    elevation: 8,
-    overflow: 'hidden',
-  },
   imageSection: {
     position: 'relative',
   },

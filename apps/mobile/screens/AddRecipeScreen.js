@@ -4,10 +4,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Animated,
-  Dimensions,
   Image,
   Keyboard,
-  PanResponder,
   Platform,
   Pressable,
   ScrollView,
@@ -20,6 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import Dropdown from '../components/Dropdown';
 import RecipeImage from '../components/RecipeImage';
+import useBottomSheet from '../hooks/useBottomSheet';
 import { useAuth } from '../providers/AuthProvider';
 import { useRecipes } from '../providers/RecipesProvider';
 import shared from '../sharedStyles';
@@ -30,26 +29,17 @@ import { supabase } from '../utils/supabase';
 
 export default function AddRecipeScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();
-  const SCREEN_H = Dimensions.get('screen').height;
-  const COLLAPSED_H = Math.round(SCREEN_H * 0.9);
-  const EXPANDED_H = SCREEN_H - insets.top;
+  const { backdropAnim, closeWithAnimation, panHandlers, sheetTransform, screenHeight } =
+    useBottomSheet(navigation);
+  const COLLAPSED_H = Math.round(screenHeight * 0.9);
+  const EXPANDED_H = screenHeight - insets.top;
 
-  const backdropAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(SCREEN_H)).current;
-  const dragY = useRef(new Animated.Value(0)).current;
   const heightAnim = useRef(new Animated.Value(COLLAPSED_H)).current;
   const scrollRef = useRef(null);
   const currentScrollY = useRef(0);
   const closeScrollTimeoutRef = useRef(null);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [showUnitPadding, setShowUnitPadding] = useState(false);
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(backdropAnim, { toValue: 1, duration: 250, useNativeDriver: true }),
-      Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true, damping: 25, stiffness: 200 }),
-    ]).start();
-  }, []);
 
   useEffect(() => {
     const showEvt = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
@@ -77,39 +67,6 @@ export default function AddRecipeScreen({ navigation, route }) {
       h.remove();
     };
   }, [EXPANDED_H, COLLAPSED_H]);
-
-  const closeWithAnimation = () => {
-    Animated.parallel([
-      Animated.timing(backdropAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: SCREEN_H, duration: 220, useNativeDriver: true }),
-    ]).start(() => {
-      navigation.goBack();
-    });
-  };
-
-  const panResponder = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gs) => gs.dy > 6 && gs.dy > Math.abs(gs.dx),
-      onPanResponderMove: (_, gs) => {
-        if (gs.dy > 0) dragY.setValue(gs.dy);
-      },
-      onPanResponderRelease: (_, gs) => {
-        if (gs.dy > 120 || gs.vy > 0.6) {
-          Animated.parallel([
-            Animated.timing(backdropAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
-            Animated.timing(dragY, { toValue: SCREEN_H, duration: 220, useNativeDriver: true }),
-          ]).start(() => navigation.goBack());
-        } else {
-          Animated.spring(dragY, {
-            toValue: 0,
-            useNativeDriver: true,
-            damping: 20,
-            stiffness: 200,
-          }).start();
-        }
-      },
-    })
-  ).current;
 
   const unitOptions = ['g', 'ml', 'unit'];
   const servingsOptions = Array.from({ length: 10 }, (_, i) => i + 1);
@@ -487,7 +444,7 @@ export default function AddRecipeScreen({ navigation, route }) {
     <View style={styles.container}>
       <Animated.View
         pointerEvents="none"
-        style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.45)', opacity: backdropAnim }]}
+        style={[StyleSheet.absoluteFillObject, { backgroundColor: colors.backdrop, opacity: backdropAnim }]}
       />
       <Pressable
         style={StyleSheet.absoluteFillObject}
@@ -501,13 +458,13 @@ export default function AddRecipeScreen({ navigation, route }) {
       />
       <Animated.View
         style={[
-          styles.sheetOuter,
-          { transform: [{ translateY: Animated.add(slideAnim, dragY) }] },
+          shared.sheetAnchor,
+          { transform: sheetTransform },
         ]}
       >
-        <Animated.View style={[styles.sheet, { height: heightAnim }]}>
-        <View {...panResponder.panHandlers} style={styles.dragHandleArea}>
-          <View style={styles.dragHandle} />
+        <Animated.View style={[shared.sheetSurface, styles.sheetPadding, { height: heightAnim }]}>
+        <View {...panHandlers} style={shared.dragHandleArea}>
+          <View style={shared.dragHandle} />
         </View>
 
         <View style={styles.headerRow}>
@@ -723,38 +680,7 @@ export default function AddRecipeScreen({ navigation, route }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  sheetOuter: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  sheet: {
-    backgroundColor: colors.white,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    borderWidth: 1,
-    borderColor: colors.border,
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: -4 },
-    elevation: 8,
-    overflow: 'hidden',
-    paddingHorizontal: 18,
-  },
-  dragHandleArea: {
-    paddingTop: 8,
-    paddingBottom: 6,
-    alignItems: 'center',
-  },
-  dragHandle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.border,
-    opacity: 0.25,
-  },
+  sheetPadding: { paddingHorizontal: 18 },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

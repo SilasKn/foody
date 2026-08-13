@@ -4,7 +4,7 @@ const mockUser = { id: 'user-123' };
 const mockRecipeId = 42;
 const mockImage = { uri: 'file:///tmp/photo.jpg', width: 800, height: 600 };
 
-const mockBlob = {};
+const mockArrayBuffer = new ArrayBuffer(8);
 const mockFetch = jest.fn();
 global.fetch = mockFetch;
 
@@ -29,7 +29,7 @@ function makeMockSupabase({ uploadError = null, insertError = null } = {}) {
 }
 
 beforeEach(() => {
-  mockFetch.mockResolvedValue({ blob: () => Promise.resolve(mockBlob) });
+  mockFetch.mockResolvedValue({ arrayBuffer: () => Promise.resolve(mockArrayBuffer) });
 });
 
 afterEach(() => {

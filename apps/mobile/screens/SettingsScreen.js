@@ -57,6 +57,19 @@ export default function SettingsScreen({ navigation }) {
           >
             <Text style={[shared.typography.body, styles.menuLabelDanger]}>Delete Account</Text>
           </Pressable>
+          <Pressable
+            style={({ pressed }) => [styles.menuItem, styles.imprintItem, pressed && shared.pressed]}
+            onPress={() => navigation.navigate('Imprint')}
+            accessibilityRole="button"
+            accessibilityLabel="Imprint"
+          >
+            <SvgIcon
+              source={require('../assets/info_icon.svg')}
+              style={styles.imprintIcon}
+              contentFit="contain"
+            />
+            <Text style={[shared.typography.body, styles.imprintLabel]}>Imprint</Text>
+          </Pressable>
         </View>
       </View>
 
@@ -153,6 +166,18 @@ const styles = StyleSheet.create({
   },
   menuLabelDanger: {
     color: colors.danger,
+  },
+  imprintItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  imprintIcon: {
+    width: 20,
+    height: 20,
+  },
+  imprintLabel: {
+    color: colors.textMuted,
   },
   separator: {
     height: 1,
