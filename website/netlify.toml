@@ -7,3 +7,6 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
     X-Frame-Options = "DENY"
+    # Fonts and the Supabase SDK are served from this origin, so the browser has no
+    # reason to talk to anyone else. connect-src covers the reset page's auth calls.
+    Content-Security-Policy = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self' https://ciuojjrpsvjhpxdozhwy.supabase.co; form-action 'self'; base-uri 'none'; frame-ancestors 'none'"
