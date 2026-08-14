@@ -10,13 +10,23 @@ export default function SettingsScreen({ navigation }) {
   const { deleteAccount } = useAuth();
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+
+  const closeDeleteModal = () => {
+    setDeleteModalVisible(false);
+    setDeleteError('');
+  };
 
   const handleDelete = async () => {
     setIsDeleting(true);
+    setDeleteError('');
     const { error } = await deleteAccount();
     setIsDeleting(false);
+    // Bei einem Fehler bleibt das Konto bestehen: Dialog offen lassen, damit
+    // der Nutzer es erneut versuchen kann. error.message waere hier immer der
+    // generische FunctionsHttpError-Text, deshalb eine eigene Meldung.
     if (error) {
-      setDeleteModalVisible(false);
+      setDeleteError('Could not delete your account. Please try again.');
     }
   };
 
@@ -77,21 +87,24 @@ export default function SettingsScreen({ navigation }) {
         transparent
         visible={deleteModalVisible}
         animationType="fade"
-        onRequestClose={() => !isDeleting && setDeleteModalVisible(false)}
+        onRequestClose={() => !isDeleting && closeDeleteModal()}
       >
         <Pressable
           style={styles.backdrop}
-          onPress={() => !isDeleting && setDeleteModalVisible(false)}
+          onPress={() => !isDeleting && closeDeleteModal()}
         >
           <Pressable style={styles.dialogCard} onPress={() => {}}>
             <Text style={[shared.typography.h2, styles.dialogTitle]}>Delete Account?</Text>
             <Text style={[shared.typography.body, styles.dialogMessage]}>
               This action is permanent and cannot be undone. All your recipes and data will be deleted.
             </Text>
+            {deleteError ? (
+              <Text style={[shared.typography.bodySmall, styles.dialogError]}>{deleteError}</Text>
+            ) : null}
             <View style={styles.dialogButtons}>
               <Pressable
                 style={({ pressed }) => [styles.dialogBtn, styles.dialogBtnCancel, pressed && styles.dialogBtnPressed]}
-                onPress={() => setDeleteModalVisible(false)}
+                onPress={closeDeleteModal}
                 disabled={isDeleting}
               >
                 <Text style={[shared.typography.sub2, styles.dialogBtnLabel]}>Cancel</Text>
@@ -210,6 +223,10 @@ const styles = StyleSheet.create({
   dialogMessage: {
     color: colors.text,
     opacity: 0.7,
+  },
+  dialogError: {
+    color: colors.danger,
+    marginTop: 10,
   },
   dialogButtons: {
     flexDirection: 'row',

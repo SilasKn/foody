@@ -23,6 +23,7 @@ import { useAuth } from '../providers/AuthProvider';
 import { useRecipes } from '../providers/RecipesProvider';
 import shared from '../sharedStyles';
 import { colors } from '../theme';
+import { deleteRecipeImages } from '../utils/deleteRecipeImages';
 import { uploadImage } from '../utils/imageUpload';
 import { supabase } from '../utils/supabase';
 
@@ -279,6 +280,11 @@ export default function AddRecipeScreen({ navigation, route }) {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
+            // Best effort: ein Storage-Aussetzer soll das Loeschen nicht blockieren.
+            // Eine zurueckbleibende Datei raeumt spaeter die Kontoloeschung ab.
+            try {
+              await deleteRecipeImages(supabase, editRecipe.id);
+            } catch {}
             await supabase.from('recipe_ingredients').delete().eq('recipe_id', editRecipe.id);
             await supabase.from('recipes').delete().eq('id', editRecipe.id);
             refreshRecipesForMode(filterModes.MINE);
@@ -357,13 +363,11 @@ export default function AddRecipeScreen({ navigation, route }) {
 
         if (selectedImage) {
           if (existingImagePath) {
-            await supabase.storage.from('recipe_images').remove([existingImagePath]);
-            await supabase.from('recipe_images').delete().eq('recipe_id', editRecipe.id);
+            await deleteRecipeImages(supabase, editRecipe.id);
           }
           await uploadImage(supabase, user, editRecipe.id, selectedImage);
         } else if (imageRemoved && existingImagePath) {
-          await supabase.storage.from('recipe_images').remove([existingImagePath]);
-          await supabase.from('recipe_images').delete().eq('recipe_id', editRecipe.id);
+          await deleteRecipeImages(supabase, editRecipe.id);
         }
         await refreshRecipesForMode(filterModes.MINE);
         showToast('Recipe updated successfully.');
@@ -423,6 +427,11 @@ export default function AddRecipeScreen({ navigation, route }) {
           showToast('Recipe saved successfully.');
         } catch (createErr) {
           if (draftRecipeId) {
+            // Best effort, damit der Rollback nicht am Storage haengen bleibt und
+            // den urspruenglichen Fehler verdeckt.
+            try {
+              await deleteRecipeImages(supabase, draftRecipeId);
+            } catch {}
             await supabase.from('recipe_ingredients').delete().eq('recipe_id', draftRecipeId);
             await supabase.from('recipes').delete().eq('id', draftRecipeId);
           }
