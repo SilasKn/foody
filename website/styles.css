@@ -91,6 +91,12 @@
   box-sizing: border-box;
 }
 
+/* Author styles outrank the UA's [hidden] rule, so a layout declaration like
+   .reset-form's display: flex would otherwise keep a hidden element on screen. */
+[hidden] {
+  display: none !important;
+}
+
 html,
 body {
   margin: 0;
