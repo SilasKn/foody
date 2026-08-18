@@ -52,9 +52,12 @@ export function AuthProvider({ children }) {
       },
       signUp: async ({ email, password, displayName }) => {
         const normalizedDisplayName = displayName?.trim();
+        if (!normalizedDisplayName) {
+          return { data: null, error: { message: 'Please enter a username.' } };
+        }
         const options = {
           emailRedirectTo: `${SITE_URL}/verify-email`,
-          ...(normalizedDisplayName ? { data: { display_name: normalizedDisplayName } } : {}),
+          data: { display_name: normalizedDisplayName },
         };
         const { data, error } = await supabase.auth.signUp({ email, password, options });
         return { data, error };

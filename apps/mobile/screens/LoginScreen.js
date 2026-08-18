@@ -33,9 +33,15 @@ export default function LoginScreen() {
   };
 
   const onSubmit = async () => {
-    setIsSubmitting(true);
     setErrorMessage('');
     setInfoMessage('');
+
+    if (mode === 'signup' && !username.trim()) {
+      setErrorMessage('Please enter a username.');
+      return;
+    }
+
+    setIsSubmitting(true);
 
     try {
       const result =
@@ -152,12 +158,7 @@ export default function LoginScreen() {
             <Pressable
               accessibilityRole="button"
               onPress={onSubmit}
-              disabled={
-                isSubmitting ||
-                !email ||
-                !password ||
-                (mode === 'signup' && username.trim().length === 0)
-              }
+              disabled={isSubmitting || !email || !password}
               style={({ pressed }) => [
                 styles.primaryButton,
                 isSubmitting && styles.primaryButtonDisabled,
