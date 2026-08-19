@@ -79,11 +79,13 @@ Anschließend `supabase db dump --schema public > supabase/migrations/schema.sql
 
 ---
 
-### ☐ A-4 · Username-Ableitung aus der E-Mail beseitigen
+### ☑ A-4 · Username-Ableitung aus der E-Mail beseitigen — **erledigt**
 
 **Was zu tun ist:** Den Trigger `handle_new_user` ändern. Statt `split_part(email,'@',1)` entweder einen zufälligen Namen (`'user_' || substr(md5(random()::text),1,8)`) setzen oder den Anzeigenamen bei der Registrierung zum Pflichtfeld machen.
 
-**Warum:** Aktuell wird bei fehlendem Anzeigenamen der lokale Teil der E-Mail-Adresse zum Username. Bei `vorname.nachname@…` steht damit der Klarname in einer Tabelle, die potenziell für andere Nutzer lesbar ist. Das ist eine Datenverarbeitung, die kein Nutzer erwartet, und sie widerspricht dem Grundsatz der Datenminimierung (Art. 5 Abs. 1 lit. c DSGVO) sowie Privacy by Default (Art. 25 Abs. 2). Du *kannst* das stattdessen nur offenlegen — aber Beseitigen ist billiger als Erklären, und der Datenschutztext wird dadurch deutlich einfacher.
+**Umgesetzt als Pflichtfeld:** `supabase/migrations/20260818120000_require_username_on_signup.sql` entfernt den E-Mail-Fallback aus dem Trigger und setzt `profiles.username` auf `NOT NULL` samt Leer-Check. `supabase/migrations/20260819120000_unique_username.sql` macht den Namen zusätzlich eindeutig (Unique-Index auf `lower(trim(username))`, Groß-/Kleinschreibung wird also ignoriert) und stellt die RPC `is_username_available` bereit, mit der das Registrierungsformular schon während der Eingabe meldet, ob ein Name frei ist. Bestandsnutzer mit kollidierenden Namen haben in der zweiten Migration ein kurzes Suffix bekommen.
+
+**Warum:** Bis dahin wurde bei fehlendem Anzeigenamen der lokale Teil der E-Mail-Adresse zum Username. Bei `vorname.nachname@…` steht damit der Klarname in einer Tabelle, die potenziell für andere Nutzer lesbar ist. Das ist eine Datenverarbeitung, die kein Nutzer erwartet, und sie widerspricht dem Grundsatz der Datenminimierung (Art. 5 Abs. 1 lit. c DSGVO) sowie Privacy by Default (Art. 25 Abs. 2). Du *kannst* das stattdessen nur offenlegen — aber Beseitigen ist billiger als Erklären, und der Datenschutztext wird dadurch deutlich einfacher.
 
 **Fertig, wenn:** Neue Registrierungen erzeugen keinen aus der E-Mail abgeleiteten Username mehr. Bestandsnutzer aus der TestFlight-Phase ggf. migrieren.
 
@@ -397,7 +399,7 @@ Der Entwurf deckt alle diese Punkte ab.
 2. An fünf Stellen steht `siknago@gmail.com` statt der Impressumsadresse.
 3. Der Text behauptet, die Website lade Google Fonts. Das ist seit der Umstellung auf selbst gehostete `.woff2`-Dateien falsch. Eine unzutreffende Angabe in der Datenschutzerklärung ist ein eigenständiger Verstoß gegen den Transparenzgrundsatz — und ausgerechnet Google Fonts ist ein bekanntes Abmahnthema.
 
-**Vier Dinge, die ein Leser nicht erwartet und die deshalb ausdrücklich im Text stehen:** die lokale unverschlüsselte Sitzungsspeicherung, die automatische Löschung vergangener Planungseinträge, der Verbleib von Zutatennamen nach der Kontolöschung (entfällt bei Umsetzung von A-6), die Ableitung des Usernames aus der E-Mail (entfällt bei Umsetzung von A-4).
+**Drei Dinge, die ein Leser nicht erwartet und die deshalb ausdrücklich im Text stehen:** die lokale unverschlüsselte Sitzungsspeicherung, die automatische Löschung vergangener Planungseinträge, der Verbleib von Zutatennamen nach der Kontolöschung (entfällt bei Umsetzung von A-6). Die Ableitung des Usernames aus der E-Mail ist mit A-4 entfallen.
 
 ---
 

@@ -6,7 +6,6 @@
 >
 > Placeholders marked `[…]` and paragraphs marked **[DECIDE]** must be resolved before this goes live. Each corresponds to a checklist item:
 >
-> - **§3.1 username derivation** — delete this paragraph once checklist item A-4 is done. Keep it if you leave the email-derived username in place.
 > - **§3.4 photos / EXIF** — the wording is deliberately neutral. After the test in A-8, you may replace it with a positive statement if the test confirms EXIF is stripped.
 > - **§3.6 ingredient catalogue** — delete this paragraph once A-6 is done.
 > - **§5 Netlify transfer** — after checking A-3 / E-3, keep either the DPF sentence or the SCC sentence, not both.
@@ -44,15 +43,15 @@ The sections below set out the detail required by Articles 13 and 14 GDPR.
 
 ### 3.1 Creating an account
 
-**Data:** email address; password (stored only as a bcrypt hash, never in plain text); a display name if you choose to provide one; the time your account was created.
+**Data:** email address; password (stored only as a bcrypt hash, never in plain text); a display name that you choose yourself and that is required to register; the time your account was created.
 
 **Purpose:** to create and operate your user account. foody cannot be used without an account, because all your content is tied to it.
 
 **Legal basis:** Article 6(1)(b) GDPR — performance of a contract. Providing this data is necessary to use the app; without it, no account can be created and the app cannot be used.
 
-**Retention:** until you delete your account.
+Your display name must be unique: registration is rejected if another account already uses the same name, ignoring upper and lower case. To make this possible, the registration form checks whether a name is already in use while you type. This check returns nothing but a yes-or-no answer and never reveals who holds a name. It is not derived from your email address — you choose it freely, so you can pick a name that does not identify you.
 
-**[DECIDE — delete this paragraph after checklist A-4]** If you do not provide a display name, the part of your email address before the `@` symbol is used as your display name. If your email address contains your real name, that name may become visible to other users in future versions of the app. You can avoid this by choosing a display name during registration.
+**Retention:** until you delete your account.
 
 ### 3.2 Verifying your email address and signing in
 

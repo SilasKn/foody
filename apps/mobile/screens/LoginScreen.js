@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Pressable,
@@ -13,23 +13,55 @@ import { colors } from '../theme';
 import shared from '../sharedStyles';
 import { useAuth } from '../providers/AuthProvider';
 
+const USERNAME_STATUS_TEXT = {
+  checking: 'Checking availability…',
+  available: 'Username is available.',
+  taken: 'This username is already taken.',
+  error: 'Could not check the username right now.',
+};
+
 export default function LoginScreen() {
-  const { signIn, signUp, sendPasswordReset } = useAuth();
+  const { signIn, signUp, sendPasswordReset, checkUsernameAvailable } = useAuth();
 
   const [mode, setMode] = useState('signin'); // 'signin' | 'signup'
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
+  // 'idle' | 'checking' | 'available' | 'taken' | 'error'
+  const [usernameStatus, setUsernameStatus] = useState('idle');
+  const checkSeq = useRef(0);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSendingReset, setIsSendingReset] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [infoMessage, setInfoMessage] = useState('');
 
+  useEffect(() => {
+    const trimmed = username.trim();
+    if (mode !== 'signup' || !trimmed) {
+      setUsernameStatus('idle');
+      return;
+    }
+
+    // A slow early response must not overwrite the answer for a newer input.
+    const seq = ++checkSeq.current;
+    setUsernameStatus('checking');
+
+    const timer = setTimeout(async () => {
+      const { available } = await checkUsernameAvailable({ username: trimmed });
+      if (seq !== checkSeq.current) return;
+      setUsernameStatus(available === null ? 'error' : available ? 'available' : 'taken');
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [username, mode, checkUsernameAvailable]);
+
   const onModeChange = (nextMode) => {
     setMode(nextMode);
     setErrorMessage('');
     setInfoMessage('');
+    setUsernameStatus('idle');
   };
 
   const onSubmit = async () => {
@@ -38,6 +70,11 @@ export default function LoginScreen() {
 
     if (mode === 'signup' && !username.trim()) {
       setErrorMessage('Please enter a username.');
+      return;
+    }
+
+    if (mode === 'signup' && usernameStatus === 'taken') {
+      setErrorMessage('This username is already taken. Please choose another one.');
       return;
     }
 
@@ -127,6 +164,18 @@ export default function LoginScreen() {
                   autoCorrect={false}
                   style={styles.input}
                 />
+                {usernameStatus !== 'idle' && (
+                  <Text
+                    style={[
+                      shared.typography.bodySmall,
+                      styles.usernameStatus,
+                      usernameStatus === 'taken' && styles.usernameStatusTaken,
+                      usernameStatus === 'available' && styles.usernameStatusAvailable,
+                    ]}
+                  >
+                    {USERNAME_STATUS_TEXT[usernameStatus]}
+                  </Text>
+                )}
               </>
             )}
 
@@ -267,12 +316,23 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     marginBottom: 14,
   },
+  usernameStatus: {
+    color: colors.textMuted,
+    marginTop: -8,
+    marginBottom: 14,
+  },
+  usernameStatusTaken: {
+    color: colors.danger,
+  },
+  usernameStatusAvailable: {
+    color: colors.accent,
+  },
   error: {
-    color: '#B00020',
+    color: colors.danger,
     marginBottom: 14,
   },
   info: {
-    color: '#1B5E20',
+    color: colors.accent,
     marginBottom: 14,
   },
   primaryButton: {

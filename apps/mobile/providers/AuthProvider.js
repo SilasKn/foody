@@ -50,6 +50,16 @@ export function AuthProvider({ children }) {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         return { data, error };
       },
+      checkUsernameAvailable: async ({ username }) => {
+        const normalized = username?.trim();
+        if (!normalized) return { available: false, error: null };
+        const { data, error } = await supabase.rpc('is_username_available', {
+          p_username: normalized,
+        });
+        // null means "could not determine" - callers must not read it as taken.
+        if (error) return { available: null, error };
+        return { available: data === true, error: null };
+      },
       signUp: async ({ email, password, displayName }) => {
         const normalizedDisplayName = displayName?.trim();
         if (!normalizedDisplayName) {
@@ -60,6 +70,20 @@ export function AuthProvider({ children }) {
           data: { display_name: normalizedDisplayName },
         };
         const { data, error } = await supabase.auth.signUp({ email, password, options });
+        if (error) {
+          // GoTrue reports any trigger failure as a generic 500, so ask the DB
+          // what actually went wrong instead of guessing from the message. This
+          // is what catches two people claiming the same name at once.
+          const { data: stillFree } = await supabase.rpc('is_username_available', {
+            p_username: normalizedDisplayName,
+          });
+          if (stillFree === false) {
+            return {
+              data: null,
+              error: { message: 'This username is already taken. Please choose another one.' },
+            };
+          }
+        }
         return { data, error };
       },
       signOut: async () => {
