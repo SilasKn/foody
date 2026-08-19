@@ -44,8 +44,7 @@ function formatLastEaten(isoDate) {
 }
 
 export default function StartScreen({ navigation }) {
-  const { user } = useAuth();
-  const displayName = user?.user_metadata?.display_name ?? null;
+  const { user, username } = useAuth();
   const [upcoming, setUpcoming] = useState(null);
   const [loading, setLoading] = useState(true);
   const [rangeKey, setRangeKey] = useState('2d');
@@ -179,7 +178,7 @@ export default function StartScreen({ navigation }) {
       >
         <AppHeader navigation={navigation} />
         <Text style={[shared.pageTitle, styles.greeting]}>
-          {displayName ? `Hello, ${displayName}!` : 'Hello!'}
+          {username ? `Hello, ${username}!` : 'Hello!'}
         </Text>
         <Text style={[shared.typography.bodySmall, styles.dateSubtitle]}>
           {new Date().toLocaleDateString('en-GB', {

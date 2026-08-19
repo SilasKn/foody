@@ -35,6 +35,7 @@ export default function LoginScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSendingReset, setIsSendingReset] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [emailError, setEmailError] = useState('');
   const [infoMessage, setInfoMessage] = useState('');
 
   useEffect(() => {
@@ -60,12 +61,14 @@ export default function LoginScreen() {
   const onModeChange = (nextMode) => {
     setMode(nextMode);
     setErrorMessage('');
+    setEmailError('');
     setInfoMessage('');
     setUsernameStatus('idle');
   };
 
   const onSubmit = async () => {
     setErrorMessage('');
+    setEmailError('');
     setInfoMessage('');
 
     if (mode === 'signup' && !username.trim()) {
@@ -91,7 +94,12 @@ export default function LoginScreen() {
             });
 
       if (result?.error) {
-        setErrorMessage(result.error.message);
+        // Belongs under the email field, not in the generic slot at the bottom.
+        if (result.error.code === 'email_already_registered') {
+          setEmailError(result.error.message);
+        } else {
+          setErrorMessage(result.error.message);
+        }
       } else if (mode === 'signup') {
         if (result?.data?.session) {
           setInfoMessage('Account created. You are now signed in.');
@@ -168,9 +176,9 @@ export default function LoginScreen() {
                   <Text
                     style={[
                       shared.typography.bodySmall,
-                      styles.usernameStatus,
-                      usernameStatus === 'taken' && styles.usernameStatusTaken,
-                      usernameStatus === 'available' && styles.usernameStatusAvailable,
+                      styles.fieldStatus,
+                      usernameStatus === 'taken' && styles.fieldStatusTaken,
+                      usernameStatus === 'available' && styles.fieldStatusAvailable,
                     ]}
                   >
                     {USERNAME_STATUS_TEXT[usernameStatus]}
@@ -182,7 +190,10 @@ export default function LoginScreen() {
             <Text style={[shared.typography.sub2, styles.label]}>Email</Text>
             <TextInput
               value={email}
-              onChangeText={setEmail}
+              onChangeText={(text) => {
+                setEmail(text);
+                setEmailError('');
+              }}
               placeholder="you@example.com"
               placeholderTextColor="#666"
               keyboardType="email-address"
@@ -190,6 +201,11 @@ export default function LoginScreen() {
               autoCorrect={false}
               style={styles.input}
             />
+            {!!emailError && (
+              <Text style={[shared.typography.bodySmall, styles.fieldStatus, styles.fieldStatusTaken]}>
+                {emailError}
+              </Text>
+            )}
 
             <Text style={[shared.typography.sub2, styles.label]}>Password</Text>
             <TextInput
@@ -316,15 +332,15 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     marginBottom: 14,
   },
-  usernameStatus: {
+  fieldStatus: {
     color: colors.textMuted,
     marginTop: -8,
     marginBottom: 14,
   },
-  usernameStatusTaken: {
+  fieldStatusTaken: {
     color: colors.danger,
   },
-  usernameStatusAvailable: {
+  fieldStatusAvailable: {
     color: colors.accent,
   },
   error: {

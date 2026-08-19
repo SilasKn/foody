@@ -5,10 +5,25 @@ const SITE_URL = process.env.EXPO_PUBLIC_SITE_URL ?? 'https://foodytheapp.com';
 
 const AuthContext = createContext(null);
 
+// Shared by both duplicate-email paths so the screen only has one code to match on.
+const EMAIL_TAKEN_RESULT = {
+  data: null,
+  error: {
+    code: 'email_already_registered',
+    message: 'This email is already registered. Please sign in instead.',
+  },
+};
+
+function isEmailTakenError(error) {
+  if (error?.code === 'user_already_exists' || error?.code === 'email_exists') return true;
+  return /already\s+registered/i.test(error?.message ?? '');
+}
+
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [username, setUsername] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -41,10 +56,37 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
+  // profiles.username ist die einzige Anzeigequelle fuer den Namen. Die Kopie in
+  // raw_user_meta_data.display_name ist nur der Transportkanal beim Signup und
+  // wird bewusst nicht gelesen - sie ist client-beschreibbar und unvalidiert.
+  useEffect(() => {
+    const userId = user?.id ?? null;
+    if (!userId) {
+      setUsername(null);
+      return;
+    }
+
+    let isMounted = true;
+
+    supabase
+      .from('profiles')
+      .select('username')
+      .eq('user_id', userId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (isMounted) setUsername(data?.username ?? null);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.id]);
+
   const value = useMemo(() => {
     return {
       session,
       user,
+      username,
       isLoading,
       signIn: async ({ email, password }) => {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -71,6 +113,10 @@ export function AuthProvider({ children }) {
         };
         const { data, error } = await supabase.auth.signUp({ email, password, options });
         if (error) {
+          // Only reachable with email confirmation switched off; with it on,
+          // GoTrue hides a duplicate address behind a fake success (see below).
+          if (isEmailTakenError(error)) return EMAIL_TAKEN_RESULT;
+
           // GoTrue reports any trigger failure as a generic 500, so ask the DB
           // what actually went wrong instead of guessing from the message. This
           // is what catches two people claiming the same name at once.
@@ -83,7 +129,20 @@ export function AuthProvider({ children }) {
               error: { message: 'This username is already taken. Please choose another one.' },
             };
           }
+          return { data, error };
         }
+
+        // A signup on an address that already has an account answers 200 with a
+        // throwaway user, no session and no mail sent - GoTrue obfuscates it on
+        // purpose so signup cannot be used to enumerate accounts. The empty
+        // identities array is the only tell. Anything other than a present but
+        // empty array is left alone: a shape we do not recognise must not be
+        // reported as a duplicate.
+        const identities = data?.user?.identities;
+        if (!data?.session && Array.isArray(identities) && identities.length === 0) {
+          return EMAIL_TAKEN_RESULT;
+        }
+
         return { data, error };
       },
       signOut: async () => {
@@ -112,7 +171,7 @@ export function AuthProvider({ children }) {
         return { error: null };
       },
     };
-  }, [session, user, isLoading]);
+  }, [session, user, username, isLoading]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
