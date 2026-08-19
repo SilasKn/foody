@@ -19,6 +19,7 @@ import ScheduleRecipeScreen from './screens/ScheduleRecipeScreen';
 import RescheduleScreen from './screens/RescheduleScreen';
 import CalendarScreen from './screens/CalendarScreen';
 import ChangePasswordScreen from './screens/ChangePasswordScreen';
+import ChangeUsernameScreen from './screens/ChangeUsernameScreen';
 import ImprintScreen from './screens/ImprintScreen';
 import LoginScreen from './screens/LoginScreen';
 import RecipeDetailScreen from './screens/RecipeDetailScreen';
@@ -93,6 +94,15 @@ function AppRoutes() {
           <Stack.Screen
             name="ChangePassword"
             component={ChangePasswordScreen}
+            options={{
+              presentation: 'transparentModal',
+              animation: 'none',
+              contentStyle: { backgroundColor: 'transparent' },
+            }}
+          />
+          <Stack.Screen
+            name="ChangeUsername"
+            component={ChangeUsernameScreen}
             options={{
               presentation: 'transparentModal',
               animation: 'none',

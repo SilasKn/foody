@@ -155,6 +155,32 @@ export function AuthProvider({ children }) {
         await supabase.auth.signOut();
         return { error: null };
       },
+      updateUsername: async ({ username: nextUsername }) => {
+        const trimmed = nextUsername?.trim();
+        if (!trimmed) return { error: { message: 'Please enter a username.' } };
+        if (!user?.id) return { error: { message: 'You are not signed in.' } };
+
+        const { error } = await supabase
+          .from('profiles')
+          .update({ username: trimmed })
+          .eq('user_id', user.id);
+
+        // Der CI-Unique-Index ist bei einer Umbenennung die einzige
+        // serverseitige Pruefung - der Signup-Trigger laeuft hier nicht.
+        // Gleiche Formulierung wie beim Signup, damit der Nutzer denselben
+        // Text sieht.
+        if (error?.code === '23505') {
+          return {
+            error: { message: 'This username is already taken. Please choose another one.' },
+          };
+        }
+        if (error) return { error };
+
+        // Der Lade-Effekt oben haengt nur an user?.id und laeuft nach einem
+        // Update nicht erneut - der neue Name muss von Hand gesetzt werden.
+        setUsername(trimmed);
+        return { error: null };
+      },
       updatePassword: async ({ currentPassword, newPassword }) => {
         const { error } = await supabase.auth.updateUser({
           password: newPassword,

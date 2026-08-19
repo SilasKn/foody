@@ -1,4 +1,4 @@
-import { render, waitFor } from '@testing-library/react-native';
+import { act, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
 import { Text } from 'react-native';
 
@@ -12,6 +12,7 @@ jest.mock('../../utils/supabase', () => ({
       getSession: jest.fn(),
       onAuthStateChange: jest.fn(),
       signUp: jest.fn(),
+      updateUser: jest.fn(),
     },
     rpc: jest.fn(),
     from: jest.fn(),
@@ -43,6 +44,34 @@ async function mountAuth() {
 }
 
 const SIGNUP_ARGS = { email: 'taken@example.com', password: 'pw123456', displayName: 'Silas' };
+
+// profiles wird von zwei Ketten benutzt: der Lade-Effekt liest
+// select().eq().maybeSingle(), updateUsername schreibt update().eq().
+// Beide muessen aus demselben from()-Mock kommen.
+function mockProfilesTable(updateResult) {
+  const updateEq = jest.fn().mockResolvedValue(updateResult);
+  const update = jest.fn(() => ({ eq: updateEq }));
+  const select = jest.fn(() => ({
+    eq: () => ({ maybeSingle: () => Promise.resolve({ data: { username: 'Old' } }) }),
+  }));
+  supabase.from.mockReturnValue({ update, select });
+  return { update, updateEq };
+}
+
+// updateUsername braucht eine echte Session - ohne user.id bricht es vorher ab.
+function signIn(userId = 'user-1') {
+  supabase.auth.getSession.mockResolvedValue({
+    data: { session: { user: { id: userId } } },
+  });
+}
+
+// mountAuth kehrt schon nach dem ersten Render zurueck, da steht die Session
+// noch aus. Erst warten, sonst laeuft der Test gegen ein user-loses Context.
+async function mountSignedInAuth() {
+  const auth = await mountAuth();
+  await waitFor(() => expect(auth.user).toBeTruthy());
+  return auth;
+}
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -121,5 +150,47 @@ describe('signUp on addresses that are actually free', () => {
 
     expect(result.error.message).toMatch(/username is already taken/i);
     expect(result.error.code).toBeUndefined();
+  });
+});
+
+describe('updateUsername', () => {
+  it('writes the trimmed name to profiles and nothing else', async () => {
+    signIn();
+    const { update, updateEq } = mockProfilesTable({ error: null });
+
+    const auth = await mountSignedInAuth();
+    // setUsername rendert den Provider neu, deshalb act().
+    let result;
+    await act(async () => {
+      result = await auth.updateUsername({ username: '  Silas  ' });
+    });
+
+    expect(result.error).toBeNull();
+    expect(supabase.from).toHaveBeenCalledWith('profiles');
+    expect(update).toHaveBeenCalledWith({ username: 'Silas' });
+    expect(updateEq).toHaveBeenCalledWith('user_id', 'user-1');
+    // Der Name in raw_user_meta_data bleibt bewusst stehen.
+    expect(supabase.auth.updateUser).not.toHaveBeenCalled();
+  });
+
+  it('translates the unique-index violation into the taken message', async () => {
+    signIn();
+    mockProfilesTable({ error: { code: '23505', message: 'duplicate key value' } });
+
+    const auth = await mountSignedInAuth();
+    const result = await auth.updateUsername({ username: 'Silas' });
+
+    expect(result.error.message).toMatch(/username is already taken/i);
+  });
+
+  it('rejects a blank name without touching the database', async () => {
+    signIn();
+    const { update } = mockProfilesTable({ error: null });
+
+    const auth = await mountSignedInAuth();
+    const result = await auth.updateUsername({ username: '   ' });
+
+    expect(result.error.message).toMatch(/enter a username/i);
+    expect(update).not.toHaveBeenCalled();
   });
 });
