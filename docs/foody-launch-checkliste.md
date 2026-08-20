@@ -141,7 +141,7 @@ exiftool -G -a heruntergeladenes_bild.jpg | grep -i -E "gps|location|serial|mode
 
 ---
 
-### ☐ A-9 · Privacy Manifest ergänzen
+### ☐ A-9 · Privacy Manifest ergänzen — **Code eingebaut, Nachweis offen**
 
 **Was zu tun ist:** In `app.config.js` unter `ios`:
 
@@ -164,15 +164,19 @@ privacyManifests: {
 
 **Fertig, wenn:** Upload nach App Store Connect ohne ITMS-91056-Mail durchläuft.
 
+**Stand:** `privacyManifests` steht in `app.config.js` unter `ios`, zusätzlich mit `NSPrivacyTracking: false` und leeren `NSPrivacyTrackingDomains`/`NSPrivacyCollectedDataTypes`. Ein Prebuild erzeugt daraus `ios/foody/PrivacyInfo.xcprivacy` mit allen vier Kategorien, und die Datei ist im Xcode-Target referenziert. Offen bleibt nur der Nachweis über einen echten Upload — Haken erst danach setzen.
+
 ---
 
-### ☐ A-10 · Export-Compliance deklarieren
+### ☑ A-10 · Export-Compliance deklarieren — **erledigt**
 
 **Was zu tun ist:** In `app.config.js` unter `ios.config`: `usesNonExemptEncryption: false`.
 
 **Warum:** Apple fragt bei jedem Upload nach US-Exportbestimmungen für Verschlüsselung. Deine App nutzt ausschließlich HTTPS/TLS und Standard-Betriebssystemkrypto — das fällt unter die Ausnahme. Ohne die Deklaration im Config-File musst du die Frage bei jedem einzelnen Build manuell beantworten, und eine falsche Antwort blockiert die Freigabe.
 
 **Fertig, wenn:** Der Build fragt nicht mehr nach.
+
+**Stand:** Bereits erfüllt über `ios.infoPlist.ITSAppUsesNonExemptEncryption: false` in `app.config.js` — äquivalent zu `ios.config.usesNonExemptEncryption`. Nicht zusätzlich eintragen, sonst gibt es zwei Quellen für dieselbe Aussage.
 
 ---
 
