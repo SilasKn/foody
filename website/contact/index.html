@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>foody — Contact</title>
+    <meta name="description" content="Get in touch about the foody app — support, privacy requests, or anything else." />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a class="wordmark wordmark--header" href="/" aria-label="foody home">
+          <span>foody</span>
+          <span class="wordmark__dot" aria-hidden="true"></span>
+        </a>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="info-section">
+        <div class="info-card">
+          <h2>Contact</h2>
+          <p class="body info-card__body">
+            Send a message and I aim to reply within two business days. You can also write directly to
+            <a href="mailto:service@foodytheapp.com">service@foodytheapp.com</a>.
+          </p>
+
+          <!-- Handled by Netlify Forms: a plain HTML POST, no JavaScript, so this stays
+               reachable with scripting disabled. Spam is filtered by the honeypot below;
+               reCAPTCHA is not an option because the CSP forbids third-party scripts. -->
+          <form
+            class="reset-form"
+            name="contact"
+            method="POST"
+            action="/contact/thanks"
+            data-netlify="true"
+            data-netlify-honeypot="bot-field"
+          >
+            <input type="hidden" name="form-name" value="contact" />
+            <p hidden>
+              <label>Leave this field empty: <input name="bot-field" /></label>
+            </p>
+
+            <div class="field">
+              <label class="sub2" for="email">Your email address</label>
+              <input
+                class="input"
+                id="email"
+                name="email"
+                type="email"
+                autocomplete="email"
+                required
+                placeholder="you@example.com"
+              />
+            </div>
+
+            <div class="field">
+              <label class="sub2" for="subject">Subject</label>
+              <input class="input" id="subject" name="subject" type="text" placeholder="What is this about?" />
+            </div>
+
+            <div class="field">
+              <label class="sub2" for="message">Message</label>
+              <textarea class="input" id="message" name="message" rows="6" required></textarea>
+            </div>
+
+            <button class="button" type="submit">Send message</button>
+          </form>
+
+          <p class="body-small info-card__body">
+            For requests about your personal data, see the <a href="/privacy-policy">Privacy Policy</a>. So
+            that nobody else can obtain your data, such requests are only answered to the email address
+            registered to the account concerned.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p class="body-small">© foody ·
+        <a class="footer-link" href="/legal-notice">Legal Notice</a> ·
+        <a class="footer-link" href="/privacy-policy">Privacy Policy</a> ·
+        <a class="footer-link" href="/terms">Terms of Use</a>
+      </p>
+    </footer>
+  </body>
+</html>

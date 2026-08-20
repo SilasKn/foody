@@ -22,155 +22,207 @@
       <section class="legal container">
         <div class="legal__inner">
           <h1>Privacy Policy</h1>
-          <p class="legal__updated body-small">Last updated: 10 June 2026</p>
-
-          <p>
-            This Privacy Policy explains how the <strong>foody</strong> app ("foody", "we", "us")
-            collects, uses, and protects your personal data when you use the app. We are committed to
-            handling your data carefully and only collecting what we need to run the service. If you
-            have any questions, you can reach us at
-            <a href="mailto:service@foodytheapp.com">service@foodytheapp.com</a>.
+          <p class="legal__updated body-small">
+            Version 1.1 · 20 August 2026 · applies to foody iOS app v1.0.3 and foodytheapp.com
           </p>
 
-          <h2>1. Who is responsible</h2>
+          <h2>1. Controller</h2>
           <p>
-            foody is the data controller responsible for your personal data. You can contact us about
-            any privacy matter at <a href="mailto:service@foodytheapp.com">service@foodytheapp.com</a>.
+            Silas Knapp<br />
+            Email: <a href="mailto:service@foodytheapp.com">service@foodytheapp.com</a><br />
+            Postal address: see the <a href="/legal-notice">Legal Notice</a>.
           </p>
 
-          <h2>2. What data we collect</h2>
-          <ul>
-            <li>
-              <strong>Account data:</strong> your email address, your password (stored only in hashed
-              form by our authentication provider), and an optional display name.
-            </li>
-            <li>
-              <strong>Content you create:</strong> recipes you save (name, description, ingredients,
-              quantities and units, number of servings), the meal-plan entries you schedule (dates and
-              meal type), and recipe photos you choose to add from your device's photo library,
-              including their image dimensions.
-            </li>
-            <li>
-              <strong>Technical data:</strong> a login session token stored locally on your device so
-              you stay signed in.
-            </li>
-          </ul>
+          <h2>2. What is processed, why, and on what legal basis</h2>
+          <div class="legal__table">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Purpose</th>
+                  <th scope="col">Data</th>
+                  <th scope="col">Legal basis</th>
+                  <th scope="col">Retention</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Creating and operating your account</td>
+                  <td>
+                    email address; password (stored only as a bcrypt hash); a display name you choose; the time
+                    your account was created
+                  </td>
+                  <td>Art. 6(1)(b) GDPR</td>
+                  <td>until you delete your account</td>
+                </tr>
+                <tr>
+                  <td>Verifying your email address and signing in</td>
+                  <td>
+                    email address, a short-lived confirmation token, session tokens, the time of your last
+                    sign-in
+                  </td>
+                  <td>
+                    Art. 6(1)(b) GDPR; Art. 6(1)(f) for the abuse-prevention element — the legitimate interest
+                    is preventing accounts being created with email addresses belonging to other people
+                  </td>
+                  <td>tokens are short-lived; session data until you sign out or delete your account</td>
+                </tr>
+                <tr>
+                  <td>Keeping you signed in, on your own device</td>
+                  <td>
+                    access token, refresh token, expiry time, your ID, email address and display name — held in
+                    the app's own sandbox, <strong>not</strong> in the iOS Keychain and not additionally
+                    encrypted by the app; never transmitted anywhere
+                  </td>
+                  <td>
+                    Art. 6(1)(b) GDPR. Under § 25(2)(2) TDDDG this needs no consent, being strictly necessary
+                    for the service you requested
+                  </td>
+                  <td>removed when you sign out or delete the app</td>
+                </tr>
+                <tr>
+                  <td>Storing your recipes, ingredients and photos</td>
+                  <td>
+                    names, descriptions, servings, ingredient names, quantities, units; photos together with
+                    your user ID, file path and image dimensions. Photos come from your photo library — the app
+                    does not access your camera — and are cropped and re-encoded before upload, stored
+                    privately and retrievable only through links that expire after one hour
+                  </td>
+                  <td>Art. 6(1)(b) GDPR</td>
+                  <td>until you delete the recipe or your account; photos are deleted with their recipe</td>
+                </tr>
+                <tr>
+                  <td>Meal planning and suggestions</td>
+                  <td>
+                    which recipe you planned, for which date, meal and number of servings; a "last eaten" date
+                    derived from your plan
+                  </td>
+                  <td>
+                    Art. 6(1)(b) GDPR for the calendar; Art. 6(1)(f) for suggestions — the legitimate interest
+                    is not suggesting the same meal repeatedly
+                  </td>
+                  <td>
+                    plan entries in the past are <strong>deleted automatically</strong> every time you open the
+                    calendar
+                  </td>
+                </tr>
+                <tr>
+                  <td>Operating and securing the infrastructure</td>
+                  <td>
+                    website: IP address, time of access, browser identification, resource requested. App
+                    backend: technical logs of authentication events, including IP addresses
+                  </td>
+                  <td>
+                    Art. 6(1)(f) GDPR — the legitimate interest is secure and stable operation, in particular
+                    defence against automated attacks
+                  </td>
+                  <td>
+                    the providers' own retention periods. These logs are not stored per account and are
+                    therefore <strong>not</strong> deleted when you delete yours
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h2>3. Who else processes your data</h2>
+          <div class="legal__table">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Provider</th>
+                  <th scope="col">Role</th>
+                  <th scope="col">What they process</th>
+                  <th scope="col">Location</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Supabase</td>
+                  <td>Processor under Art. 28 GDPR</td>
+                  <td>
+                    account, recipe, ingredient, plan and image data; authentication logs; verification and
+                    password-reset emails
+                  </td>
+                  <td>European Union</td>
+                </tr>
+                <tr>
+                  <td>Netlify</td>
+                  <td>Processor under Art. 28 GDPR</td>
+                  <td>delivery of foodytheapp.com; server logs including IP addresses</td>
+                  <td>United States</td>
+                </tr>
+                <tr>
+                  <td>Apple</td>
+                  <td>Independent controller</td>
+                  <td>distribution of the app via the App Store</td>
+                  <td>see Apple's own privacy policy</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>A data processing agreement pursuant to Article 28(3) GDPR is in place with each processor.</p>
           <p>
-            We do <strong>not</strong> collect analytics, advertising identifiers, location data,
-            contacts, or usage tracking, and we do not use the device camera.
+            All account data, recipes, ingredients, meal plans and photos are stored on servers
+            <strong>within the European Union</strong>.
+          </p>
+          <p>
+            The website is delivered from the United States. This affects only the server logs described above,
+            not your account data or your content. The transfer is based on the European Commission's adequacy
+            decision for the EU-US Data Privacy Framework pursuant to Article 45 GDPR, under which the provider
+            is certified.
           </p>
 
-          <h2>3. How we use your data</h2>
-          <ul>
-            <li>To create and maintain your account and keep you signed in.</li>
-            <li>To save your recipes and meal plans and sync them across your devices.</li>
-            <li>To show recipes you have explicitly marked as public to other users.</li>
-            <li>
-              To send you essential account emails, such as email verification and password-reset
-              messages.
-            </li>
-          </ul>
-
-          <h2>4. Legal bases for processing</h2>
-          <p>Under the GDPR, we rely on the following legal bases:</p>
-          <ul>
-            <li>
-              <strong>Performance of a contract</strong> — to provide the app's core features and
-              manage your account.
-            </li>
-            <li>
-              <strong>Consent</strong> — when you choose to publish a recipe publicly or provide an
-              optional display name. You can withdraw consent at any time.
-            </li>
-            <li>
-              <strong>Legitimate interests</strong> — to keep the service secure and functioning
-              correctly.
-            </li>
-          </ul>
-
-          <h2>5. Public recipes</h2>
+          <h2>4. Your rights</h2>
           <p>
-            Recipes are private by default. If you choose to mark a recipe as public, that recipe and
-            your display name become visible to other foody users. You can change a recipe back to
-            private at any time.
+            You have the right to <strong>access</strong> (Art. 15), <strong>rectification</strong> (Art. 16),
+            <strong>erasure</strong> (Art. 17), <strong>restriction of processing</strong> (Art. 18),
+            <strong>data portability</strong> (Art. 20) and to <strong>object</strong> (Art. 21) to the
+            processing based on legitimate interests described above.
+          </p>
+          <p>
+            Recipes, ingredients, plans, your display name and your password can be changed in the app. You can
+            erase everything yourself under Settings → Delete Account; this permanently deletes your account,
+            recipes, ingredient names, meal plans and photos, with the exception of the server logs described
+            above.
+          </p>
+          <p>
+            For anything else, write to
+            <a href="mailto:service@foodytheapp.com">service@foodytheapp.com</a>. To protect your data,
+            requests are answered only to the email address registered to the account concerned, and within one
+            month.
+          </p>
+          <p>
+            You may lodge a complaint with a data protection supervisory authority, in particular in the Member
+            State of your habitual residence, place of work or place of the alleged infringement.
+          </p>
+          <p>
+            Account data is required to use foody: without it, no account can be created and the app cannot be
+            used.
+          </p>
+          <p>No automated decision-making within the meaning of Article 22 GDPR takes place.</p>
+
+          <h2>5. Children</h2>
+          <p>
+            foody is not directed at children. Under the <a href="/terms">Terms of Use</a> you must be at least
+            16 years old to create an account. If you believe a child has created an account, please contact
+            <a href="mailto:service@foodytheapp.com">service@foodytheapp.com</a> and it will be deleted.
           </p>
 
-          <h2>6. Sharing and service providers</h2>
+          <h2>6. Changes to this policy</h2>
           <p>
-            We do not sell your personal data and we do not use it for advertising. We use
-            <strong>Supabase</strong> (Supabase Inc.) as our backend provider for authentication,
-            database, and image storage; your data is processed on our behalf under their security and
-            privacy terms. Our website also loads fonts from Google Fonts when you view it in a browser.
-          </p>
-
-          <h2>7. Data retention</h2>
-          <p>
-            We keep your data for as long as your account is active. When you delete your account, your
-            personal data is deleted as described below.
-          </p>
-
-          <h2>8. Your rights</h2>
-          <p>Under the GDPR you have the right to:</p>
-          <ul>
-            <li>access the personal data we hold about you;</li>
-            <li>have inaccurate data corrected;</li>
-            <li>have your data erased;</li>
-            <li>restrict or object to certain processing;</li>
-            <li>receive your data in a portable format;</li>
-            <li>withdraw consent at any time;</li>
-            <li>lodge a complaint with a data protection supervisory authority.</li>
-          </ul>
-          <p>
-            To exercise any of these rights, email us at
-            <a href="mailto:service@foodytheapp.com">service@foodytheapp.com</a>.
-          </p>
-
-          <h2>9. Account and data deletion</h2>
-          <p>
-            You can permanently delete your account directly in the app under
-            <strong>Settings → Delete Account</strong>. This is permanent and removes your recipes and
-            associated data. You can also request deletion by emailing
-            <a href="mailto:service@foodytheapp.com">service@foodytheapp.com</a>.
-          </p>
-
-          <h2>10. Children</h2>
-          <p>
-            foody is not directed at children under the age of 16, and we do not knowingly collect
-            personal data from them. If you believe a child has provided us with personal data, please
-            contact us so we can remove it.
-          </p>
-
-          <h2>11. International data transfers</h2>
-          <p>
-            Your data may be processed on servers located outside your country, including outside the
-            European Union. Where this happens, appropriate safeguards are in place to protect your
-            data in line with applicable law.
-          </p>
-
-          <h2>12. Data security</h2>
-          <p>
-            Data is transmitted over encrypted connections, passwords are stored only in hashed form,
-            and access to stored data is restricted. No method of transmission or storage is completely
-            secure, but we take reasonable measures to protect your information.
-          </p>
-
-          <h2>13. Changes to this policy</h2>
-          <p>
-            We may update this Privacy Policy from time to time. When we do, we will revise the "Last
-            updated" date at the top of this page.
-          </p>
-
-          <h2>14. Contact</h2>
-          <p>
-            If you have any questions about this Privacy Policy or your data, contact us at
-            <a href="mailto:service@foodytheapp.com">service@foodytheapp.com</a>.
+            This policy is updated when the app changes in a way that affects how data is processed. The
+            current version is always available at foodytheapp.com/privacy-policy and in the app.
           </p>
         </div>
       </section>
     </main>
 
     <footer class="site-footer">
-      <p class="body-small">© foody · <a class="footer-link" href="/privacy-policy">Privacy Policy</a></p>
+      <p class="body-small">© foody ·
+        <a class="footer-link" href="/legal-notice">Legal Notice</a> ·
+        <a class="footer-link" href="/privacy-policy">Privacy Policy</a> ·
+        <a class="footer-link" href="/terms">Terms of Use</a>
+      </p>
     </footer>
   </body>
 </html>

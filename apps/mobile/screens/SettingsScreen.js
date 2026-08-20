@@ -1,10 +1,24 @@
 import { useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Linking, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image as SvgIcon } from 'expo-image';
 import { useAuth } from '../providers/AuthProvider';
 import shared from '../sharedStyles';
 import { colors } from '../theme';
+
+// Die Rechtstexte leben auf der Website, damit App und Website nicht auseinanderlaufen.
+// Reihenfolge wie im Footer von foodytheapp.com.
+const LEGAL_LINKS = [
+  { label: 'Legal Notice', url: 'https://foodytheapp.com/legal-notice' },
+  { label: 'Privacy Policy', url: 'https://foodytheapp.com/privacy-policy' },
+  { label: 'Terms of Use', url: 'https://foodytheapp.com/terms' },
+];
+
+// openURL lehnt ab, wenn kein Browser bereitsteht. Das darf den Screen nicht
+// abstuerzen lassen, deshalb wird die Rejection geschluckt.
+const openLegalLink = (url) => {
+  Linking.openURL(url).catch(() => {});
+};
 
 export default function SettingsScreen({ navigation }) {
   const { deleteAccount } = useAuth();
@@ -73,19 +87,23 @@ export default function SettingsScreen({ navigation }) {
           >
             <Text style={[shared.typography.body, styles.menuLabelDanger]}>Delete Account</Text>
           </Pressable>
-          <Pressable
-            style={({ pressed }) => [styles.menuItem, styles.imprintItem, pressed && shared.pressed]}
-            onPress={() => navigation.navigate('Imprint')}
-            accessibilityRole="button"
-            accessibilityLabel="Imprint"
-          >
-            <SvgIcon
-              source={require('../assets/info_icon.svg')}
-              style={styles.imprintIcon}
-              contentFit="contain"
-            />
-            <Text style={[shared.typography.body, styles.imprintLabel]}>Imprint</Text>
-          </Pressable>
+          {LEGAL_LINKS.map(({ label, url }) => (
+            <Pressable
+              key={url}
+              style={({ pressed }) => [styles.menuItem, styles.legalItem, pressed && shared.pressed]}
+              onPress={() => openLegalLink(url)}
+              accessibilityRole="link"
+              accessibilityLabel={label}
+              accessibilityHint="Opens in your browser"
+            >
+              <SvgIcon
+                source={require('../assets/info_icon.svg')}
+                style={styles.legalIcon}
+                contentFit="contain"
+              />
+              <Text style={[shared.typography.body, styles.legalLabel]}>{label}</Text>
+            </Pressable>
+          ))}
         </View>
       </View>
 
@@ -186,16 +204,16 @@ const styles = StyleSheet.create({
   menuLabelDanger: {
     color: colors.danger,
   },
-  imprintItem: {
+  legalItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  imprintIcon: {
+  legalIcon: {
     width: 20,
     height: 20,
   },
-  imprintLabel: {
+  legalLabel: {
     color: colors.textMuted,
   },
   separator: {
