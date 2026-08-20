@@ -1,4 +1,5 @@
 import { Image as SvgIcon } from 'expo-image';
+import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -27,6 +28,7 @@ import { deleteRecipeImages } from '../utils/deleteRecipeImages';
 import { uploadImage } from '../utils/imageUpload';
 import { supabase } from '../utils/supabase';
 
+const MAX_IMAGE_DIMENSION = 1600;
 
 export default function AddRecipeScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();
@@ -180,12 +182,30 @@ export default function AddRecipeScreen({ navigation, route }) {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 3],
-      quality: 0.8,
+      quality: 1,
     });
-    if (!result.canceled && result.assets?.[0]) {
-      const asset = result.assets[0];
-      setSelectedImage({ uri: asset.uri, width: asset.width, height: asset.height });
+    if (result.canceled || !result.assets?.[0]) return;
+
+    const asset = result.assets[0];
+    try {
+      // Der Picker liefert die Originaldatei inklusive EXIF-Block - auf Android
+      // werden die GPS-Tags sogar aktiv in die komprimierte Kopie zurueckgeschrieben.
+      // Dekodieren und neu encodieren erzeugt eine Datei ganz ohne Metadaten.
+      const context = ImageManipulator.manipulate(asset.uri);
+      if (Math.max(asset.width, asset.height) > MAX_IMAGE_DIMENSION) {
+        context.resize(
+          asset.width >= asset.height
+            ? { width: MAX_IMAGE_DIMENSION }
+            : { height: MAX_IMAGE_DIMENSION }
+        );
+      }
+      const rendered = await context.renderAsync();
+      const clean = await rendered.saveAsync({ format: SaveFormat.JPEG, compress: 0.8 });
+      setSelectedImage({ uri: clean.uri, width: clean.width, height: clean.height });
       setImageRemoved(false);
+    } catch {
+      // Bewusst kein Rueckfall auf asset.uri: lieber kein Bild als eines mit Standortdaten.
+      Alert.alert('Bild konnte nicht verarbeitet werden', 'Bitte versuche es erneut.');
     }
   };
 

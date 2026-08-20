@@ -1,5 +1,6 @@
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
+import { Alert } from 'react-native';
 
 import AddRecipeScreen from '../AddRecipeScreen';
 
@@ -31,6 +32,10 @@ jest.mock('expo-image-picker', () => ({
   launchImageLibraryAsync: jest.fn(),
   MediaTypeOptions: { Images: 'Images' },
 }));
+jest.mock('expo-image-manipulator', () => ({
+  ImageManipulator: { manipulate: jest.fn() },
+  SaveFormat: { JPEG: 'jpeg' },
+}));
 jest.mock('react-native-safe-area-context', () => {
   const { View } = require('react-native');
   return {
@@ -44,6 +49,31 @@ jest.mock('react-native-safe-area-context', () => {
 const { supabase } = require('../../utils/supabase');
 const { uploadImage } = require('../../utils/imageUpload');
 const { launchImageLibraryAsync } = require('expo-image-picker');
+const { ImageManipulator } = require('expo-image-manipulator');
+
+// Der Picker liefert immer die Originaldatei (mit EXIF/GPS); erst das Re-Encoding
+// durch den Manipulator erzeugt die Datei, die tatsaechlich hochgeladen wird.
+const PICKED_IMAGE = { uri: 'file:///tmp/photo.jpg', width: 800, height: 600 };
+const CLEAN_IMAGE = { uri: 'file:///tmp/clean.jpg', width: 800, height: 600 };
+
+function setupManipulatorMock({ saveResult = CLEAN_IMAGE, saveError = null } = {}) {
+  const saveAsync = saveError
+    ? jest.fn().mockRejectedValue(saveError)
+    : jest.fn().mockResolvedValue(saveResult);
+  const renderAsync = jest.fn().mockResolvedValue({ saveAsync });
+  const resize = jest.fn();
+  const context = { resize, renderAsync };
+  resize.mockReturnValue(context);
+  ImageManipulator.manipulate.mockReturnValue(context);
+  return { resize, renderAsync, saveAsync };
+}
+
+async function pickImageIn({ getByLabelText }) {
+  await act(async () => {
+    fireEvent.press(getByLabelText('Add recipe image'));
+  });
+  await waitFor(() => expect(launchImageLibraryAsync).toHaveBeenCalled());
+}
 
 const CREATED_RECIPE = { id: 99, name: 'Test', author: 'user-123', created_at: '2026-01-01' };
 
@@ -118,6 +148,8 @@ beforeEach(() => {
   jest.useFakeTimers();
   jest.clearAllMocks();
   uploadImage.mockResolvedValue(undefined);
+  setupManipulatorMock();
+  launchImageLibraryAsync.mockResolvedValue({ canceled: false, assets: [PICKED_IMAGE] });
 });
 
 afterEach(() => {
@@ -148,22 +180,14 @@ test('creates draft then finalizes without calling uploadImage when no image sel
 
 // Test 7: with image → uploadImage called with correct args, then finalized to draft: false
 test('calls uploadImage then finalizes when image is selected', async () => {
-  const { recipesInsertMock, updateMock } = setupSupabaseMock();
+  const { updateMock } = setupSupabaseMock();
 
-  launchImageLibraryAsync.mockResolvedValue({
-    canceled: false,
-    assets: [{ uri: 'file:///tmp/photo.jpg', width: 800, height: 600 }],
-  });
-
-  const { getByPlaceholderText, getByText, getByLabelText } = renderScreen();
+  const screen = renderScreen();
+  const { getByPlaceholderText, getByText } = screen;
 
   fireEvent.changeText(getByPlaceholderText('e.g. Spaghetti Aglio e Olio'), 'Test Recipe');
 
-  // Select an image
-  await act(async () => {
-    fireEvent.press(getByLabelText('Add recipe image'));
-  });
-  await waitFor(() => expect(launchImageLibraryAsync).toHaveBeenCalled());
+  await pickImageIn(screen);
 
   await act(async () => {
     fireEvent.press(getByText('Save'));
@@ -174,7 +198,7 @@ test('calls uploadImage then finalizes when image is selected', async () => {
       supabase,
       { id: 'user-123' },
       CREATED_RECIPE.id,
-      expect.objectContaining({ uri: 'file:///tmp/photo.jpg' })
+      expect.objectContaining({ uri: CLEAN_IMAGE.uri })
     )
   );
   await waitFor(() =>
@@ -243,19 +267,12 @@ test('deletes draft recipe and shows error when uploadImage throws', async () =>
   setupSupabaseMock();
   uploadImage.mockRejectedValue(new Error('upload failed'));
 
-  launchImageLibraryAsync.mockResolvedValue({
-    canceled: false,
-    assets: [{ uri: 'file:///tmp/photo.jpg', width: 800, height: 600 }],
-  });
-
-  const { getByPlaceholderText, getByText, getByLabelText, findByText } = renderScreen();
+  const screen = renderScreen();
+  const { getByPlaceholderText, getByText, findByText } = screen;
 
   fireEvent.changeText(getByPlaceholderText('e.g. Spaghetti Aglio e Olio'), 'Test Recipe');
 
-  await act(async () => {
-    fireEvent.press(getByLabelText('Add recipe image'));
-  });
-  await waitFor(() => expect(launchImageLibraryAsync).toHaveBeenCalled());
+  await pickImageIn(screen);
 
   await act(async () => {
     fireEvent.press(getByText('Save'));
@@ -312,4 +329,99 @@ test('stamps created_by on new ingredients and scopes the lookup to the user', a
   expect(ingredientsInsertMock).toHaveBeenCalledWith([
     { name: 'Salt', created_by: 'user-123' },
   ]);
+});
+
+// ─── Metadaten-Entfernung (EXIF/GPS) ───────────────────────────────────────────
+
+// Test 11: die vom Picker gelieferte Datei darf das Geraet niemals verlassen.
+// Genau dieser Test faellt um, falls das Re-Encoding je wieder herausfliegt.
+test('uploads the re-encoded file and never the URI returned by the picker', async () => {
+  setupSupabaseMock();
+  const { saveAsync } = setupManipulatorMock();
+
+  const screen = renderScreen();
+  const { getByPlaceholderText, getByText } = screen;
+
+  fireEvent.changeText(getByPlaceholderText('e.g. Spaghetti Aglio e Olio'), 'Test Recipe');
+  await pickImageIn(screen);
+
+  await act(async () => {
+    fireEvent.press(getByText('Save'));
+  });
+
+  await waitFor(() => expect(uploadImage).toHaveBeenCalled());
+
+  expect(ImageManipulator.manipulate).toHaveBeenCalledWith(PICKED_IMAGE.uri);
+  expect(saveAsync).toHaveBeenCalledWith({ format: 'jpeg', compress: 0.8 });
+
+  const uploaded = uploadImage.mock.calls[0][3];
+  expect(uploaded.uri).toBe(CLEAN_IMAGE.uri);
+  expect(uploaded.uri).not.toBe(PICKED_IMAGE.uri);
+});
+
+// Test 12: kleines Bild -> kein Resize, aber das Re-Encoding laeuft trotzdem.
+// Das Ueberspringen von saveAsync waere hier der Weg, wie EXIF zurueckkaeme.
+test('re-encodes without resizing when the image is below the max dimension', async () => {
+  setupSupabaseMock();
+  const { resize, saveAsync } = setupManipulatorMock();
+
+  const screen = renderScreen();
+  await pickImageIn(screen);
+
+  expect(resize).not.toHaveBeenCalled();
+  expect(saveAsync).toHaveBeenCalledTimes(1);
+});
+
+// Test 13: Resize entlang der laengeren Kante, damit das Seitenverhaeltnis bleibt
+test('resizes along the longer edge when the image exceeds the max dimension', async () => {
+  setupSupabaseMock();
+  const { resize } = setupManipulatorMock();
+  launchImageLibraryAsync.mockResolvedValue({
+    canceled: false,
+    assets: [{ uri: 'file:///tmp/wide.jpg', width: 4032, height: 3024 }],
+  });
+
+  const screen = renderScreen();
+  await pickImageIn(screen);
+
+  expect(resize).toHaveBeenCalledWith({ width: 1600 });
+});
+
+test('resizes by height for a portrait image that exceeds the max dimension', async () => {
+  setupSupabaseMock();
+  const { resize } = setupManipulatorMock();
+  launchImageLibraryAsync.mockResolvedValue({
+    canceled: false,
+    assets: [{ uri: 'file:///tmp/tall.jpg', width: 3024, height: 4032 }],
+  });
+
+  const screen = renderScreen();
+  await pickImageIn(screen);
+
+  expect(resize).toHaveBeenCalledWith({ height: 1600 });
+});
+
+// Test 14: fail closed - schlaegt das Re-Encoding fehl, wird gar kein Bild
+// uebernommen statt auf das ungefilterte Original zurueckzufallen.
+test('keeps no image at all when re-encoding fails', async () => {
+  setupSupabaseMock();
+  setupManipulatorMock({ saveError: new Error('decode failed') });
+  const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+
+  const screen = renderScreen();
+  const { getByPlaceholderText, getByText } = screen;
+
+  fireEvent.changeText(getByPlaceholderText('e.g. Spaghetti Aglio e Olio'), 'Test Recipe');
+  await pickImageIn(screen);
+
+  expect(alertSpy).toHaveBeenCalled();
+
+  await act(async () => {
+    fireEvent.press(getByText('Save'));
+  });
+
+  await waitFor(() => expect(supabase.from).toHaveBeenCalledWith('recipes'));
+  expect(uploadImage).not.toHaveBeenCalled();
+
+  alertSpy.mockRestore();
 });
