@@ -180,13 +180,15 @@ privacyManifests: {
 
 ---
 
-### ☐ A-11 · Kontakt-E-Mail vereinheitlichen
+### ☑ A-11 · Kontakt-E-Mail vereinheitlichen — **erledigt, Postfach noch zu prüfen**
 
-**Was zu tun ist:** Alle fünf Vorkommen von `siknago@gmail.com` durch `service@foodytheapp.com` ersetzen. Sicherstellen, dass das Postfach existiert, funktioniert und regelmäßig gelesen wird.
+**Was zu tun ist:** Alle fünf Vorkommen der privaten Gmail-Adresse durch `service@foodytheapp.com` ersetzen. Sicherstellen, dass das Postfach existiert, funktioniert und regelmäßig gelesen wird.
 
 **Warum:** Art. 13 Abs. 1 lit. a DSGVO und § 5 DDG verlangen eine funktionierende Kontaktmöglichkeit. Eine private Gmail-Adresse in der Datenschutzerklärung, die vom Impressum abweicht, ist widersprüchlich und wirkt unseriös. Betroffenenanfragen und Behördenpost laufen hierüber — ein ungelesenes Postfach führt zu Fristversäumnissen (ein Monat nach Art. 12 Abs. 3).
 
 **Fertig, wenn:** Grep über das Repo findet keine Gmail-Adresse mehr.
+
+**Stand:** Alle fünf Vorkommen lagen in `website/privacy-policy/index.html` und sind ersetzt; im Repo steht die private Adresse nirgends mehr. App (`ImprintScreen.js:62`) und die Entwürfe in `docs/` nutzten die Adresse bereits. Offen: bestätigen, dass `service@foodytheapp.com` tatsächlich zugestellt wird und täglich gelesen wird — das ist der eigentliche Rechtspflicht-Teil und lässt sich nicht im Repo erledigen.
 
 ---
 
@@ -404,7 +406,7 @@ Der Entwurf deckt alle diese Punkte ab.
 
 **Drei Fehler der alten Fassung, die du beheben musst:**
 1. Der Verantwortliche wird nur als „foody" bezeichnet — ein Produktname ist keine Rechtsperson. Art. 13 Abs. 1 lit. a verlangt Identität **und** Anschrift.
-2. An fünf Stellen steht `siknago@gmail.com` statt der Impressumsadresse.
+2. An fünf Stellen stand die private Gmail-Adresse statt der Impressumsadresse (mit A-11 behoben).
 3. Der Text behauptet, die Website lade Google Fonts. Das ist seit der Umstellung auf selbst gehostete `.woff2`-Dateien falsch. Eine unzutreffende Angabe in der Datenschutzerklärung ist ein eigenständiger Verstoß gegen den Transparenzgrundsatz — und ausgerechnet Google Fonts ist ein bekanntes Abmahnthema.
 
 **Drei Dinge, die ein Leser nicht erwartet und die deshalb ausdrücklich im Text stehen:** die lokale unverschlüsselte Sitzungsspeicherung, die automatische Löschung vergangener Planungseinträge, der Verbleib von Zutatennamen nach der Kontolöschung (entfällt bei Umsetzung von A-6). Die Ableitung des Usernames aus der E-Mail ist mit A-4 entfallen.

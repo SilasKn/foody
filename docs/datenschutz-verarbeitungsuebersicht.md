@@ -21,7 +21,7 @@ Es ersetzt keine Rechtsberatung. Die in §5 gelisteten offenen Punkte sind vor d
 | App | „foody", iOS Bundle `com.silasknapp.foody`, Version 1.0.3 | `app.config.js:4,18` |
 | Website | https://foodytheapp.com (statisch, Netlify) | `website/netlify.toml`, `eas.json` |
 
-> **Achtung für die Erklärung:** Die alte Fassung nennt den Verantwortlichen nur als „foody" (Produktname, keine Rechtsperson) und verwendet an 5 Stellen `siknago@gmail.com` statt der Impressums-Adresse. Beides ist zu korrigieren — Art. 13 Abs. 1 lit. a DSGVO verlangt Identität **und** Anschrift.
+> **Achtung für die Erklärung:** Die alte Fassung nennt den Verantwortlichen nur als „foody" (Produktname, keine Rechtsperson) und verwendete an 5 Stellen die private Gmail-Adresse statt der Impressums-Adresse (mit A-11 behoben). Der Verantwortliche ist weiterhin zu korrigieren — Art. 13 Abs. 1 lit. a DSGVO verlangt Identität **und** Anschrift.
 
 ---
 
