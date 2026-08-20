@@ -58,7 +58,7 @@ Defined in `App.js` using React Navigation native stack:
 - `auth.users` — Supabase managed
 - `profiles` (`user_id`, `username`) — auto-created on signup via SQL trigger in `supabase/migrations/`
 - `recipes` (`id`, `name`, `description`, `author`, `created_at`, `public`)
-- `ingredients` (`id`, `name`)
+- `ingredients` (`id`, `name`, `created_by`) — per-user, not a shared catalogue: RLS restricts reads and inserts to `created_by = auth.uid()`, so two users each own their own "Tomato" row. Cascades on account deletion.
 - `recipe_ingredients` (`recipe_id`, `ingredient_id`, `quantity`, `unit`)
 
 ### Theming

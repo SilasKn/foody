@@ -101,9 +101,13 @@ Anschließend `supabase db dump --schema public > supabase/migrations/schema.sql
 
 ---
 
-### ☐ A-6 · Zutaten-Tabelle: Löschlücke und Sichtbarkeit schließen
+### ☑ A-6 · Zutaten-Tabelle: Löschlücke und Sichtbarkeit schließen — **erledigt**
 
 **Was zu tun ist:** Eine Owner-Spalte (`created_by uuid references auth.users on delete cascade`) zu `public.ingredients` hinzufügen, oder — besser — die Tabelle auf einen kuratierten, von dir gepflegten Katalog umstellen, in den Nutzer nichts schreiben.
+
+**Umgesetzt als Owner-Spalte mit Isolierung:** `supabase/migrations/20260819130000_ingredients_owner.sql` macht `created_by` zur Pflichtspalte mit Cascade auf `auth.users`, teilt die bisher geteilten Zeilen pro Nutzer auf, hängt die vorhandenen `recipe_ingredients` auf die jeweils eigene Kopie um und schaltet RLS scharf: gelesen und geschrieben wird nur, wo `auth.uid() = created_by`. Ein Unique-Index auf `(created_by, lower(trim(name)))` hält die Kopien pro Nutzer eindeutig. Die App liest die Tabelle entsprechend nicht mehr global, sondern gefiltert (`AddRecipeScreen.js`, `getIngredientIdsByName`), und schreibt `created_by` beim Anlegen mit.
+
+**Wichtig für die Reihenfolge:** Die Isolierung ist nicht optional, wenn das Cascade richtig sein soll. Bliebe der Katalog geteilt, würde `created_by` nur den *ersten* Nutzer festhalten, der einen Namen getippt hat — und dessen Kontolöschung würde Zeilen entfernen, auf die die Rezepte anderer Nutzer noch zeigen. Erst durch die Aufteilung pro Nutzer ist `on delete cascade` gefahrlos.
 
 **Warum, gleich doppelt:**
 1. **DSGVO:** Bei Kontolöschung bleiben die eingetragenen Zutatennamen bestehen, weil es keine Owner-Spalte und kein Cascade gibt. Freitext-Eingaben können personenbezogen sein („Omas Rezept", „Für Lisas Geburtstag"). Art. 17 verlangt vollständige Löschung.

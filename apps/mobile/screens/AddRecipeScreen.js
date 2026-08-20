@@ -206,9 +206,12 @@ export default function AddRecipeScreen({ navigation, route }) {
       originalByNormalizedName[normalized] = name.trim();
     });
 
+    // Nur die eigenen Zutaten: seit A-6 gehoert jede Zeile genau einem Nutzer,
+    // eine ungefilterte Abfrage laeuft jetzt ohnehin in die RLS-Policy.
     const { data: existingIngredients, error: existingIngredientsError } = await supabase
       .from('ingredients')
-      .select('id, name');
+      .select('id, name')
+      .eq('created_by', user.id);
 
     if (existingIngredientsError) {
       throw existingIngredientsError;
@@ -228,8 +231,11 @@ export default function AddRecipeScreen({ navigation, route }) {
     );
 
     if (missingNormalizedNames.length > 0) {
+      // created_by ist Pflicht, nicht Beiwerk: die Insert-Policy prueft es per
+      // with check, ohne die Spalte wird die Zeile abgelehnt.
       const ingredientsToInsert = missingNormalizedNames.map((normalizedName) => ({
         name: originalByNormalizedName[normalizedName],
+        created_by: user.id,
       }));
 
       const { data: insertedIngredients, error: insertIngredientsError } = await supabase

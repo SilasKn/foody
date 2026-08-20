@@ -79,8 +79,10 @@ Deno.serve(async (req) => {
     // Muss vor deleteUser laufen: danach sind die Bilder nur noch ueber den Bucket auffindbar.
     await removeUserImages(adminClient, userId);
 
-    // Cascade auf auth.users raeumt profiles, recipes, recipe_ingredients,
-    // recipe_schedule und recipe_images ab.
+    // Cascade auf auth.users raeumt profiles, recipes, ingredients,
+    // recipe_ingredients, recipe_schedule und recipe_images ab. ingredients haengt
+    // seit der Owner-Spalte mit drin - moeglich nur, weil jede Zutat genau einem
+    // Nutzer gehoert und kein fremdes Rezept darauf zeigt.
     const { error: deleteError } = await adminClient.auth.admin.deleteUser(userId);
     if (deleteError) throw deleteError;
   } catch (e) {

@@ -64,6 +64,15 @@ function setupSupabaseMock({ updateDraftError = null } = {}) {
   const updateEqMock = jest.fn().mockResolvedValue({ error: updateDraftError });
   const updateMock = jest.fn().mockReturnValue({ eq: updateEqMock });
 
+  // ingredients is read via .select(...).eq('created_by', ...) since the table
+  // became per-user, so the mock has to offer that link in the chain.
+  const ingredientsSelectEqMock = jest.fn().mockResolvedValue({ data: [], error: null });
+  const ingredientsSelectMock = jest.fn().mockReturnValue({ eq: ingredientsSelectEqMock });
+  const ingredientsInsertSelectMock = jest
+    .fn()
+    .mockResolvedValue({ data: [{ id: 1, name: 'Salt' }], error: null });
+  const ingredientsInsertMock = jest.fn().mockReturnValue({ select: ingredientsInsertSelectMock });
+
   supabase.from = jest.fn((table) => {
     if (table === 'recipes') {
       return {
@@ -79,12 +88,20 @@ function setupSupabaseMock({ updateDraftError = null } = {}) {
       };
     }
     if (table === 'ingredients') {
-      return { select: jest.fn().mockResolvedValue({ data: [], error: null }) };
+      return { select: ingredientsSelectMock, insert: ingredientsInsertMock };
     }
     return {};
   });
 
-  return { recipesInsertMock, updateMock, recipesDeleteMock, ingredientsDeleteMock };
+  return {
+    recipesInsertMock,
+    updateMock,
+    recipesDeleteMock,
+    ingredientsDeleteMock,
+    ingredientsSelectMock,
+    ingredientsSelectEqMock,
+    ingredientsInsertMock,
+  };
 }
 
 // ─── Render helpers ────────────────────────────────────────────────────────────
@@ -191,8 +208,9 @@ test('deletes draft recipe when ingredient insert fails', async () => {
     }
     if (table === 'ingredients') {
       const insertSelectMock = jest.fn().mockResolvedValue({ data: [{ id: 1, name: 'Salt' }], error: null });
+      const selectEqMock = jest.fn().mockResolvedValue({ data: [], error: null });
       return {
-        select: jest.fn().mockResolvedValue({ data: [], error: null }),
+        select: jest.fn().mockReturnValue({ eq: selectEqMock }),
         insert: jest.fn().mockReturnValue({ select: insertSelectMock }),
       };
     }
@@ -266,4 +284,32 @@ test('deletes draft recipe and shows error when finalize update fails', async ()
 
   const deletedFromRecipes = supabase.from.mock.calls.some((c) => c[0] === 'recipes');
   expect(deletedFromRecipes).toBe(true);
+});
+
+// Test 11: new ingredients are stamped with the owner and looked up per user
+test('stamps created_by on new ingredients and scopes the lookup to the user', async () => {
+  const { ingredientsSelectMock, ingredientsSelectEqMock, ingredientsInsertMock } =
+    setupSupabaseMock();
+
+  const { getByPlaceholderText, getByText, getByLabelText } = renderScreen();
+
+  fireEvent.changeText(getByPlaceholderText('e.g. Spaghetti Aglio e Olio'), 'Test Recipe');
+  fireEvent.changeText(getByPlaceholderText('Add ingredient…'), 'Salt');
+  fireEvent.changeText(getByPlaceholderText('Quantity'), '5');
+  await act(async () => {
+    fireEvent.press(getByLabelText('Add ingredient'));
+  });
+
+  await act(async () => {
+    fireEvent.press(getByText('Save'));
+  });
+
+  // The catalogue is no longer global: only the caller's own rows are read.
+  await waitFor(() => expect(ingredientsSelectMock).toHaveBeenCalledWith('id, name'));
+  expect(ingredientsSelectEqMock).toHaveBeenCalledWith('created_by', 'user-123');
+
+  // Without created_by the RLS insert policy would reject the row.
+  expect(ingredientsInsertMock).toHaveBeenCalledWith([
+    { name: 'Salt', created_by: 'user-123' },
+  ]);
 });

@@ -7,7 +7,6 @@
 > Placeholders marked `[…]` and paragraphs marked **[DECIDE]** must be resolved before this goes live. Each corresponds to a checklist item:
 >
 > - **§3.4 photos / EXIF** — the wording is deliberately neutral. After the test in A-8, you may replace it with a positive statement if the test confirms EXIF is stripped.
-> - **§3.6 ingredient catalogue** — delete this paragraph once A-6 is done.
 > - **§5 Netlify transfer** — after checking A-3 / E-3, keep either the DPF sentence or the SCC sentence, not both.
 > - **§4 sharing** — this policy deliberately says nothing about publishing recipes, because that feature is disabled. Add it when you enable it.
 > - Confirm the Supabase region wording in §5 matches your screenshot from A-1.
@@ -97,11 +96,7 @@ This is stored in the app's own sandbox, which other apps cannot read. It is **n
 
 **Note:** your shopping list is calculated on your device from your plan and your recipes. It is not stored separately anywhere.
 
-### 3.6 **[DECIDE — delete this paragraph after checklist A-6]** Shared ingredient catalogue
-
-Ingredient names you type are added to a shared catalogue used to offer suggestions to all users. These entries are not linked to your account and contain no identifying information about you. Because they are not linked to any user, they are **not** deleted when you delete your account. Please do not enter personal information in ingredient names.
-
-### 3.7 Server logs
+### 3.6 Server logs
 
 **Data — website:** when you visit foodytheapp.com, the hosting provider records your IP address, the time of access, your browser identification and the resource requested.
 
@@ -142,7 +137,7 @@ A data processing agreement pursuant to Article 28(3) GDPR is in place with each
 
 **Where your data is stored:** all account data, recipes, ingredients, meal plans and photos are stored on servers **within the European Union**. No transfer to a third country takes place for this data.
 
-**Transfers to the United States:** the website is delivered by a provider based in the United States. This affects only the server logs described in section 3.7 — not your account data or your content. **[DECIDE — keep one]** *This transfer is based on the European Commission's adequacy decision for the EU-US Data Privacy Framework pursuant to Article 45 GDPR, under which the provider is certified.* / *This transfer is safeguarded by the European Commission's Standard Contractual Clauses pursuant to Article 46(2)(c) GDPR. A copy is available on request.*
+**Transfers to the United States:** the website is delivered by a provider based in the United States. This affects only the server logs described in section 3.6 — not your account data or your content. **[DECIDE — keep one]** *This transfer is based on the European Commission's adequacy decision for the EU-US Data Privacy Framework pursuant to Article 45 GDPR, under which the provider is certified.* / *This transfer is safeguarded by the European Commission's Standard Contractual Clauses pursuant to Article 46(2)(c) GDPR. A copy is available on request.*
 
 **Apple** processes your Apple account data, downloads and any crash reports at its own level and on its own responsibility. This is not accessible to us and is governed by Apple's privacy policy.
 
@@ -152,10 +147,10 @@ Under the GDPR you have the right to:
 
 - **Access** (Art. 15) — ask what data is held about you. Write to service@foodytheapp.com from the address registered to your account.
 - **Rectification** (Art. 16) — have inaccurate data corrected. Recipes, ingredients, plans and your password can be changed in the app. **[DECIDE — delete after A-5]** *Your display name currently has to be changed by request to the address above.*
-- **Erasure** (Art. 17) — have your data deleted. You can do this yourself: Settings → Delete Account. This permanently deletes your account, all recipes, ingredients assigned to them, meal plans and all uploaded photos. The exceptions are described in sections 3.6 and 3.7.
+- **Erasure** (Art. 17) — have your data deleted. You can do this yourself: Settings → Delete Account. This permanently deletes your account, all recipes, your ingredient names, meal plans and all uploaded photos. The exceptions are described in section 3.6.
 - **Restriction of processing** (Art. 18).
 - **Data portability** (Art. 20) — receive your data in a machine-readable format. Please request this by email.
-- **Object** (Art. 21) — object to processing based on legitimate interests, namely the processing described in sections 3.5 and 3.7.
+- **Object** (Art. 21) — object to processing based on legitimate interests, namely the processing described in sections 3.5 and 3.6.
 - **Withdraw consent** at any time, where processing is based on consent. Withdrawal does not affect the lawfulness of processing carried out beforehand.
 
 Requests are answered within one month. Where a request is complex, this may be extended by a further two months, in which case you will be informed.
