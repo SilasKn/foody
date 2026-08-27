@@ -19,7 +19,9 @@
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "https://ciuojjrpsvjhpxdozhwy.supabase.co",
         "EXPO_PUBLIC_SUPABASE_KEY": "sb_publishable_CeKDouinnVEvtAO7xPIVcA_Mky3SvPT",
-        "EXPO_PUBLIC_SITE_URL": "https://foodytheapp.com"
+        "EXPO_PUBLIC_SITE_URL": "https://foodytheapp.com",
+        "EXPO_PUBLIC_POSTHOG_KEY": "phc_oWoqAfLE3nxPot7gQncJ3qrrnuxC2r64jkkjW3aH5GHJ",
+        "EXPO_PUBLIC_POSTHOG_HOST": "https://eu.i.posthog.com"
       }
     },
     "production": {
@@ -27,7 +29,9 @@
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "https://ciuojjrpsvjhpxdozhwy.supabase.co",
         "EXPO_PUBLIC_SUPABASE_KEY": "sb_publishable_CeKDouinnVEvtAO7xPIVcA_Mky3SvPT",
-        "EXPO_PUBLIC_SITE_URL": "https://foodytheapp.com"
+        "EXPO_PUBLIC_SITE_URL": "https://foodytheapp.com",
+        "EXPO_PUBLIC_POSTHOG_KEY": "phc_oWoqAfLE3nxPot7gQncJ3qrrnuxC2r64jkkjW3aH5GHJ",
+        "EXPO_PUBLIC_POSTHOG_HOST": "https://eu.i.posthog.com"
       }
     }
   },
