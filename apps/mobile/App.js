@@ -14,6 +14,7 @@ import {
 import { View, Text } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { PostHogProvider } from 'posthog-react-native';
 import AddRecipeScreen from './screens/AddRecipeScreen';
 import ScheduleRecipeScreen from './screens/ScheduleRecipeScreen';
 import RescheduleScreen from './screens/RescheduleScreen';
@@ -138,14 +139,19 @@ export default function App() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <AuthProvider>
-        <SafeAreaProvider>
-          <RecipesProvider>
-            <AppRoutes />
-            <StatusBar style="dark" />
-          </RecipesProvider>
-        </SafeAreaProvider>
-      </AuthProvider>
+      <PostHogProvider
+        apiKey={process.env.EXPO_PUBLIC_POSTHOG_KEY}
+        options={{ host: process.env.EXPO_PUBLIC_POSTHOG_HOST }}
+      >
+        <AuthProvider>
+          <SafeAreaProvider>
+            <RecipesProvider>
+              <AppRoutes />
+              <StatusBar style="dark" />
+            </RecipesProvider>
+          </SafeAreaProvider>
+        </AuthProvider>
+      </PostHogProvider>
     </GestureHandlerRootView>
   );
 }
