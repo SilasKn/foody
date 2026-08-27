@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { usePostHog } from 'posthog-react-native';
 import { supabase } from '../utils/supabase';
 
 const SITE_URL = process.env.EXPO_PUBLIC_SITE_URL ?? 'https://foodytheapp.com';
@@ -24,6 +25,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [username, setUsername] = useState(null);
+  const posthog = usePostHog();
 
   useEffect(() => {
     let isMounted = true;
@@ -55,6 +57,13 @@ export function AuthProvider({ children }) {
       subscription?.unsubscribe?.();
     };
   }, []);
+
+  // Ohne identify zaehlt PostHog geraetegebundene anonyme IDs - Retention wuerde
+  // dann Geraete statt Nutzer messen. Nur die Supabase-User-ID, keine Mail, kein
+  // Username: zur Wiedererkennung reicht die ID.
+  useEffect(() => {
+    if (user?.id) posthog?.identify(user.id);
+  }, [user?.id]);
 
   // profiles.username ist die einzige Anzeigequelle fuer den Namen. Die Kopie in
   // raw_user_meta_data.display_name ist nur der Transportkanal beim Signup und
@@ -147,12 +156,15 @@ export function AuthProvider({ children }) {
       },
       signOut: async () => {
         const { error } = await supabase.auth.signOut();
+        // Sonst erbt der naechste Nutzer auf diesem Geraet die Identitaet des vorherigen.
+        if (!error) posthog?.reset();
         return { error };
       },
       deleteAccount: async () => {
         const { error } = await supabase.functions.invoke('delete-account');
         if (error) return { error };
         await supabase.auth.signOut();
+        posthog?.reset();
         return { error: null };
       },
       updateUsername: async ({ username: nextUsername }) => {

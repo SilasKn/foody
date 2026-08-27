@@ -83,6 +83,9 @@ export default function LoginScreen() {
           setErrorMessage(result.error.message);
         }
       } else if (mode === 'signup') {
+        posthog.capture('signup_completed', {
+          email_confirmation_required: !result?.data?.session,
+        });
         if (result?.data?.session) {
           setInfoMessage('Account created. You are now signed in.');
         } else {
