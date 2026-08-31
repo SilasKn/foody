@@ -14,7 +14,6 @@ import {
 import { View, Text } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { PostHogProvider } from 'posthog-react-native';
 import AddRecipeScreen from './screens/AddRecipeScreen';
 import ScheduleRecipeScreen from './screens/ScheduleRecipeScreen';
 import RescheduleScreen from './screens/RescheduleScreen';
@@ -28,6 +27,7 @@ import SettingsScreen from './screens/SettingsScreen';
 import StartScreen from './screens/StartScreen';
 import { colors } from './theme';
 import { AuthProvider, useAuth } from './providers/AuthProvider';
+import { AnalyticsProvider } from './providers/AnalyticsProvider';
 import { RecipesProvider } from './providers/RecipesProvider';
 
 SplashScreen.preventAutoHideAsync();
@@ -139,19 +139,16 @@ export default function App() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <PostHogProvider
-        apiKey={process.env.EXPO_PUBLIC_POSTHOG_KEY}
-        options={{ host: process.env.EXPO_PUBLIC_POSTHOG_HOST }}
-      >
-        <AuthProvider>
+      <AuthProvider>
+        <AnalyticsProvider>
           <SafeAreaProvider>
             <RecipesProvider>
               <AppRoutes />
               <StatusBar style="dark" />
             </RecipesProvider>
           </SafeAreaProvider>
-        </AuthProvider>
-      </PostHogProvider>
+        </AnalyticsProvider>
+      </AuthProvider>
     </GestureHandlerRootView>
   );
 }

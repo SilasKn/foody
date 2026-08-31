@@ -1,6 +1,6 @@
 # Datenverarbeitungs-Übersicht „foody" — Input für die Datenschutzerklärung
 
-*Stand: 14.08.2026 · Codebasis-Stand: Commit `122c9f0` · App-Version 1.0.3*
+*Stand: 31.08.2026 · Codebasis-Stand: Commit `51be999` · App-Version 1.0.5*
 
 ## Zweck dieses Dokuments
 
@@ -50,6 +50,7 @@ Legende Rechtsgrundlage: **(b)** = Art. 6 Abs. 1 lit. b (Vertragserfüllung), **
 | 17 | **Betrieb der Website foodytheapp.com** | Server-Logs des Hosters (IP-Adresse, Zeitstempel, User-Agent, angeforderte Ressource) | automatisch beim Aufruf | (f) — Betrieb & Sicherheit | **Netlify** (US-Anbieter) | nach Netlify-Vorgaben | Nein |
 | 18 | **Betrieb der Backend-Infrastruktur** | Serverseitige Logs / Auth-Audit-Logs von Supabase (u. a. IP-Adressen bei Auth-Vorgängen) | automatisch | (f) | **Supabase** | nach Supabase-Vorgaben; **wird bei Kontolöschung nicht mit gelöscht** | Nein |
 | 19 | **App-Distribution** | Apple-Account-Daten, Käufe/Downloads, ggf. Absturzberichte auf Apple-Ebene — **nicht vom Betreiber erhoben**, unterliegen Apples eigener Datenschutzerklärung | Apple | — (Apple eigenverantwortlich) | **Apple** (App Store / TestFlight) | Apple | — |
+| 20 | **Nutzungsanalyse (PostHog)** — Verstehen, ob begonnene Registrierungen abgeschlossen werden und ob die App danach weiter genutzt wird | Drei Ereignisse: Klick auf „Registrieren" und erfolgreiche Registrierung (mit dem Flag, ob eine E-Mail-Bestätigung aussteht) — beide **anonym, ohne User-ID**, da sie vor Bestehen einer Session feuern — sowie `app_opened` beim Öffnen der App, das als einziges die **Supabase-User-ID** als Kennung trägt; IP-Adresse zum Transport | App | **(f)** — Produktverbesserung; Widerspruch nach Art. 21 möglich | **PostHog**, EU-Region (`eu.i.posthog.com`) | nach PostHog-Aufbewahrung | Nein — **keine Speicherung auf dem Endgerät** (`persistence: 'memory'`), keine Gerätekennungen, kein Locale, keine Zeitzone, keine Standortdaten (`disableGeoip: true`), keine Bildschirmmaße (per `before_send` entfernt), keine automatische Erfassung von Bildschirmen oder Eingaben (`autocapture={false}`), keine Feature-Flag-/Survey-Abrufe |
 
 ---
 
@@ -62,6 +63,7 @@ Legende Rechtsgrundlage: **(b)** = Art. 6 Abs. 1 lit. b (Vertragserfüllung), **
 | **Expo / EAS (650 Industries)** | Auftragsverarbeiter (Build-Zeit) | Build-Prozess der App; keine Endnutzerdaten. Kein `expo-updates` installiert → **kein OTA-Kanal, keine Laufzeit-Telemetrie** | USA | Nur erwähnen, wenn Vollständigkeit gewünscht |
 | **Apple** | Eigenverantwortlicher | App-Store-Distribution | USA/EU | Verweis auf Apples Datenschutzerklärung |
 | **esm.sh (CDN)** | — | Die Edge Function lädt zur Laufzeit `@supabase/supabase-js@2` von `https://esm.sh` | — | Keine Nutzerdaten; Supply-Chain-Hinweis, kein DSGVO-Thema |
+| **PostHog** | Auftragsverarbeiter, Art. 28 | Supabase-User-ID (nur am `app_opened`-Event), zwei anonyme Registrierungs-Events, IP zum Transport | **EU-Region (Frankfurt)**; Anbieter PostHog Inc., USA | AV-Vertrag abschließen und nennen; EU-Hosting erwähnen |
 | **GitHub** | — | Nur Quellcode, keine Personendaten von Nutzern | USA | Nicht erwähnenswert |
 
 ---
@@ -70,13 +72,13 @@ Legende Rechtsgrundlage: **(b)** = Art. 6 Abs. 1 lit. b (Vertragserfüllung), **
 
 Diese Punkte sind im Code nachweisbar und sollten aktiv in der Erklärung stehen — sie sind eine starke Compliance-Position:
 
-- **Keine Analytics, kein Tracking, kein Crash-Reporting, keine Werbung.** Kein Sentry, Firebase, Amplitude, PostHog, Mixpanel, Segment, AdMob, RevenueCat, Bugsnag — weder in `package.json` noch in `node_modules` (508 Pakete geprüft).
-- **Keine Werbe-IDs / kein Tracking über App-Grenzen hinweg.** Kein IDFA/AAID, kein `expo-tracking-transparency`, kein `expo-device`.
+- **Kein Crash-Reporting, keine Werbung.** Kein Sentry, Firebase, Amplitude, Mixpanel, Segment, AdMob, RevenueCat, Bugsnag. Eine Nutzungsanalyse findet statt (#20), begrenzt auf drei Ereignisse ohne Speicherung auf dem Endgerät.
+- **Keine Werbe-IDs / kein Tracking über App-Grenzen hinweg.** Kein IDFA/AAID, kein `expo-tracking-transparency`.
 - **Keine Push-Benachrichtigungen, keine Device-Tokens.** `expo-notifications` nicht installiert.
 - **Keine Standortdaten, keine Kontakte, kein Kalenderzugriff, kein Mikrofon.** Keine entsprechenden APIs im Code.
 - **Kein Kamerazugriff im Code** — nur `launchImageLibraryAsync` (Fotomediathek). *Einschränkung siehe §5, Punkt Android.*
 - **Keine Verkäufe oder Weitergabe von Daten an Dritte, kein Profiling, keine automatisierte Entscheidungsfindung** i. S. v. Art. 22 DSGVO.
-- **Keine Netzwerkaufrufe außerhalb von Supabase.** Der einzige rohe `fetch` liest eine lokale `file://`-URI zum Auslesen der Bilddatei.
+- **Keine Netzwerkaufrufe außerhalb von Supabase und PostHog.** Der einzige rohe `fetch` liest eine lokale `file://`-URI zum Auslesen der Bilddatei.
 - **Website: keine Cookies, kein LocalStorage-Tracking, keine Analytics, keine eingebetteten Dritten.** Schriftarten sind **selbst gehostet** (Poppins als lokale `.woff2`), Google Fonts wurde entfernt. Strikte CSP: `default-src 'none'; … connect-src 'self' https://<supabase>` plus `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`.
   → **Die alte Erklärung behauptet fälschlich, die Website lade Google Fonts. Dieser Satz muss weg.**
 - **Keine Zahlungsdaten** — die App ist kostenlos, keine In-App-Käufe im Code.
@@ -91,7 +93,7 @@ Diese Punkte sind im Code nachweisbar und sollten aktiv in der Erklärung stehen
 | Berichtigung (Art. 16) | Rezepte, Zutaten, Planung und Passwort in der App änderbar. **Lücke: der Anzeigename/Username ist nach der Registrierung in der App nicht änderbar** — nur per E-Mail-Anfrage |
 | Löschung (Art. 17) | **Self-service:** Einstellungen → Konto löschen. Vollständige Löschung inkl. Storage-Objekten und der eigenen Zutatennamen (seit A-6 per Cascade über `ingredients.created_by`). Server-/Auth-Logs bei Supabase und Netlify bleiben gemäß deren Fristen |
 | Datenübertragbarkeit (Art. 20) | Kein Export in der App — auf Anfrage per E-Mail |
-| Widerspruch (Art. 21) | Betrifft die auf (f) gestützten Verarbeitungen (#17, #18) |
+| Widerspruch (Art. 21) | Betrifft die auf (f) gestützten Verarbeitungen (#17, #18, #20) |
 | Beschwerde (Art. 77) | LfDI Baden-Württemberg |
 
 ---
@@ -107,6 +109,7 @@ Diese Punkte sind im Code nachweisbar und sollten aktiv in der Erklärung stehen
 7. **Kein Altersgate.** Weder App noch Website prüfen das Alter (Art. 8 DSGVO / App-Store-Altersfreigabe). Ggf. Mindestalter in den Nutzungsbedingungen festlegen.
 8. **Kein Impressum auf der Website.** Das Impressum existiert nur in der App. Für die unter foodytheapp.com betriebene Website ist nach § 5 DDG eine eigene Impressumsseite nötig, verlinkt aus dem Footer (`website/index.html:69`).
 9. **Kontakt-E-Mail vereinheitlichen** auf `service@foodytheapp.com`.
+10. **PostHog — AV-Vertrag und Rechtsgrundlage.** Der AV-Vertrag mit PostHog ist abzuschließen, bevor die Datenschutzerklärung ihn als Auftragsverarbeiter nennt (§3 der Erklärung behauptet einen Vertrag mit *jedem* gelisteten Verarbeiter). Die Stützung auf (f) setzt voraus, dass nichts auf dem Endgerät gespeichert oder ausgelesen wird — das gilt nur mit `persistence: 'memory'` und ist **bei jedem SDK-Update erneut zu prüfen**, da die Defaults des SDK in die Gegenrichtung zeigen. Dasselbe gilt für `disableGeoip: true` und den `before_send`-Filter in `apps/mobile/utils/analytics.js`: beide decken Negativ-Aussagen der Erklärung ab (kein Standort, keine Bildschirmmaße) und würden bei einem Default-Wechsel des SDK stillschweigend wirkungslos. Die Einstufung als (f) statt (a) ist vertretbar, aber nicht unumstritten — juristisch bestätigen lassen.
 
 ---
 
@@ -115,4 +118,4 @@ Diese Punkte sind im Code nachweisbar und sollten aktiv in der Erklärung stehen
 - Sprache der App und der bestehenden Website: **Englisch**. Verantwortlicher sitzt in Deutschland → DSGVO gilt. Zielsprache der neuen Erklärung abstimmen (Empfehlung: Englisch wie bisher, ggf. zweisprachig).
 - Pflichtangaben nach Art. 13 DSGVO vollständig abdecken: Identität und Kontakt des Verantwortlichen, Zwecke, Rechtsgrundlagen, berechtigte Interessen bei (f), Empfänger, Drittlandtransfer + Mechanismus, Speicherdauer, Betroffenenrechte, Widerrufsrecht, Beschwerderecht bei der Aufsichtsbehörde, ob die Bereitstellung erforderlich ist und welche Folgen die Nichtbereitstellung hat.
 - Ausdrücklich benennen: die lokale unverschlüsselte Session-Speicherung (#6) und die automatische Löschung vergangener Planungseinträge (#13). Das sind die Punkte, die ein Leser nicht erwarten würde. (Die frühere Ableitung des Usernames aus der E-Mail ist mit A-4 entfallen, der globale Zutatenkatalog mit A-6.)
-- Positiv herausstellen: keine Analytics/Tracking/Werbung, private Bilder mit 1-Stunden-Signed-URLs, vollständige Self-Service-Kontolöschung inkl. Dateien, cookie- und trackerfreie Website mit strikter CSP.
+- Positiv herausstellen: keine Werbung, kein Crash-Reporting, kein geräteübergreifendes Tracking, private Bilder mit 1-Stunden-Signed-URLs, vollständige Self-Service-Kontolöschung inkl. Dateien, cookie- und trackerfreie Website mit strikter CSP.

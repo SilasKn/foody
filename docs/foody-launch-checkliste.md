@@ -229,17 +229,17 @@ privacyManifests: {
 | Kategorie | Erhoben? | Verknüpft mit Nutzer? | Zweck | Tracking? |
 |---|---|---|---|---|
 | Contact Info → Email Address | Ja | Ja | App Functionality | Nein |
-| Identifiers → User ID | Ja | Ja | App Functionality | Nein |
+| Identifiers → User ID | Ja | Ja | App Functionality, Analytics | Nein |
 | User Content → Photos or Videos | Ja | Ja | App Functionality | Nein |
 | User Content → Other User Content (Rezepte, Zutaten, Planung) | Ja | Ja | App Functionality | Nein |
-| Usage Data | Nein | — | — | — |
+| Usage Data → Product Interaction | Ja | Ja | Analytics | Nein |
 | Diagnostics | Nein | — | — | — |
 | Location | Nein | — | — | — |
 | Alle übrigen Kategorien | Nein | — | — | — |
 
 Bei „Does your app use data for tracking?" → **Nein**. Kein IDFA, kein `expo-tracking-transparency`, keine Werbe-SDKs.
 
-**Warum:** Die Labels sind eine verbindliche Zusicherung gegenüber Apple. Abweichungen zwischen Labels, Datenschutzerklärung und tatsächlichem Verhalten sind einer der häufigsten Ablehnungsgründe und können nach dem Launch zur Entfernung führen. Deine Position ist hier ungewöhnlich stark: <cite index="0-1">kein Sentry, Firebase, Amplitude, PostHog, Mixpanel, Segment, AdMob, RevenueCat oder Bugsnag</cite> — nutze das, statt vorsichtshalber zu viel anzukreuzen.
+**Warum:** Die Labels sind eine verbindliche Zusicherung gegenüber Apple. Abweichungen zwischen Labels, Datenschutzerklärung und tatsächlichem Verhalten sind einer der häufigsten Ablehnungsgründe und können nach dem Launch zur Entfernung führen. Deine Position ist hier ungewöhnlich stark: <cite index="0-1">kein Sentry, Firebase, Amplitude, Mixpanel, Segment, AdMob, RevenueCat oder Bugsnag</cite> — nutze das, statt vorsichtshalber zu viel anzukreuzen. Die Nutzungsanalyse über PostHog ist oben als Usage Data deklariert; „Tracking" bleibt **Nein**, weil weder mit Drittdaten zu Werbezwecken verknüpft noch an Datenhändler weitergegeben wird.
 
 **Zu den Server-Logs:** IP-Adressen in den Auth-Logs von Supabase musst du hier nicht deklarieren. Apples Definition von „collect" zielt auf Daten, die die App vom Gerät überträgt und über die Bearbeitung der Anfrage hinaus speichert; reine Sicherheits- und Betriebsprotokolle des Auftragsverarbeiters fallen unter die Ausnahme. In der DSGVO-Erklärung gehören sie trotzdem hinein — die beiden Regelwerke haben unterschiedliche Schwellen.
 

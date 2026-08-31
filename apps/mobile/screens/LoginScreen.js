@@ -9,15 +9,14 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { usePostHog } from 'posthog-react-native';
 import { colors } from '../theme';
 import shared from '../sharedStyles';
 import { useAuth } from '../providers/AuthProvider';
 import useUsernameAvailability, { USERNAME_STATUS_TEXT } from '../hooks/useUsernameAvailability';
+import { captureSignupEvent } from '../utils/analytics';
 
 export default function LoginScreen() {
   const { signIn, signUp, sendPasswordReset } = useAuth();
-  const posthog = usePostHog();
 
   const [mode, setMode] = useState('signin'); // 'signin' | 'signup'
   const [username, setUsername] = useState('');
@@ -48,7 +47,7 @@ export default function LoginScreen() {
     setInfoMessage('');
 
     if (mode === 'signup') {
-      posthog.capture('button_pressed', {
+      captureSignupEvent('button_pressed', {
         button_name: 'signup',
       });
     }
@@ -83,7 +82,7 @@ export default function LoginScreen() {
           setErrorMessage(result.error.message);
         }
       } else if (mode === 'signup') {
-        posthog.capture('signup_completed', {
+        captureSignupEvent('signup_completed', {
           email_confirmation_required: !result?.data?.session,
         });
         if (result?.data?.session) {
