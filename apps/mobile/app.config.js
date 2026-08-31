@@ -22,7 +22,47 @@ export default {
       privacyManifests: {
         NSPrivacyTracking: false,
         NSPrivacyTrackingDomains: [],
-        NSPrivacyCollectedDataTypes: [],
+        NSPrivacyCollectedDataTypes: [
+          {
+            // Registrierung und Login ueber Supabase Auth.
+            NSPrivacyCollectedDataType: "NSPrivacyCollectedDataTypeEmailAddress",
+            NSPrivacyCollectedDataTypeLinked: true,
+            NSPrivacyCollectedDataTypeTracking: false,
+            NSPrivacyCollectedDataTypePurposes: ["NSPrivacyCollectedDataTypePurposeAppFunctionality"]
+          },
+          {
+            // Supabase-User-UUID: traegt die Daten in der Datenbank und ist zugleich
+            // die distinct_id des app_opened-Events.
+            NSPrivacyCollectedDataType: "NSPrivacyCollectedDataTypeUserID",
+            NSPrivacyCollectedDataTypeLinked: true,
+            NSPrivacyCollectedDataTypeTracking: false,
+            NSPrivacyCollectedDataTypePurposes: [
+              "NSPrivacyCollectedDataTypePurposeAppFunctionality",
+              "NSPrivacyCollectedDataTypePurposeAnalytics"
+            ]
+          },
+          {
+            // Rezeptfotos im Storage-Bucket recipe_images.
+            NSPrivacyCollectedDataType: "NSPrivacyCollectedDataTypePhotosorVideos",
+            NSPrivacyCollectedDataTypeLinked: true,
+            NSPrivacyCollectedDataTypeTracking: false,
+            NSPrivacyCollectedDataTypePurposes: ["NSPrivacyCollectedDataTypePurposeAppFunctionality"]
+          },
+          {
+            // Rezepte, Zutaten, Essensplanung.
+            NSPrivacyCollectedDataType: "NSPrivacyCollectedDataTypeOtherUserContent",
+            NSPrivacyCollectedDataTypeLinked: true,
+            NSPrivacyCollectedDataTypeTracking: false,
+            NSPrivacyCollectedDataTypePurposes: ["NSPrivacyCollectedDataTypePurposeAppFunctionality"]
+          },
+          {
+            // PostHog: app_opened sowie die beiden Signup-Events.
+            NSPrivacyCollectedDataType: "NSPrivacyCollectedDataTypeProductInteraction",
+            NSPrivacyCollectedDataTypeLinked: true,
+            NSPrivacyCollectedDataTypeTracking: false,
+            NSPrivacyCollectedDataTypePurposes: ["NSPrivacyCollectedDataTypePurposeAnalytics"]
+          }
+        ],
         NSPrivacyAccessedAPITypes: [
           {
             NSPrivacyAccessedAPIType: "NSPrivacyAccessedAPICategoryUserDefaults",
