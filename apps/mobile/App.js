@@ -54,70 +54,65 @@ function AppRoutes() {
 
   return (
     <NavigationContainer>
-      {session ? (
-        <Stack.Navigator
-          initialRouteName="Start"
-          screenOptions={{ headerShown: false, animation: 'fade' }}
-        >
-          <Stack.Screen name="Start" component={StartScreen} />
-          <Stack.Screen name="Recipes" component={RecipesScreen} />
-          <Stack.Screen name="Calendar" component={CalendarScreen} />
-          <Stack.Screen name="Settings" component={SettingsScreen} />
-          <Stack.Screen name="RecipeDetail" component={RecipeDetailScreen} />
-          <Stack.Screen
-            name="ScheduleRecipe"
-            component={ScheduleRecipeScreen}
-            options={{
-              presentation: 'transparentModal',
-              animation: 'none',
-              contentStyle: { backgroundColor: 'transparent' },
-            }}
-          />
-          <Stack.Screen
-            name="Reschedule"
-            component={RescheduleScreen}
-            options={{
-              presentation: 'transparentModal',
-              animation: 'none',
-              contentStyle: { backgroundColor: 'transparent' },
-            }}
-          />
-          <Stack.Screen
-            name="AddRecipe"
-            component={AddRecipeScreen}
-            options={{
-              presentation: 'transparentModal',
-              animation: 'none',
-              contentStyle: { backgroundColor: 'transparent' },
-            }}
-          />
-          <Stack.Screen
-            name="ChangePassword"
-            component={ChangePasswordScreen}
-            options={{
-              presentation: 'transparentModal',
-              animation: 'none',
-              contentStyle: { backgroundColor: 'transparent' },
-            }}
-          />
-          <Stack.Screen
-            name="ChangeUsername"
-            component={ChangeUsernameScreen}
-            options={{
-              presentation: 'transparentModal',
-              animation: 'none',
-              contentStyle: { backgroundColor: 'transparent' },
-            }}
-          />
-        </Stack.Navigator>
-      ) : (
-        <Stack.Navigator
-          initialRouteName="Login"
-          screenOptions={{ headerShown: false, animation: 'fade' }}
-        >
-          <Stack.Screen name="Login" component={LoginScreen} />
-        </Stack.Navigator>
-      )}
+      {/* Der key setzt den Stack auf Start zurueck, sobald die Session kommt oder
+          geht - deckt Login, Logout und Kontoloeschung mit einer Zeile ab. */}
+      <Stack.Navigator
+        key={session ? 'authed' : 'anon'}
+        initialRouteName="Start"
+        screenOptions={{ headerShown: false, animation: 'fade' }}
+      >
+        <Stack.Screen name="Start" component={StartScreen} />
+        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="Recipes" component={RecipesScreen} />
+        <Stack.Screen name="Calendar" component={CalendarScreen} />
+        <Stack.Screen name="Settings" component={SettingsScreen} />
+        <Stack.Screen name="RecipeDetail" component={RecipeDetailScreen} />
+        <Stack.Screen
+          name="ScheduleRecipe"
+          component={ScheduleRecipeScreen}
+          options={{
+            presentation: 'transparentModal',
+            animation: 'none',
+            contentStyle: { backgroundColor: 'transparent' },
+          }}
+        />
+        <Stack.Screen
+          name="Reschedule"
+          component={RescheduleScreen}
+          options={{
+            presentation: 'transparentModal',
+            animation: 'none',
+            contentStyle: { backgroundColor: 'transparent' },
+          }}
+        />
+        <Stack.Screen
+          name="AddRecipe"
+          component={AddRecipeScreen}
+          options={{
+            presentation: 'transparentModal',
+            animation: 'none',
+            contentStyle: { backgroundColor: 'transparent' },
+          }}
+        />
+        <Stack.Screen
+          name="ChangePassword"
+          component={ChangePasswordScreen}
+          options={{
+            presentation: 'transparentModal',
+            animation: 'none',
+            contentStyle: { backgroundColor: 'transparent' },
+          }}
+        />
+        <Stack.Screen
+          name="ChangeUsername"
+          component={ChangeUsernameScreen}
+          options={{
+            presentation: 'transparentModal',
+            animation: 'none',
+            contentStyle: { backgroundColor: 'transparent' },
+          }}
+        />
+      </Stack.Navigator>
     </NavigationContainer>
   );
 }

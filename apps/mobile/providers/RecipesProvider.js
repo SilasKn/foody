@@ -82,18 +82,12 @@ export function RecipesProvider({ children }) {
   }, []);
 
   const loadFromBackend = useCallback(async (mode) => {
-    if (!user?.id) {
-      setRecipesByMode({
-        [FILTER_MODES.MINE]: [],
-        [FILTER_MODES.PUBLIC]: [],
-      });
-      setErrorMessage('');
-      setHasFetchedByMode({
-        [FILTER_MODES.MINE]: false,
-        [FILTER_MODES.PUBLIC]: false,
-      });
-      return;
-    }
+    // Ohne Session gibt es nichts zu laden. Hier bewusst nichts setzen: Der
+    // Reset-Effekt auf user?.id leert die Caches ohnehin bei jedem
+    // Nutzerwechsel, und neue Objektliterale wuerden hasFetchedByMode - und
+    // damit loadRecipesForMode - bei jedem Render neu erzeugen. Das ergibt mit
+    // dem Effekt in RecipesScreen eine Endlosschleife.
+    if (!user?.id) return;
 
     setIsLoading(true);
     setErrorMessage('');

@@ -9,13 +9,14 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { Image as SvgIcon } from 'expo-image';
 import { colors } from '../theme';
 import shared from '../sharedStyles';
 import { useAuth } from '../providers/AuthProvider';
 import useUsernameAvailability, { USERNAME_STATUS_TEXT } from '../hooks/useUsernameAvailability';
 import { captureSignupEvent } from '../utils/analytics';
 
-export default function LoginScreen() {
+export default function LoginScreen({ navigation }) {
   const { signIn, signUp, sendPasswordReset } = useAuth();
 
   const [mode, setMode] = useState('signin'); // 'signin' | 'signup'
@@ -120,6 +121,20 @@ export default function LoginScreen() {
       <KeyboardAvoidingView style={styles.safe} behavior="padding">
         <ScrollView contentContainerStyle={styles.container}>
           <View style={styles.header}>
+            {navigation.canGoBack() && (
+              <Pressable
+                style={({ pressed }) => [styles.backButton, pressed && shared.pressed]}
+                onPress={() => navigation.goBack()}
+                accessibilityRole="button"
+                accessibilityLabel="Go back"
+              >
+                <SvgIcon
+                  source={require('../assets/arrow_back_icon.svg')}
+                  style={[styles.backIcon, shared.iconOnAccent]}
+                  contentFit="contain"
+                />
+              </Pressable>
+            )}
             <Text style={[shared.typography.h1, styles.logo]}>
               foody
               <Text style={styles.logoDot}>.</Text>
@@ -258,13 +273,25 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 14,
     paddingHorizontal: 18,
     paddingVertical: 14,
     backgroundColor: colors.headerBg,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
+  },
+  backButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backIcon: {
+    width: 22,
+    height: 22,
   },
   logo: {
     color: colors.text,

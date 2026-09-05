@@ -3,6 +3,7 @@ import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-na
 import { Image as SvgIcon } from 'expo-image';
 import RecipeImage from '../components/RecipeImage';
 import ScreenShell from '../components/ScreenShell';
+import { useAuth } from '../providers/AuthProvider';
 import { useRecipes } from '../providers/RecipesProvider';
 import shared from '../sharedStyles';
 import { colors } from '../theme';
@@ -11,6 +12,7 @@ const searchIcon = require('../assets/search_icon.svg');
 const emptyBookImage = require('../assets/created_images/empty_book.png');
 
 export default function RecipesScreen({ navigation }) {
+  const { session } = useAuth();
   const {
     recipes,
     isLoading,
@@ -117,7 +119,7 @@ export default function RecipesScreen({ navigation }) {
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Add recipe"
-        onPress={() => navigation.navigate('AddRecipe')}
+        onPress={() => navigation.navigate(session ? 'AddRecipe' : 'Login')}
         style={({ pressed }) => [shared.fabArea, shared.fabMainButton, pressed && shared.pressed]}
       >
         <SvgIcon source={require('../assets/plus_icon.svg')} style={[{ width: 26, height: 26 }, shared.iconOnAccent]} contentFit="contain" />

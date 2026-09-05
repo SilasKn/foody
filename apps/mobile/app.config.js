@@ -95,7 +95,11 @@ export default {
       favicon: "./assets/favicon.png"
     },
     plugins: [
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "expo-font",
+      "expo-image",
+      "expo-splash-screen",
+      "expo-status-bar"
     ],
     extra: {
       eas: {

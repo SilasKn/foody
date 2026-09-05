@@ -12,10 +12,6 @@ export default function AppHeader({ navigation }) {
   const iconRef = useRef(null);
 
   const onUserPress = () => {
-    if (!session) {
-      navigation.navigate('Login');
-      return;
-    }
     if (dropdownVisible) {
       setDropdownVisible(false);
       return;
@@ -58,20 +54,32 @@ export default function AppHeader({ navigation }) {
                 iconRect && { top: iconRect.y + iconRect.height + 6 },
               ]}
             >
-              <Pressable
-                style={({ pressed }) => [styles.dropdownRow, pressed && styles.pressed]}
-                onPress={() => { setDropdownVisible(false); navigation.navigate('Settings'); }}
-              >
-                <SvgIcon source={require('../assets/settings_icon.svg')} style={styles.dropdownIcon} contentFit="contain" />
-                <Text style={[shared.typography.body, styles.dropdownLabel]}>Settings</Text>
-              </Pressable>
-              <Pressable
-                style={({ pressed }) => [styles.dropdownRow, pressed && styles.pressed]}
-                onPress={() => { setDropdownVisible(false); signOut(); }}
-              >
-                <SvgIcon source={require('../assets/logout_icon.svg')} style={styles.dropdownIcon} contentFit="contain" />
-                <Text style={[shared.typography.body, styles.dropdownLabel]}>Logout</Text>
-              </Pressable>
+              {session ? (
+                <>
+                  <Pressable
+                    style={({ pressed }) => [styles.dropdownRow, pressed && styles.pressed]}
+                    onPress={() => { setDropdownVisible(false); navigation.navigate('Settings'); }}
+                  >
+                    <SvgIcon source={require('../assets/settings_icon.svg')} style={styles.dropdownIcon} contentFit="contain" />
+                    <Text style={[shared.typography.body, styles.dropdownLabel]}>Settings</Text>
+                  </Pressable>
+                  <Pressable
+                    style={({ pressed }) => [styles.dropdownRow, pressed && styles.pressed]}
+                    onPress={() => { setDropdownVisible(false); signOut(); }}
+                  >
+                    <SvgIcon source={require('../assets/logout_icon.svg')} style={styles.dropdownIcon} contentFit="contain" />
+                    <Text style={[shared.typography.body, styles.dropdownLabel]}>Logout</Text>
+                  </Pressable>
+                </>
+              ) : (
+                <Pressable
+                  style={({ pressed }) => [styles.dropdownRow, pressed && styles.pressed]}
+                  onPress={() => { setDropdownVisible(false); navigation.navigate('Login'); }}
+                >
+                  <SvgIcon source={require('../assets/login_icon.svg')} style={styles.dropdownIcon} contentFit="contain" />
+                  <Text style={[shared.typography.body, styles.dropdownLabel]}>Login</Text>
+                </Pressable>
+              )}
             </View>
           </Pressable>
         </Modal>
