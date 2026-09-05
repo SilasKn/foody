@@ -3,16 +3,11 @@ export default {
   expo: {
     name: "foody",
     slug: "mobile",
-    version: "1.0.7",
+    version: "1.0.8",
     orientation: "portrait",
     icon: "./assets/icon.png",
     userInterfaceStyle: "light",
     newArchEnabled: true,
-    splash: {
-      image: "./assets/splash-icon.png",
-      resizeMode: "contain",
-      backgroundColor: "#ffffff"
-    },
     ios: {
       supportsTablet: false,
       bundleIdentifier: "com.silasknapp.foody",
@@ -98,7 +93,15 @@ export default {
       "@react-native-community/datetimepicker",
       "expo-font",
       "expo-image",
-      "expo-splash-screen",
+      [
+        "expo-splash-screen",
+        {
+          image: "./assets/splash-icon.png",
+          imageWidth: 220,
+          resizeMode: "contain",
+          backgroundColor: "#FDF3E7"
+        }
+      ],
       "expo-status-bar"
     ],
     extra: {
