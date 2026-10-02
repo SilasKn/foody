@@ -1,0 +1,5 @@
+# Netlify CLI local state (netlify dev / netlify link)
+.netlify/
+
+# macOS
+.DS_Store
